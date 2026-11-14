@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "ResearchMatch"
+description = "A USC research discovery and recruitment sample with explainable bidirectional matches, student profiles, faculty projects, and data-source setup."
+version = "1.0.0"
+id = "artifacts/research-match"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18669
+
+[services.development]
+run = "pnpm --filter @workspace/research-match run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/research-match", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/research-match/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18669"
+BASE_PATH = "/"

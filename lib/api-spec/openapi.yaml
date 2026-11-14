@@ -1,0 +1,69 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+paths:
+  /researchmatch/status:
+    get:
+      operationId: getResearchMatchStatus
+      summary: Honest sample data-source configuration status
+      responses:
+        "200":
+          description: Configuration status without credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionStatus"
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+components:
+  schemas:
+    ConnectionStatus:
+      type: object
+      required: [github, convex, matching]
+      properties:
+        github:
+          type: object
+          required: [status, repositoryUrl]
+          properties:
+            status: { type: string }
+            repositoryUrl: { type: [string, "null"] }
+        convex:
+          type: object
+          required: [status, message]
+          properties:
+            status: { type: string }
+            message: { type: string }
+        matching:
+          type: object
+          required: [mode, message]
+          properties:
+            mode: { type: string }
+            message: { type: string }
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+

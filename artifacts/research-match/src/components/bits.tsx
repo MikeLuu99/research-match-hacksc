@@ -1,0 +1,106 @@
+import { Bookmark, BookmarkCheck, Clock, GraduationCap, DollarSign, Sprout } from "lucide-react";
+import type { Project, RecruitStatus } from "@/lib/data";
+import type { MatchResult } from "@/lib/matching";
+import { useStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
+
+export function RecruitPill({ status }: { status: RecruitStatus }) {
+  const map = {
+    open: ["Open recruiting", "bg-chart-3/12 text-chart-3 border-chart-3/30"],
+    exploration: ["Lab exploration", "bg-accent text-accent-foreground border-chart-2/40"],
+    closed: ["Closed this term", "bg-muted text-muted-foreground border-border"],
+  } as const;
+  const [label, cls] = map[status];
+  return (
+    <span data-testid={`status-recruit-${status}`} className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", cls)}>
+      <span className={cn("h-1.5 w-1.5 rounded-full", status === "open" ? "bg-chart-3" : status === "exploration" ? "bg-chart-2" : "bg-muted-foreground")} />
+      {label}
+    </span>
+  );
+}
+
+export function ScoreDial({ score, size = 56 }: { score: number; size?: number }) {
+  const r = size / 2 - 5;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }} title="Demo match score">
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth={5} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={score >= 70 ? "hsl(var(--primary))" : score >= 50 ? "hsl(var(--chart-2))" : "hsl(var(--muted-foreground))"}
+          strokeWidth={5}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - score / 100)}
+          style={{ transition: "stroke-dashoffset .6s ease" }}
+        />
+      </svg>
+      <span className="absolute inset-0 grid place-items-center font-mono text-sm font-medium">{Math.round(score)}</span>
+    </div>
+  );
+}
+
+export function SaveButton({ id }: { id: string }) {
+  const { saved, toggleSave } = useStore();
+  const on = saved.includes(id);
+  const Icon = on ? BookmarkCheck : Bookmark;
+  return (
+    <button
+      data-testid={`button-save-${id}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleSave(id);
+      }}
+      aria-label={on ? "Remove from saved" : "Save project"}
+      className={cn(
+        "h-9 w-9 grid place-items-center rounded-full border transition-all duration-200 hover:scale-110 active:scale-95",
+        on ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:text-primary hover:border-primary/40",
+      )}
+    >
+      <Icon className="h-4 w-4" />
+    </button>
+  );
+}
+
+export function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResult; onOpen: () => void; i?: number }) {
+  return (
+    <article
+      data-testid={`card-project-${p.id}`}
+      onClick={onOpen}
+      style={{ animationDelay: `${i * 45}ms` }}
+      className={cn("lift rise group cursor-pointer rounded-2xl border bg-card p-5 flex flex-col gap-3", p.status === "closed" && "opacity-75")}
+    >
+      <div className="flex items-start gap-4">
+        <ScoreDial score={m.score} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <RecruitPill status={p.status} />
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{p.department}</span>
+          </div>
+          <h3 className="font-display text-lg leading-snug mt-1.5 group-hover:text-primary transition-colors">{p.title}</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">{p.lab}</p>
+        </div>
+        <SaveButton id={p.id} />
+      </div>
+      <p className="text-sm text-foreground/80 leading-relaxed">{p.summary}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {p.requiredSkills.map((s) => (
+          <span key={s} className={cn("rounded-md px-2 py-0.5 text-xs border", m.matchedSkills.includes(s) ? "bg-primary/8 border-primary/25 text-primary" : "border-dashed text-muted-foreground")}>
+            {s}
+          </span>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground pt-2 border-t border-dashed">
+        <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{p.minHours}-{p.maxHours} h/wk</span>
+        {p.credit && <span className="inline-flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" />Credit</span>}
+        {p.paid && <span className="inline-flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" />Paid</span>}
+        {m.learningPotential && <span className="inline-flex items-center gap-1 text-chart-3 font-medium"><Sprout className="h-3.5 w-3.5" />Learning potential</span>}
+        <span className="ml-auto text-primary font-medium opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">Why this match</span>
+      </div>
+    </article>
+  );
+}
