@@ -40,12 +40,33 @@ export default defineSchema({
     ownerSubject: v.string(),
     name: v.string(),
     major: v.string(),
+    schoolYear: v.union(
+      v.literal("freshman"),
+      v.literal("sophomore"),
+      v.literal("junior"),
+      v.literal("senior"),
+      v.literal("masters"),
+      v.literal("phd"),
+    ),
     skills: v.array(v.string()),
     interests: v.array(v.string()),
+    experience: v.array(
+      v.object({
+        role: v.string(),
+        org: v.string(),
+        description: v.string(),
+      }),
+    ),
     hoursPerWeek: v.number(),
+    workStudy: v.boolean(),
     seekingCredit: v.boolean(),
     // Only explicit opt-in records may appear in reverse matching.
     recruitmentConsent: v.boolean(),
+    // Resume is stored as a file; parsed structured data lands in
+    // experience/skills. Embeddings are generated once a provider is configured.
+    resumeStorageId: v.optional(v.string()),
+    resumeFileName: v.optional(v.string()),
+    resumeParsedAt: v.optional(v.number()),
     embeddingModel: v.string(),
     embedding: v.array(v.float64()),
   })

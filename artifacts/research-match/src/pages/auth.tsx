@@ -14,6 +14,7 @@ import {
   CredentialsForm,
   type CredentialsMode,
 } from "@/components/auth-form";
+import { StudentProfileForm } from "@/components/student-profile-form";
 
 function OnboardingForm() {
   const { completeProfile, viewer } = useAccount();
@@ -125,7 +126,7 @@ const SETUP_COPY = {
 function CredentialsPage({ mode }: { mode: CredentialsMode }) {
   return (
     <AuthFrame {...AUTH_COPY[mode]}>
-      <CredentialsForm mode={mode} />
+      <CredentialsForm />
     </AuthFrame>
   );
 }
@@ -143,6 +144,16 @@ export default function AuthPage({
           <LoaderCircle className="animate-spin" size={23} />
           Getting your account ready…
         </div>
+      </AuthFrame>
+    );
+  if (account.viewer?.accountType === "student" && !account.viewer.hasStudentProfile)
+    return (
+      <AuthFrame
+        eyebrow="YOUR RESEARCH PROFILE"
+        title="Tell us about your work."
+        intro="A few details help us match you with projects worth your time."
+      >
+        <StudentProfileForm />
       </AuthFrame>
     );
   if (account.viewer?.accountType)

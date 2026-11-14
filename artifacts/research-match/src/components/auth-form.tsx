@@ -1,8 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowUpRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { ArrowUpRight, LoaderCircle } from "lucide-react";
 import { useAccount } from "@/lib/auth";
-import { validateCredentials } from "@/lib/auth-validation";
 
 export type CredentialsMode = "sign-in" | "sign-up";
 export const AUTH_COPY = {
@@ -10,130 +9,35 @@ export const AUTH_COPY = {
     eyebrow: "GOOD TO SEE YOU AGAIN",
     title: "Welcome back.",
     intro: "Pick up where your curiosity left off.",
-    button: "Sign in",
-    pending: "Signing in…",
     switchPrompt: "New to ResearchMatch?",
     switchLabel: "Create an account",
     switchHref: "/sign-up",
-    passwordHint: "Enter your password",
-    autocomplete: "current-password",
   },
   "sign-up": {
     eyebrow: "YOUR NEXT CHAPTER STARTS HERE",
     title: "A world of research awaits.",
     intro: "Create your account and discover what’s possible across campus.",
-    button: "Create account",
-    pending: "Creating your account…",
     switchPrompt: "Already have an account?",
     switchLabel: "Sign in",
     switchHref: "/sign-in",
-    passwordHint: "At least 12 characters",
-    autocomplete: "new-password",
   },
 };
 
-function PasswordField({
-  id,
-  label,
-  hint,
-  autoComplete,
-  disabled,
-}: {
-  id: string;
-  label: string;
-  hint: string;
-  autoComplete: string;
-  disabled: boolean;
-}) {
-  const [visible, setVisible] = useState(false);
-  const action = visible ? "Hide" : "Show";
+function GoogleIcon() {
   return (
-    <div className="auth-field">
-      <label htmlFor={id}>{label}</label>
-      <div className="password-input">
-        <input
-          id={id}
-          name={id}
-          type={visible ? "text" : "password"}
-          autoComplete={autoComplete}
-          placeholder={hint}
-          required
-          maxLength={256}
-          disabled={disabled}
-        />
-        <button
-          type="button"
-          onClick={() => setVisible(!visible)}
-          aria-label={`${action} ${label.toLowerCase()}`}
-          aria-pressed={visible}
-        >
-          {visible ? <EyeOff size={19} /> : <Eye size={19} />}
-        </button>
-      </div>
-    </div>
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.75 2 2.9 6.32 2.9 12c0 5.51 4.49 10 9.79 10 5.14 0 9.41-3.72 9.41-9.26 0-1.13-.35-1.34-.75-1.64z"
+      />
+    </svg>
   );
 }
 
-function formString(data: FormData, name: string) {
-  return String(data.get(name) ?? "");
-}
-
-function SubmitButton({
-  pending,
-  mode,
-  enabled,
-}: {
-  pending: boolean;
-  mode: CredentialsMode;
-  enabled: boolean;
-}) {
-  const copy = AUTH_COPY[mode];
-  const label = pending ? copy.pending : copy.button;
-  return (
-    <button
-      className="public-button auth-submit"
-      disabled={pending || !enabled}
-    >
-      {pending && <LoaderCircle className="animate-spin" size={18} />}
-      {label}
-      <ArrowUpRight size={18} />
-    </button>
-  );
-}
-
-export function CredentialsForm({ mode }: { mode: CredentialsMode }) {
+export function CredentialsForm() {
   const account = useAccount();
   const [error, setError] = useState("");
-  const [pending, setPending] = useState(false);
-  const copy = AUTH_COPY[mode];
-  const signingUp = mode === "sign-up";
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const email = formString(data, "email");
-    const password = formString(data, "password");
-    const confirmation = signingUp
-      ? formString(data, "confirm-password")
-      : undefined;
-    const validation = validateCredentials(email, password, confirmation);
-    setError(validation ?? "");
-    if (validation) return;
-    setPending(true);
-    try {
-      if (signingUp)
-        await account.signUp(email, password, formString(data, "name"));
-      else await account.signIn(email, password);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "We couldn’t connect. Please try again.",
-      );
-    } finally {
-      setPending(false);
-    }
-  }
+  const [googlePending, setGooglePending] = useState(false);
 
   return (
     <>
@@ -143,71 +47,40 @@ export function CredentialsForm({ mode }: { mode: CredentialsMode }) {
           <Link href="/demo">explore the demo</Link>.
         </div>
       )}
-      <form className="auth-form" onSubmit={submit}>
-        {signingUp && (
-          <div className="auth-field">
-            <label htmlFor="signup-name">Full name</label>
-            <input
-              id="signup-name"
-              name="name"
-              autoComplete="name"
-              placeholder="Your name"
-              minLength={2}
-              maxLength={80}
-              required
-              disabled={pending}
-            />
-          </div>
+      <p className="auth-intro-google">
+        Sign in with your USC Google account. No password needed.
+      </p>
+      <button
+        type="button"
+        className="public-button auth-google"
+        disabled={!account.isConfigured || googlePending}
+        onClick={() => {
+          setGooglePending(true);
+          account.signInWithGoogle().catch((err: unknown) => {
+            setGooglePending(false);
+            setError(
+              err instanceof Error
+                ? err.message
+                : "We couldn’t start Google sign-in. Please try again.",
+            );
+          });
+        }}
+      >
+        {googlePending ? (
+          <LoaderCircle className="animate-spin" size={18} />
+        ) : (
+          <GoogleIcon />
         )}
-        <div className="auth-field">
-          <label htmlFor="email">Email address</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="username"
-            placeholder="you@usc.edu"
-            maxLength={100}
-            required
-            disabled={pending}
-          />
-        </div>
-        <PasswordField
-          id="password"
-          label="Password"
-          hint={copy.passwordHint}
-          autoComplete={copy.autocomplete}
-          disabled={pending}
-        />
-        {signingUp && (
-          <PasswordField
-            id="confirm-password"
-            label="Confirm password"
-            hint="Repeat your password"
-            autoComplete="new-password"
-            disabled={pending}
-          />
-        )}
-        {signingUp && (
-          <p className="auth-help">
-            Use a unique passphrase. USC or faculty affiliation is not verified
-            at sign-up.
-          </p>
-        )}
-        {error && (
-          <p className="auth-error" role="alert">
-            {error}
-          </p>
-        )}
-        <SubmitButton
-          pending={pending}
-          mode={mode}
-          enabled={account.isConfigured}
-        />
-      </form>
+        Continue with Google
+      </button>
+      {error && (
+        <p className="auth-error" role="alert">
+          {error}
+        </p>
+      )}
       <p className="auth-switch">
-        {copy.switchPrompt}{" "}
-        <Link href={copy.switchHref}>{copy.switchLabel}</Link>
+        Any Google account works today. USC affiliation isn’t verified at
+        sign-up.
       </p>
       <div className="auth-divider">
         <span />

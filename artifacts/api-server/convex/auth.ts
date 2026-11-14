@@ -21,11 +21,11 @@ export function createAuth(ctx: GenericCtx<DataModel>) {
     secret: process.env.BETTER_AUTH_SECRET,
     trustedOrigins: [siteUrl],
     database: authComponent.adapter(ctx),
-    emailAndPassword: {
-      enabled: true,
-      minPasswordLength: 12,
-      maxPasswordLength: 256,
-      requireEmailVerification: false,
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      },
     },
     rateLimit: { enabled: true, storage: "database" },
     plugins: [crossDomain({ siteUrl }), convex({ authConfig })],

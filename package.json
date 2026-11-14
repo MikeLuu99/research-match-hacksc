@@ -7,7 +7,7 @@
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
-    "dev": "pnpm --filter @workspace/research-match dev",
+    "dev": "concurrently --names web,api,convex --prefix-colors blue,green,yellow \"pnpm --filter @workspace/research-match dev\" \"pnpm --filter @workspace/api-server dev\" \"pnpm --filter @workspace/api-server watch\"",
     "test": "node --experimental-strip-types --test artifacts/research-match/src/lib/auth-validation.test.ts",
     "typecheck:convex": "pnpm --filter @workspace/api-server exec tsc -p convex/tsconfig.json --noEmit",
     "analyze": "fallow audit",
@@ -19,9 +19,10 @@
     "convex": "^1.50.0"
   },
   "devDependencies": {
+    "concurrently": "^10.0.7",
+    "fallow": "3.42.0",
     "prettier": "^3.9.10",
-    "typescript": "~5.9.3",
-    "fallow": "3.42.0"
+    "typescript": "~5.9.3"
   },
   "packageManager": "pnpm@11.21.0",
   "engines": {

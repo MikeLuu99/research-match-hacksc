@@ -1,0 +1,58 @@
+diff --git a/dist/client/adapter-utils.js b/dist/client/adapter-utils.js
+index f046ec4..122ad21 100644
+--- a/dist/client/adapter-utils.js
++++ b/dist/client/adapter-utils.js
+@@ -389,6 +389,10 @@ filterWhere) => {
+ const generateQuery = (ctx, schema, args) => {
+     const { index, values, boundField, indexFields } = findIndex(schema, args) ?? {};
+     const usableIndex = index?.indexDescriptor === "by_creation_time" ? undefined : index;
++    // Better Auth's createdAt maps to Convex _creationTime, which a field
++    // index cannot bound. Skip the bound in the index query and apply it
++    // statically instead.
++    const skipCreatedAtBound = usableIndex && boundField === "createdAt";
+     const query = stream(ctx.db, schema).query(args.model);
+     const hasValues = (values?.eq?.length ?? 0) > 0 ||
+         values?.lt !== undefined ||
+@@ -401,16 +405,16 @@ const generateQuery = (ctx, schema, args) => {
+                 for (const [idx, value] of (values?.eq ?? []).entries()) {
+                     q = q.eq(usableIndex.fields[idx], value);
+                 }
+-                if (values?.lt !== undefined) {
++                if (values?.lt !== undefined && !skipCreatedAtBound) {
+                     q = q.lt(boundField, values.lt);
+                 }
+-                if (values?.lte !== undefined) {
++                if (values?.lte !== undefined && !skipCreatedAtBound) {
+                     q = q.lte(boundField, values.lte);
+                 }
+-                if (values?.gt !== undefined) {
++                if (values?.gt !== undefined && !skipCreatedAtBound) {
+                     q = q.gt(boundField, values.gt);
+                 }
+-                if (values?.gte !== undefined) {
++                if (values?.gte !== undefined && !skipCreatedAtBound) {
+                     q = q.gte(boundField, values.gte);
+                 }
+                 return q;
+@@ -439,7 +443,9 @@ const generateQuery = (ctx, schema, args) => {
+         // incompatible with Convex statically.
+         (w) => isNullEq(w) ||
+             (w.operator &&
+-                ["contains", "starts_with", "ends_with", "ne", "not_in"].includes(w.operator)));
++                (["contains", "starts_with", "ends_with", "ne", "not_in"].includes(w.operator) ||
++                    (skipCreatedAtBound && w.field === "createdAt" &&
++                        ["lt", "lte", "gt", "gte"].includes(w.operator)))));
+     });
+     return filteredQuery;
+ };
+@@ -503,8 +509,8 @@ export const paginate = async (ctx, schema, betterAuthSchema, args) => {
+     }
+     if (args.where?.some((w) => w.field === "_id" &&
+         w.operator &&
+-        !["eq", "in", "not_in"].includes(w.operator))) {
+-        throw new Error(`_id can only be used with eq, in, or not_in operator: ${JSON.stringify(args.where)}`);
++        !["eq", "in", "not_in", "ne"].includes(w.operator))) {
++        throw new Error(`_id can only be used with eq, in, not_in, or ne operator: ${JSON.stringify(args.where)}`);
+     }
+     if (args.where?.some((w) => w.mode === "insensitive")) {
+         throw new Error(`Case-insensitive queries (mode: "insensitive") are not supported by the Convex adapter. Store values in a normalized form (e.g. lowercase on write) and query against the normalized value.`);

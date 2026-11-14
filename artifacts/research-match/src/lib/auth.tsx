@@ -8,22 +8,22 @@ import {
 } from "convex/react";
 import { authClient } from "./auth-client";
 import { api } from "./convex-api";
-import {
-  authErrorMessage,
-  normalizeEmail,
-  type AccountType,
-} from "./auth-validation";
+import { authErrorMessage, type AccountType } from "./auth-validation";
 
 interface Account {
   isConfigured: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
   viewer:
-    | { id: string; name: string | null; accountType: AccountType | null }
+    | {
+        id: string;
+        name: string | null;
+        accountType: AccountType | null;
+        hasStudentProfile: boolean;
+      }
     | null
     | undefined;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   completeProfile: (name: string, accountType: AccountType) => Promise<null>;
 }
@@ -36,8 +36,7 @@ const AccountContext = createContext<Account>({
   isAuthenticated: false,
   isLoading: false,
   viewer: null,
-  signIn: unavailable,
-  signUp: unavailable,
+  signInWithGoogle: unavailable,
   signOut: unavailable,
   completeProfile: unavailable,
 });
@@ -57,21 +56,10 @@ function ConnectedAccount({ children }: { children: ReactNode }) {
     isAuthenticated,
     isLoading: isLoading || (isAuthenticated && viewer === undefined),
     viewer,
-    signIn: async (email, password) => {
-      const result = await authClient.signIn.email({
-        email: normalizeEmail(email),
-        password,
-      });
-      if (result.error)
-        throw new Error(
-          authErrorMessage({ error: result.error.code ?? "OTHER_ERROR" }),
-        );
-    },
-    signUp: async (email, password, name) => {
-      const result = await authClient.signUp.email({
-        email: normalizeEmail(email),
-        password,
-        name: name.trim(),
+    signInWithGoogle: async () => {
+      const result = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${window.location.origin}${import.meta.env.BASE_URL}app`,
       });
       if (result.error)
         throw new Error(

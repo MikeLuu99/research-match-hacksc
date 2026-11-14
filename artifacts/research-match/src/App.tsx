@@ -24,18 +24,36 @@ import { AccountProvider, useAccount } from "@/lib/auth";
 
 const queryClient = new QueryClient();
 
+// Faculty workspace and data controls are faculty-only. Signed-in students
+// are redirected instead of shown another side's tooling.
+function StudentRouteGate({ children }: { children: ReactNode }) {
+  const [loc] = useLocation();
+  const account = useAccount();
+  const isFacultyOnly =
+    loc.startsWith("/faculty") || loc.startsWith("/settings");
+  if (
+    account.isAuthenticated &&
+    account.viewer?.accountType !== "faculty" &&
+    isFacultyOnly
+  )
+    return <Redirect to="~/app" replace />;
+  return <>{children}</>;
+}
+
 function WorkspaceRoutes() {
   return (
     <RoutedErrorBoundary>
-      <Switch>
-        <Route path="/" component={Discovery} />
-        <Route path="/saved" component={Saved} />
-        <Route path="/applications" component={Applications} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/faculty" component={Faculty} />
-        <Route path="/settings" component={Settings} />
-        <Route component={NotFound} />
-      </Switch>
+      <StudentRouteGate>
+        <Switch>
+          <Route path="/" component={Discovery} />
+          <Route path="/saved" component={Saved} />
+          <Route path="/applications" component={Applications} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/faculty" component={Faculty} />
+          <Route path="/settings" component={Settings} />
+          <Route component={NotFound} />
+        </Switch>
+      </StudentRouteGate>
     </RoutedErrorBoundary>
   );
 }

@@ -15,12 +15,12 @@ import { cn } from "@/lib/utils";
 import { useAccount } from "@/lib/auth";
 
 const NAV = [
-  { href: "/", label: "Discover", icon: Compass },
-  { href: "/saved", label: "Saved", icon: Bookmark },
-  { href: "/applications", label: "Interest tracker", icon: Send },
-  { href: "/profile", label: "My profile", icon: UserRound },
-  { href: "/faculty", label: "Faculty workspace", icon: FlaskConical },
-  { href: "/settings", label: "Data & matching", icon: Settings2 },
+  { href: "/", label: "Discover", icon: Compass, roles: ["student"] },
+  { href: "/saved", label: "Saved", icon: Bookmark, roles: ["student"] },
+  { href: "/applications", label: "Interest tracker", icon: Send, roles: ["student"] },
+  { href: "/profile", label: "My profile", icon: UserRound, roles: ["student"] },
+  { href: "/faculty", label: "Faculty workspace", icon: FlaskConical, roles: ["faculty"] },
+  { href: "/settings", label: "Data & matching", icon: Settings2, roles: ["faculty"] },
 ];
 
 function AccountMenu() {
@@ -64,29 +64,38 @@ function AccountMenu() {
 export function Layout({ children }: { children: ReactNode }) {
   const [loc] = useLocation();
   const { saved, interests, profile } = useStore();
+  const account = useAccount();
+  // Signed-in accounts see only their side's tools. The unauthenticated demo
+  // shows both sides so visitors can explore each workflow.
+  const role = account.isAuthenticated
+    ? account.viewer?.accountType ?? "student"
+    : "demo";
   const mine = interests.filter((i) => i.studentId === profile.id).length;
   const counts: Record<string, number> = {
     "/saved": saved.length,
     "/applications": mine,
   };
+  const nav = NAV.filter(
+    (n) => role === "demo" || n.roles.includes(role),
+  );
   return (
-    <div className="grain min-h-[100dvh] md:flex">
-      <aside className="md:w-64 md:min-h-[100dvh] bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:h-[100dvh] flex md:flex-col">
+    <div className="workspace-grid min-h-[100dvh] md:flex">
+      <aside className="md:w-64 md:min-h-[100dvh] bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:h-[100dvh] flex md:flex-col border-r border-sidebar-border">
         <div className="hidden md:block px-6 pt-7 pb-6">
           <Link href="/" className="block group" data-testid="link-home">
             <div className="flex items-center gap-2">
-              <span className="h-8 w-8 rounded-full bg-sidebar-primary text-sidebar-primary-foreground grid place-items-center font-display text-lg font-bold transition-transform group-hover:rotate-12">
+              <span className="h-8 w-8 bg-sidebar-primary text-sidebar-primary-foreground grid place-items-center font-display text-lg transition-colors group-hover:bg-sidebar-accent">
                 r
               </span>
               <span className="font-display text-2xl">ResearchMatch</span>
             </div>
-            <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/60">
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground/60">
               Demo · not an official USC product
             </p>
           </Link>
         </div>
-        <nav className="flex md:flex-col gap-1 px-2 md:px-3 py-2 overflow-x-auto w-full">
-          {NAV.map((n) => {
+        <nav className="flex md:flex-col gap-0 px-2 md:px-3 py-2 overflow-x-auto w-full">
+          {nav.map((n) => {
             const active =
               n.href === "/" ? loc === "/" : loc.startsWith(n.href);
             return (
@@ -95,19 +104,19 @@ export function Layout({ children }: { children: ReactNode }) {
                 href={n.href}
                 data-testid={`link-nav-${n.href.replace("/", "") || "discover"}`}
                 className={cn(
-                  "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm whitespace-nowrap transition-all duration-200",
+                  "relative flex items-center gap-3 px-3 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap transition-colors duration-200",
                   active
                     ? "bg-sidebar-accent text-sidebar-foreground"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 hover:translate-x-0.5",
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
                 )}
               >
                 {active && (
-                  <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-sidebar-primary hidden md:block" />
+                  <span className="absolute left-0 top-2 bottom-2 w-[3px] bg-sidebar-primary hidden md:block" />
                 )}
                 <n.icon className="h-4 w-4 shrink-0" />
                 <span>{n.label}</span>
                 {counts[n.href] ? (
-                  <span className="ml-auto text-[11px] font-mono rounded-full bg-sidebar-primary/90 text-sidebar-primary-foreground px-1.5">
+                  <span className="ml-auto font-mono text-[11px] bg-sidebar-primary text-sidebar-primary-foreground px-1.5">
                     {counts[n.href]}
                   </span>
                 ) : null}
@@ -146,7 +155,8 @@ export function PageHeader({
 }) {
   return (
     <header className="px-5 md:px-10 pt-8 md:pt-12 pb-6 rise">
-      <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">
+      <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-primary">
+        <span className="h-[7px] w-[7px] bg-chart-2" />
         {eyebrow}
       </p>
       <h1 className="font-display text-3xl md:text-5xl mt-2 leading-[1.05]">
@@ -169,9 +179,9 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-primary/25 bg-card/60 px-6 py-14 text-center rise">
-      <div className="mx-auto mb-4 h-14 w-14 rounded-full border-2 border-dashed border-accent-foreground/30 grid place-items-center">
-        <span className="h-3 w-3 rounded-full bg-chart-2" />
+    <div className="border border-dashed border-primary/30 bg-card/60 px-6 py-14 text-center rise">
+      <div className="mx-auto mb-4 h-14 w-14 border border-dashed border-primary/40 grid place-items-center">
+        <span className="h-3 w-3 bg-chart-2" />
       </div>
       <h3 className="font-display text-xl">{title}</h3>
       <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">

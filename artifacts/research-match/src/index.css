@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..500;1,6..72,400..500&family=Hanken+Grotesk:wght@400..700&family=DM+Mono:wght@400;500&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -61,10 +61,10 @@
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 0rem;
+  --radius-md: 0rem;
+  --radius-lg: 0rem;
+  --radius-xl: 0rem;
 }
 
 /* LIGHT MODE */
@@ -79,72 +79,72 @@
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
-  --background: 38 33% 96%;
+  --background: 43 37% 91%;
 
-  --foreground: 350 25% 12%;
+  --foreground: 342 57% 33%;
 
-  --border: 30 18% 85%;
+  --border: 13 28% 81%;
 
-  --card: 40 40% 98.5%;
+  --card: 45 62% 95%;
 
-  --card-foreground: 350 25% 12%;
+  --card-foreground: 342 57% 33%;
 
-  --card-border: 30 18% 86%;
+  --card-border: 13 28% 81%;
 
-  --sidebar: 352 62% 22%;
+  --sidebar: 342 57% 33%;
 
-  --sidebar-foreground: 40 40% 94%;
+  --sidebar-foreground: 43 45% 92%;
 
-  --sidebar-border: 352 45% 30%;
+  --sidebar-border: 342 45% 40%;
 
-  --sidebar-primary: 42 92% 58%;
+  --sidebar-primary: 44 100% 59%;
 
-  --sidebar-primary-foreground: 352 62% 16%;
+  --sidebar-primary-foreground: 342 57% 20%;
 
-  --sidebar-accent: 352 50% 28%;
+  --sidebar-accent: 342 50% 40%;
 
-  --sidebar-accent-foreground: 40 40% 96%;
+  --sidebar-accent-foreground: 43 45% 94%;
 
-  --sidebar-ring: 42 92% 58%;
+  --sidebar-ring: 44 100% 59%;
 
-  --popover: 40 40% 98.5%;
+  --popover: 45 62% 95%;
 
-  --popover-foreground: 350 25% 12%;
+  --popover-foreground: 342 57% 33%;
 
-  --popover-border: 30 18% 85%;
+  --popover-border: 13 28% 81%;
 
-  --primary: 353 68% 34%;
+  --primary: 342 57% 33%;
 
-  --primary-foreground: 40 50% 97%;
+  --primary-foreground: 43 45% 94%;
 
-  --secondary: 36 45% 90%;
+  --secondary: 45 32% 85%;
 
-  --secondary-foreground: 350 30% 18%;
+  --secondary-foreground: 342 57% 26%;
 
-  --muted: 35 25% 91%;
+  --muted: 45 32% 86%;
 
-  --muted-foreground: 350 8% 42%;
+  --muted-foreground: 342 22% 45%;
 
-  --accent: 43 90% 88%;
+  --accent: 44 100% 88%;
 
-  --accent-foreground: 30 70% 22%;
+  --accent-foreground: 342 57% 20%;
 
   --destructive: 4 70% 46%;
 
   --destructive-foreground: 40 50% 97%;
 
-  --input: 30 18% 80%;
-  --ring: 353 68% 34%;
-  --chart-1: 353 68% 34%;
-  --chart-2: 42 92% 52%;
-  --chart-3: 170 35% 36%;
-  --chart-4: 215 30% 40%;
-  --chart-5: 25 60% 50%;
+  --input: 343 19% 79%;
+  --ring: 342 57% 33%;
+  --chart-1: 342 57% 33%;
+  --chart-2: 44 100% 52%;
+  --chart-3: 42 73% 38%;
+  --chart-4: 342 40% 50%;
+  --chart-5: 43 30% 60%;
 
-  --app-font-sans: 'DM Sans', sans-serif;
-  --app-font-serif: 'Fraunces', Georgia, serif;
-  --app-font-mono: 'JetBrains Mono', monospace;
-  --radius: 0.75rem; /* 8px */
+  --app-font-sans: 'Hanken Grotesk', sans-serif;
+  --app-font-serif: 'Newsreader', Georgia, serif;
+  --app-font-mono: 'DM Mono', ui-monospace, monospace;
+  --radius: 0rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
   --shadow-sm:
@@ -228,68 +228,68 @@
   --elevate-1: rgba(255, 255, 255, 0.04);
   --elevate-2: rgba(255, 255, 255, 0.09);
 
-  --background: 38 33% 96%;
+  --background: 43 37% 91%;
 
-  --foreground: 350 25% 12%;
+  --foreground: 342 57% 33%;
 
-  --border: 30 18% 85%;
+  --border: 13 28% 81%;
 
-  --card: 40 40% 98.5%;
+  --card: 45 62% 95%;
 
-  --card-foreground: 350 25% 12%;
+  --card-foreground: 342 57% 33%;
 
-  --card-border: 30 18% 86%;
+  --card-border: 13 28% 81%;
 
-  --sidebar: 352 62% 22%;
+  --sidebar: 342 57% 33%;
 
-  --sidebar-foreground: 40 40% 94%;
+  --sidebar-foreground: 43 45% 92%;
 
-  --sidebar-border: 352 45% 30%;
+  --sidebar-border: 342 45% 40%;
 
-  --sidebar-primary: 42 92% 58%;
+  --sidebar-primary: 44 100% 59%;
 
-  --sidebar-primary-foreground: 352 62% 16%;
+  --sidebar-primary-foreground: 342 57% 20%;
 
-  --sidebar-accent: 352 50% 28%;
+  --sidebar-accent: 342 50% 40%;
 
-  --sidebar-accent-foreground: 40 40% 96%;
+  --sidebar-accent-foreground: 43 45% 94%;
 
-  --sidebar-ring: 42 92% 58%;
+  --sidebar-ring: 44 100% 59%;
 
-  --popover: 40 40% 98.5%;
+  --popover: 45 62% 95%;
 
-  --popover-foreground: 350 25% 12%;
+  --popover-foreground: 342 57% 33%;
 
-  --popover-border: 30 18% 85%;
+  --popover-border: 13 28% 81%;
 
-  --primary: 353 68% 34%;
+  --primary: 342 57% 33%;
 
-  --primary-foreground: 40 50% 97%;
+  --primary-foreground: 43 45% 94%;
 
-  --secondary: 36 45% 90%;
+  --secondary: 45 32% 85%;
 
-  --secondary-foreground: 350 30% 18%;
+  --secondary-foreground: 342 57% 26%;
 
-  --muted: 35 25% 91%;
+  --muted: 45 32% 86%;
 
-  --muted-foreground: 350 8% 42%;
+  --muted-foreground: 342 22% 45%;
 
-  --accent: 43 90% 88%;
+  --accent: 44 100% 88%;
 
-  --accent-foreground: 30 70% 22%;
+  --accent-foreground: 342 57% 20%;
 
   --destructive: 4 70% 46%;
 
   --destructive-foreground: 40 50% 97%;
 
   /* Used as the border around inputs. Dark mode: Should be a border that is light enough to have high contrast when rendered on a --card background. More contrast than standard --border */
-  --input: 30 18% 80%;
-  --ring: 353 68% 34%;
-  --chart-1: 353 68% 34%;
-  --chart-2: 42 92% 52%;
-  --chart-3: 170 35% 36%;
-  --chart-4: 215 30% 40%;
-  --chart-5: 25 60% 50%;
+  --input: 343 19% 79%;
+  --ring: 342 57% 33%;
+  --chart-1: 342 57% 33%;
+  --chart-2: 44 100% 52%;
+  --chart-3: 42 73% 38%;
+  --chart-4: 342 40% 50%;
+  --chart-5: 43 30% 60%;
 
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0);
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0);
@@ -433,9 +433,26 @@
   }
 }
 
-.font-display{font-family:var(--app-font-serif);font-optical-sizing:auto;letter-spacing:-0.02em}
-.grain::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.font-display{font-family:var(--app-font-serif);letter-spacing:-0.01em;font-weight:400}
+/* Cardinal Grid: permanent graph-paper grid behind the workspace */
+.workspace-grid{
+  background-color:hsl(var(--background));
+  background-image:
+    linear-gradient(to right, hsl(342 57% 33% / 0.10) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(342 57% 33% / 0.10) 1px, transparent 1px);
+  background-size:clamp(28px, 2.2vw, 44px) clamp(28px, 2.2vw, 44px);
+}
+.workspace-grid::before{content:'';position:fixed;left:0;right:0;top:0;height:1.5px;background:hsl(342 57% 33%);z-index:40;pointer-events:none}
+.workspace-grid::after{content:'';position:fixed;left:0;right:0;bottom:0;height:1.5px;background:hsl(342 57% 33%);z-index:40;pointer-events:none}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .rise{animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
-.lift{transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s,border-color .25s}
-.lift:hover{transform:translateY(-3px);box-shadow:0 14px 30px -18px hsl(353 68% 25% / .45);border-color:hsl(var(--primary)/.35)}
+.lift{transition:border-color .2s}
+.lift:hover{border-color:hsl(var(--primary)/.5)}
+/* Cobalt Grid identity: zero rounded corners anywhere in the workspace */
+.workspace-grid .rounded-sm,.workspace-grid .rounded,.workspace-grid .rounded-md,
+.workspace-grid .rounded-lg,.workspace-grid .rounded-xl,.workspace-grid .rounded-2xl,
+.workspace-grid .rounded-3xl,.workspace-grid .rounded-full,.workspace-grid .rounded-s-lg,
+.workspace-grid .rounded-e-lg,.workspace-grid .rounded-t-xl,.workspace-grid .rounded-b-xl{border-radius:0}
+/* Editorial chrome: Newsreader headings at weight 400, DM Mono meta */
+.workspace-grid .font-display{font-weight:400}
+.workspace-grid .font-mono{letter-spacing:0.04em}

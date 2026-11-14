@@ -4,32 +4,36 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
+    "dev": "export NODE_ENV=development PORT=\"${PORT:-3001}\" && pnpm run build && pnpm run start",
+    "watch": "convex dev",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@convex-dev/better-auth": "0.13.0",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
+    "better-auth": "1.7.23",
     "convex": "^1.50.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "drizzle-orm": "catalog:",
     "express": "^5.3.0",
     "pino": "^9.14.0",
-    "pino-http": "^10.5.0",
-    "@convex-dev/better-auth": "0.13.0",
-    "better-auth": "1.7.23"
+    "pino-http": "^10.5.0"
   },
   "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
+    "convex-test": "^0.0.71",
     "esbuild": "0.28.2",
     "esbuild-plugin-pino": "^2.3.3",
     "pino-pretty": "^13.2.0",
-    "thread-stream": "3.1.0"
+    "thread-stream": "3.1.0",
+    "vitest": "^5.1.0"
   }
 }
