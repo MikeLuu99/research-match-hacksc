@@ -1,7 +1,19 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { ALEX, SEED_PROJECTS, type Project, type StudentProfile } from "./data";
 
-export type InterestStatus = "interested" | "contacted" | "conversation" | "accepted" | "declined" | "withdrawn";
+export type InterestStatus =
+  | "interested"
+  | "contacted"
+  | "conversation"
+  | "accepted"
+  | "declined"
+  | "withdrawn";
 
 export interface Interest {
   id: string;
@@ -43,14 +55,39 @@ const initial = (): State => ({
   templates: {},
 });
 
-function load(): State {
+function freshState(accountId?: string, accountName?: string): State {
+  if (!accountId) return initial();
+  return {
+    ...initial(),
+    profile: {
+      id: accountId,
+      name: accountName ?? "Researcher",
+      major: "",
+      year: "",
+      skills: [],
+      interests: [],
+      hours: 0,
+      wantsCredit: false,
+      wantsPaid: false,
+      bio: "",
+      resumeText: "",
+      visible: false,
+    },
+    saved: [],
+    interests: [],
+    templates: {},
+  };
+}
+
+function load(key: string, accountId?: string, accountName?: string): State {
+  const state = freshState(accountId, accountName);
   try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return { ...initial(), ...JSON.parse(raw) };
+    const raw = localStorage.getItem(key);
+    if (raw) return { ...state, ...JSON.parse(raw) };
   } catch {
-    /* ignore */
+    /* Fall back to a clean profile if storage is unavailable or invalid. */
   }
-  return initial();
+  return state;
 }
 
 interface Ctx extends State {
@@ -67,42 +104,93 @@ interface Ctx extends State {
 
 const StoreCtx = createContext<Ctx | null>(null);
 
-export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<State>(load);
+export function StoreProvider({
+  children,
+  accountId,
+  accountName,
+}: {
+  children: ReactNode;
+  accountId?: string;
+  accountName?: string;
+}) {
+  const key = accountId ? `${KEY}.account.${accountId}` : KEY;
+  const [state, setState] = useState<State>(() =>
+    load(key, accountId, accountName),
+  );
   useEffect(() => {
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }, [state]);
+    try {
+      localStorage.setItem(key, JSON.stringify(state));
+    } catch {
+      /* A blocked/full browser store must not crash the workspace. */
+    }
+  }, [key, state]);
 
   const now = () => new Date().toISOString();
   const value: Ctx = {
     ...state,
-    updateProfile: (p) => setState((s) => ({ ...s, profile: { ...s.profile, ...p } })),
+    updateProfile: (p) =>
+      setState((s) => ({ ...s, profile: { ...s.profile, ...p } })),
     toggleSave: (id) =>
-      setState((s) => ({ ...s, saved: s.saved.includes(id) ? s.saved.filter((x) => x !== id) : [...s.saved, id] })),
+      setState((s) => ({
+        ...s,
+        saved: s.saved.includes(id)
+          ? s.saved.filter((x) => x !== id)
+          : [...s.saved, id],
+      })),
     expressInterest: (projectId, message) =>
       setState((s) => {
-        if (s.projects.find((project) => project.id === projectId)?.status !== "open") return s;
-        const existing = s.interests.find((i) => i.projectId === projectId && i.studentId === s.profile.id);
+        if (
+          s.projects.find((project) => project.id === projectId)?.status !==
+          "open"
+        )
+          return s;
+        const existing = s.interests.find(
+          (i) => i.projectId === projectId && i.studentId === s.profile.id,
+        );
         if (existing)
           return {
             ...s,
-            interests: s.interests.map((i) => (i.id === existing.id ? { ...i, status: "interested", message, updatedAt: now() } : i)),
+            interests: s.interests.map((i) =>
+              i.id === existing.id
+                ? { ...i, status: "interested", message, updatedAt: now() }
+                : i,
+            ),
           };
         return {
           ...s,
           interests: [
-            { id: "i-" + Date.now(), projectId, studentId: s.profile.id, studentName: s.profile.name, status: "interested", message, createdAt: now(), updatedAt: now() },
+            {
+              id: "i-" + Date.now(),
+              projectId,
+              studentId: s.profile.id,
+              studentName: s.profile.name,
+              status: "interested",
+              message,
+              createdAt: now(),
+              updatedAt: now(),
+            },
             ...s.interests,
           ],
         };
       }),
     setInterestStatus: (id, status) =>
-      setState((s) => ({ ...s, interests: s.interests.map((i) => (i.id === id ? { ...i, status, updatedAt: now() } : i)) })),
-    removeInterest: (id) => setState((s) => ({ ...s, interests: s.interests.filter((i) => i.id !== id) })),
+      setState((s) => ({
+        ...s,
+        interests: s.interests.map((i) =>
+          i.id === id ? { ...i, status, updatedAt: now() } : i,
+        ),
+      })),
+    removeInterest: (id) =>
+      setState((s) => ({
+        ...s,
+        interests: s.interests.filter((i) => i.id !== id),
+      })),
     upsertProject: (p) =>
       setState((s) => ({
         ...s,
-        projects: s.projects.some((x) => x.id === p.id) ? s.projects.map((x) => (x.id === p.id ? p : x)) : [p, ...s.projects],
+        projects: s.projects.some((x) => x.id === p.id)
+          ? s.projects.map((x) => (x.id === p.id ? p : x))
+          : [p, ...s.projects],
       })),
     removeProject: (id) =>
       setState((s) => ({
@@ -118,7 +206,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         else t[projectId] = text;
         return { ...s, templates: t };
       }),
-    reset: () => setState(initial()),
+    reset: () => {
+      try { localStorage.removeItem(key); } catch { /* Storage may be disabled. */ }
+      setState(freshState(accountId, accountName));
+    },
   };
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }

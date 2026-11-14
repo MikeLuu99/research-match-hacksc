@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Typecheck, test & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run typecheck:convex
+      - run: pnpm test
+      - run: pnpm --filter @workspace/research-match build
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+          VITE_CONVEX_SITE_URL: ${{ vars.VITE_CONVEX_SITE_URL }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: researchmatch-web
+          path: artifacts/research-match/dist/public
+          if-no-files-found: error
+
+  analysis:
+    name: Fallow static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: fallow-rs/fallow@v3
+        with:
+          version: 3.42.0
+          command: audit
+          changed-since: ${{ github.event.pull_request.base.sha || github.event.before || 'HEAD~1' }}
+          fail-on-empty-analysis: true
+          artifacts-dir: .fallow-reports
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fallow-analysis
+          path: .fallow-reports/
+          if-no-files-found: warn

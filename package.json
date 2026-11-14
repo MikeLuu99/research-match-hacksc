@@ -6,7 +6,12 @@
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "dev": "pnpm --filter @workspace/research-match dev",
+    "test": "node --experimental-strip-types --test artifacts/research-match/src/lib/auth-validation.test.ts",
+    "typecheck:convex": "pnpm --filter @workspace/api-server exec tsc -p convex/tsconfig.json --noEmit",
+    "analyze": "fallow audit",
+    "analyze:full": "fallow"
   },
   "private": true,
   "dependencies": {
@@ -14,6 +19,11 @@
   },
   "devDependencies": {
     "prettier": "^3.9.10",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "fallow": "3.42.0"
+  },
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

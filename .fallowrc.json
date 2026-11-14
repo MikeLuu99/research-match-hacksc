@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  "ignorePatterns": [
+    "**/convex/_generated/**",
+    "**/dist/**",
+    "**/*.tsbuildinfo",
+    "!artifacts/mockup-sandbox/src/.generated/**"
+  ]
+}

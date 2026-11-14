@@ -1,48 +1,149 @@
 # ResearchMatch
 
-A working browser-local sample for USC cross-department research discovery and
-faculty recruitment. This is an independent prototype, not an official USC
-service. The user will supply actual research data later.
+Research discovery across USC departments, with a public landing page, student
+and faculty onboarding, and email/password accounts using **Better Auth with
+Convex**. This is an independent prototype, not an official USC service.
 
-## Included
+## Run locally
 
-- Student research discovery, profile/preferences and explainable demo matches.
-- Saved opportunities and local interest tracking.
-- Faculty project management and consent-aware candidate discovery.
-- A status page that distinguishes configuration from actual connectivity.
-- Convex schema and internal vector-search groundwork for both directions.
-
-## Run
-
-Use the managed web and API workflows in this project.
+Use Node.js 24 and the pinned pnpm version in `package.json`.
 
 ```sh
-pnpm install
-pnpm --filter @workspace/api-spec run codegen
-pnpm run typecheck
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-The web artifact is `artifacts/research-match`. The shared status API is
-`/api/researchmatch/status`. Shared API contracts live in
-`lib/api-spec/openapi.yaml`; regenerate clients after changing the contract.
+Open `http://localhost:5173`. The landing page and public demo work without
+Convex credentials. Sign-in and sign-up explain that account access is
+unavailable until both public Convex URLs are configured.
 
-## Integration status
+| Route | Purpose |
+| --- | --- |
+| `/` | Public landing page |
+| `/sign-up` | Create an account with Better Auth |
+| `/sign-in` | Sign in to an existing account |
+| `/onboarding` | Complete a signed-in student or faculty profile |
+| `/demo` | Explore fictional research data without an account |
+| `/app` | Signed-in prototype workspace |
 
-**Convex:** No deployment URL or connection was configured. The browser app
-continues to use localStorage, not Convex. See
-[Convex setup](artifacts/api-server/convex/README.md).
+For the optional Express status API, run this in a separate terminal:
 
-**GitHub:** [MikeLuu99/research-match-hacksc](https://github.com/MikeLuu99/research-match-hacksc)
-is the source-of-truth repository for project code, schemas and matching rules.
-It is currently public. Keep private student data out of this repository.
-Changes must be explicitly committed and pushed; there is no automatic ongoing sync.
+```sh
+PORT=3001 pnpm --filter @workspace/api-server dev
+```
 
-See [data contracts and source-of-truth rules](docs/DATA_CONTRACT.md). Do not
-commit private student data, `.env` files or deployment keys.
+Vite proxies `/api` to `http://localhost:3001` by default. `PORT`, `BASE_PATH`,
+and `API_PROXY_TARGET` can override the frontend development defaults.
 
-## Scope
+## Configure Better Auth and Convex
 
-No production authentication, live resume parsing, AI-generated outreach,
-embedding generation or external email delivery is claimed. Local outreach
-drafts are templates. Real account roles, private storage and a verified data
-import are required before use with actual student information.
+1. From the repository root, associate the backend with your Convex project:
+
+   ```sh
+   pnpm --filter @workspace/api-server exec convex dev
+   ```
+
+2. Configure **deployment environment variables** in Convex:
+
+   ```sh
+   pnpm --filter @workspace/api-server exec convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
+   pnpm --filter @workspace/api-server exec convex env set SITE_URL http://localhost:5173
+   ```
+
+   Generate a secret once per deployment and keep it private. For production,
+   set `SITE_URL` to the exact HTTPS frontend origin. `CONVEX_SITE_URL` is supplied
+   by Convex; Better Auth uses it for its backend URL. The adapter registers
+   Better Auth HTTP routes and CORS for the configured frontend origin.
+
+3. Copy `artifacts/research-match/.env.example` to
+   `artifacts/research-match/.env.local`, then fill in the public URLs from the
+   **same deployment**:
+
+   ```dotenv
+   VITE_CONVEX_URL=https://your-deployment.convex.cloud
+   VITE_CONVEX_SITE_URL=https://your-deployment.convex.site
+   ```
+
+4. Restart Vite, create an account, select an account type, and verify sign-out,
+   sign-in, and access to `/app` with that deployment.
+
+Only public URLs belong in `VITE_` variables. Never put `BETTER_AUTH_SECRET` or
+`CONVEX_DEPLOY_KEY` there. `.env.local` files are ignored by Git.
+
+The integration follows the [official Convex + Better Auth React guide](https://labs.convex.dev/better-auth/framework-guides/react).
+See [backend setup and matching rules](artifacts/api-server/convex/README.md).
+
+## Authentication and data boundaries
+
+- Better Auth manages email/password accounts and sessions in its Convex
+  component. Signup passwords must be 12–256 characters. Backend rate limiting
+  uses database storage.
+- Private routes wait for Convex to validate the Better Auth session before
+  loading account queries. Profile reads/writes derive the owner from the
+  validated session; clients cannot supply another account's id.
+- Name and student/faculty preference are stored in the `accountProfiles` table.
+  A self-selected faculty preference does not verify a faculty identity.
+- Email verification and password-reset delivery are not configured. Do not
+  treat an email address as verified USC affiliation.
+- Research projects, saved opportunities, interests, resume text, and demo
+  matching remain browser-local. Each signed-in account gets separate local
+  state; it does not inherit the fictional demo student's profile. Authentication
+  does not sync or migrate this workspace data into Convex.
+- Existing vector matching actions remain internal until verified faculty
+  access, project ownership, real data, and an embedding provider are connected.
+
+## Checks and CI/CD
+
+```sh
+pnpm run typecheck
+pnpm run typecheck:convex
+pnpm test
+pnpm --filter @workspace/research-match build
+pnpm run analyze --base origin/main
+```
+
+[Fallow](https://github.com/fallow-rs/fallow) is pinned in the lockfile and used
+by `.github/workflows/ci.yml`. Pull requests and pushes to `main` run TypeScript
+checks, authentication-validation tests, the web build, and Fallow's changed-code
+quality gate. Fallow reports dead code, complexity, duplication, and styling
+findings; its audit blocks new failures while retaining inherited findings and
+advisories in the report.
+
+CI uploads the static frontend build as `researchmatch-web` and Fallow reports
+as `fallow-analysis`. Deployment of the frontend needs a hosting destination with
+SPA fallback to `index.html`; no frontend host is configured in this repository.
+
+For backend CD, `.github/workflows/deploy-convex.yml` is manually dispatched on
+`main`, reruns CI, then deploys Convex through the `production` GitHub environment.
+Before running it:
+
+- Add the production environment secret `CONVEX_DEPLOY_KEY`.
+- Configure `BETTER_AUTH_SECRET` and the exact production `SITE_URL` on that
+  Convex deployment.
+- Set repository variables `VITE_CONVEX_URL` and `VITE_CONVEX_SITE_URL` for the
+  intended frontend build. Leave both blank for a demo-only build.
+- Configure the GitHub environment's approval rules as appropriate for the team.
+
+The existing minimum package-release age is preserved. Build permissions use
+pnpm 11's `allowBuilds`; native dependencies support macOS development and Linux CI.
+
+## Verification status
+
+The workspace and Convex TypeScript checks, authentication-validation tests,
+production web build, and Fallow audit have been run locally. Fallow currently
+returns advisory warnings. Live account flows and deployment remain unverified
+until Convex credentials are configured. No browser connection was available
+for interactive visual verification in this session.
+
+## Project structure
+
+- `artifacts/research-match`: React/Vite frontend.
+- `artifacts/api-server`: Express status API and Convex functions.
+- `lib/api-spec/openapi.yaml`: shared API contract. Run
+  `pnpm --filter @workspace/api-spec codegen` after changing it.
+- `AGENTS.md`: full ResearchMatch project brief and repository instructions.
+- `docs/DATA_CONTRACT.md`: data contracts and source-of-truth rules.
+
+The source repository is [MikeLuu99/research-match-hacksc](https://github.com/MikeLuu99/research-match-hacksc).
+Changes are local until explicitly committed and pushed. Never commit private
+student data, raw resumes, `.env.local`, or deployment keys.

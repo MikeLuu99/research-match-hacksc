@@ -1,40 +1,77 @@
-# Convex groundwork — not deployed
+# Convex backend and Better Auth
 
-These files define real Convex tables and cosine-similarity vector indexes for
-both directions of ResearchMatch discovery. They are **not connected to the
-sample browser application**. No live Convex connection was available when the
-sample was created.
+This directory contains the Better Auth integration, private account onboarding,
+and internal research-matching groundwork. A live Convex deployment has not been
+configured or verified yet.
 
-## Before enabling
+## Authentication setup
 
-1. Associate this API package with your Convex project using
-   `pnpm --filter @workspace/api-server exec convex dev`.
-   Complete Convex's account/deployment authorization. Do not paste credentials
-   into source files, chat, or GitHub.
-2. Deploy this schema. The package-root `convex/` folder is the Convex default.
-3. Call the safe `matching:health` query through that deployment and confirm the
-   returned service/schema version before claiming a live connection.
-4. Connect an embedding provider. Both query and stored vectors must use the
-   **same model, version, and 1536 dimensions**. Store the model identifier.
-   A provider change requires re-embedding all records.
-5. Add authenticated profile ownership and verified-faculty authorization before
-   adding public matching actions, writes, or imports. Matching actions are
-   intentionally internal until those controls exist.
-6. Build validated, authorized import/upsert functions using `sourceId`, and
-   supply the real project records. No production data is seeded automatically.
-7. Replace local demo persistence with authenticated Convex reads/writes. Setting
-   a URL alone does **not** activate this integration or migrate browser data.
+From the repository root:
+
+```sh
+pnpm --filter @workspace/api-server exec convex dev
+pnpm --filter @workspace/api-server exec convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
+pnpm --filter @workspace/api-server exec convex env set SITE_URL http://localhost:5173
+```
+
+Keep the development command running after setup. Copy the deployment's public
+`.convex.cloud` and `.convex.site` URLs into the frontend's
+`artifacts/research-match/.env.local` as `VITE_CONVEX_URL` and
+`VITE_CONVEX_SITE_URL`. The frontend and backend keep separate environment files;
+setting variables only on Express does not configure the Convex deployment.
+
+- `convex.config.ts` mounts the Better Auth component, which owns its auth tables.
+- `auth.config.ts` configures Convex to accept Better Auth tokens.
+- `auth.ts` configures email/password, trusted origins, cross-domain sessions,
+  password lengths, and database-backed rate limiting.
+- `http.ts` registers Better Auth routes and CORS using the lazy registration API.
+- `users.ts` validates the session before reading or creating the caller's
+  `accountProfiles` row. Account types are workflow preferences, not verified
+  faculty authorizations.
+- `model.ts` provides schema-derived typed function builders. Typed component
+  references mirror the mount so CI can typecheck without deployment credentials;
+  Convex can still generate its normal `_generated` files during deployment.
+
+Email verification and password-reset delivery need a separately configured
+email provider. They are not enabled in this prototype. No email is sent by the
+current implementation.
+
+Official setup: [Convex + Better Auth for React](https://labs.convex.dev/better-auth/framework-guides/react).
+
+## Before enabling real research data
+
+1. Verify sign-up, onboarding, sign-out, sign-in, and direct private-route access
+   against the configured deployment.
+2. Call the safe `matching:health` query and confirm the returned service and
+   schema version.
+3. Connect an embedding provider. Query and stored vectors must use the same
+   model, version, and 1536 dimensions. A provider change requires re-embedding.
+4. Add authenticated research-profile ownership, project ownership, and verified
+   faculty authorization before exposing matching actions or research writes.
+5. Build validated imports/upserts using `sourceId`, with real authorized data.
+6. Replace browser-local research persistence with authenticated Convex reads
+   and writes. Setting auth URLs alone does not sync research data or resumes.
 
 ## Matching behavior
 
-- Projects are pre-filtered to actively recruiting openings.
-- Reverse matching is pre-filtered to explicit student consent, checked again
-  after document retrieval.
-- Required skills, availability and academic-credit eligibility are separate
-  from vector similarity. Learning potential does not waive hard requirements.
-- Results with an unexpected embedding model are excluded.
-- The retrieval candidate set is bounded to 64; it is approximate, not exhaustive.
-- Raw resumes, private identifiers, and embeddings are never returned to faculty.
-- Verification timestamps describe actual verification, not ingestion time.
+- Matching actions remain internal while research authorization is incomplete.
+- Project recommendations pre-filter for actively recruiting openings.
+- Reverse matching pre-filters for explicit student consent and rechecks it
+  after retrieval.
+- Required skills, availability, and academic-credit eligibility are separate
+  from semantic similarity. Learning potential does not waive hard requirements.
+- Results using a different embedding model are excluded.
+- The retrieval candidate set is bounded to 64 and is approximate.
+- Raw resumes, private identifiers, and embeddings are not returned to faculty.
+- Verification timestamps represent actual verification rather than ingestion.
 
-Official reference: https://docs.convex.dev/search/vector-search
+Official reference: [Convex vector search](https://docs.convex.dev/search/vector-search).
+
+## Production deployment
+
+Set `BETTER_AUTH_SECRET` and the exact HTTPS `SITE_URL` on the production Convex
+deployment. Add `CONVEX_DEPLOY_KEY` as a secret in GitHub's `production`
+environment, then run the **Deploy Convex** workflow from `main`. It requires CI
+checks, including Fallow, to finish successfully before deployment.
+
+Never put secrets into source files, frontend `VITE_` variables, or Git commits.
