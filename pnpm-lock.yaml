@@ -157,6 +157,9 @@ importers:
       '@replit/connectors-sdk':
         specifier: ^0.7.0
         version: 0.7.0
+      convex:
+        specifier: ^1.50.0
+        version: 1.50.0(react@19.1.0)
     devDependencies:
       fallow:
         specifier: 3.42.0
