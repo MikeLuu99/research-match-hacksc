@@ -30,7 +30,9 @@ setting variables only on Express does not configure the Convex deployment.
   faculty authorizations.
 - `model.ts` provides schema-derived typed function builders. Typed component
   references mirror the mount so CI can typecheck without deployment credentials;
-  Convex can still generate its normal `_generated` files during deployment.
+  the normal `_generated` files are tracked for typed test API references and
+  convex-test module discovery. Keep them in Git and include updates produced by
+  `pnpm --filter @workspace/api-server exec convex codegen` or `convex dev`.
 
 Email verification and password-reset delivery need a separately configured
 email provider. They are not enabled in this prototype. No email is sent by the

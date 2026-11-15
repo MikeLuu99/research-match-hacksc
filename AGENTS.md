@@ -198,6 +198,7 @@ ResearchMatch is more customized to students' syllabi, schedules, and academic c
 - Use `.env.local` for local credentials and GitHub Actions secrets for deployment keys. Never commit credentials, private student information, or resume contents.
 - Preserve `minimumReleaseAge` in `pnpm-workspace.yaml`. Support local macOS development as well as Linux CI.
 - Before reporting completion, run the available checks and clearly distinguish passing checks from checks blocked by network access or missing credentials.
+- Track `artifacts/api-server/convex/_generated/` in Git. Tests import its typed API, and convex-test uses that directory to locate modules. Regenerate with `pnpm --filter @workspace/api-server exec convex codegen` when needed; CI must typecheck and test a clean checkout without deployment credentials or code generation.
 
 ## Current Verification and Activation
 

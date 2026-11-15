@@ -39,7 +39,10 @@ node_modules
 !.env.example
 /generated-artifacts/
 /artifacts/api-server/.env.local
+# Convex's generated API, server helpers and data model are tracked so clean
+# checkouts can typecheck and run tests without deployment credentials.
 **/convex/_generated/
+!/artifacts/api-server/convex/_generated/
 /.sass-cache
 /connect.lock
 /coverage
