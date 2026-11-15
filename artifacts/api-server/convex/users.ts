@@ -14,10 +14,11 @@ import {
 } from "./embeddings";
 import { action, mutation, query, type DataModel } from "./model";
 import { photoProblem } from "./photos";
+import { compatibilityScore } from "./compatibility";
 import type { GenericId } from "convex/values";
 import type { StorageReader } from "convex/server";
 
-async function photoUrlFor(
+export async function photoUrlFor(
   ctx: { storage: StorageReader },
   storageId: GenericId<"_storage"> | undefined,
 ) {
@@ -411,5 +412,59 @@ export const embedStudent = action({
       { studentId: args.studentId, embedding },
     );
     return null;
+  },
+});
+
+// Faculty shortlist: profiles for the shortlisted student IDs of one of the
+// faculty member's own projects. A student is returned only while they are
+// opted in to discovery or have an active (not withdrawn) interest in that
+// project; anyone else is left out so the page can show them as hidden.
+export const shortlistProfiles = query({
+  args: { projectId: v.id("projects"), studentIds: v.array(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+    const account = await accountProfileFor(ctx, user._id);
+    if (!account || account.accountType !== "faculty")
+      throw new ConvexError("Only faculty accounts can view a shortlist.");
+    const project = await ctx.db.get(args.projectId);
+    if (!project || project.ownerId !== user._id)
+      throw new ConvexError("You can only view shortlists for your own projects.");
+    const applied = new Set(
+      (
+        await ctx.db
+          .query("interests")
+          .withIndex("by_source", (q) => q.eq("sourceId", project.sourceId))
+          .collect()
+      )
+        .filter((interest) => interest.status !== "withdrawn")
+        .map((interest) => interest.studentId as string),
+    );
+    const out = [];
+    for (const rawId of args.studentIds.slice(0, 200)) {
+      const id = ctx.db.normalizeId("students", rawId);
+      if (!id) continue;
+      const student = await ctx.db.get(id);
+      if (!student || !(student.recruitmentConsent || applied.has(student._id)))
+        continue;
+      out.push({
+        id: student._id as string,
+        name: student.name,
+        photoUrl: await photoUrlFor(ctx, student.photoStorageId),
+        major: student.major,
+        minors: student.minors ?? [],
+        schoolYear: student.schoolYear,
+        bio: student.bio ?? "",
+        schedule: student.schedule ?? "",
+        skills: student.skills,
+        interests: student.interests,
+        experience: student.experience,
+        hoursPerWeek: student.hoursPerWeek,
+        workStudy: student.workStudy,
+        seekingCredit: student.seekingCredit,
+        applied: applied.has(student._id),
+        compatibility: compatibilityScore(student, project),
+      });
+    }
+    return out;
   },
 });

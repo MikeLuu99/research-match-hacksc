@@ -10,6 +10,7 @@ import { useStore, parseShortlistKey } from "@/lib/store";
 import { matchProject } from "@/lib/matching";
 import { canSeeProfile, demoStudents } from "@/lib/faculty-access";
 import { useFacultyMode } from "@/lib/faculty-mode";
+import { useFacultyProjects } from "@/lib/faculty-projects";
 import { DEMO_STUDENTS, type StudentProfile } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { LocalNotice, ProjectSelect } from "@/components/faculty/demo-notice";
@@ -29,10 +30,12 @@ function Hidden({ title, body }: { title: string; body: string }) {
 
 export default function FacultyShortlist() {
   const live = useFacultyMode() === "live";
-  const { projects, shortlists, toggleShortlist } = useStore();
+  // The faculty member's own projects (live: their Convex listings).
+  const projects = useFacultyProjects();
+  const { shortlists, toggleShortlist } = useStore();
   const { toast } = useToast();
-  const [pid, setPid] = useState(projects[0]?.id ?? "");
-  const p = projects.find((x) => x.id === pid) ?? projects[0] ?? null;
+  const [pid, setPid] = useState("");
+  const p = projects?.find((x) => x.id === pid) ?? projects?.[0] ?? null;
   const keys = shortlists[p?.id ?? ""] ?? [];
   // Demo and live keys never mix: each mode only renders its own source.
   const mine = keys.filter((k) => parseShortlistKey(k).source === (live ? "live" : "demo"));
@@ -43,9 +46,9 @@ export default function FacultyShortlist() {
         A per-project list saved in this browser. Switch projects at the top; remove anyone at any time.
       </PageHeader>
       <div className="max-w-4xl space-y-4 px-5 pb-12 md:px-10">
-        {p && (
+        {projects && p && (
           <div className="border border-primary/20 bg-card p-4">
-            <ProjectSelect projects={projects} value={p.id} onChange={setPid} label="Shortlist for project" />
+            <ProjectSelect projects={projects} value={p.id} onChange={setPid} label="Project" />
           </div>
         )}
         <LocalNotice>
@@ -53,12 +56,14 @@ export default function FacultyShortlist() {
             ? "Stored in this browser for this account only. Only student IDs are kept; names and details are re-read from the current consented live query. Nothing is synced and students are not notified."
             : "Fictional demo data stored in this browser. Nobody is contacted or notified."}
         </LocalNotice>
-        {!p ? (
-          <EmptyState title="No projects" body="Create a project in the lab workspace to start a shortlist." />
+        {projects === undefined ? (
+          <p role="status" className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">Loading your projects…</p>
+        ) : !p ? (
+          <EmptyState title="No projects" body="Create a project in the lab workspace to start a shortlist." action={<Link href="/faculty" className="inline-block bg-primary px-4 py-2 text-sm text-primary-foreground">Open lab workspace</Link>} />
         ) : mine.length === 0 ? (
           <EmptyState title="Nobody shortlisted yet" body="Use the add button on Discover students to keep candidates for this project." action={<Link href="/faculty/discover" className="inline-block bg-primary px-4 py-2 text-sm text-primary-foreground">Discover students</Link>} />
         ) : live ? (
-          <LiveRows keys={mine} onRemove={(k) => { toggleShortlist(p.id, k); toast({ title: "Removed from shortlist" }); }} />
+          <LiveRows keys={mine} projectId={p.id} onRemove={(k) => { toggleShortlist(p.id, k); toast({ title: "Removed from shortlist" }); }} />
         ) : (
           <DemoRows keys={mine} projectId={p.id} onRemove={(k) => { toggleShortlist(p.id, k); toast({ title: "Removed from shortlist" }); }} />
         )}
@@ -98,8 +103,12 @@ function DemoRows({ keys, projectId, onRemove }: { keys: string[]; projectId: st
   );
 }
 
-function LiveRows({ keys, onRemove }: { keys: string[]; onRemove: (k: string) => void }) {
-  const students = useQuery(api.users.listStudents, {});
+function LiveRows({ keys, projectId, onRemove }: { keys: string[]; projectId: string; onRemove: (k: string) => void }) {
+  // Opted-in students and this project's applicants; anyone else stays hidden.
+  const students = useQuery(api.users.shortlistProfiles, {
+    projectId: projectId as never,
+    studentIds: keys.map((k) => parseShortlistKey(k).id),
+  });
   const [openId, setOpenId] = useState<string | null>(null);
   if (students === undefined)
     return <ul className="space-y-2" role="status" aria-label="Loading shortlist">{keys.map((k) => <li key={k} className="h-[78px] animate-pulse border bg-card" />)}</ul>;
@@ -114,11 +123,20 @@ function LiveRows({ keys, onRemove }: { keys: string[]; onRemove: (k: string) =>
             <li key={k} data-testid={`row-shortlist-live-${id}`} style={{ animationDelay: `${i * 40}ms` }} className="rise flex items-center gap-4 border bg-card p-4">
               {s ? (
                 <>
-                  <span className="grid h-[46px] w-[46px] shrink-0 place-items-center bg-primary font-display text-lg text-primary-foreground">{s.name.slice(0, 1)}</span>
-                  <div className="min-w-0 flex-1"><p className="font-semibold">{s.name}</p><p className="text-xs text-muted-foreground">{s.major} · {s.hoursPerWeek} h/week · {s.skills.slice(0, 4).join(", ")}</p></div>
+                  <span className="grid h-[46px] w-[46px] shrink-0 place-items-center overflow-hidden rounded-full bg-primary font-display text-lg text-primary-foreground">
+                    {s.photoUrl ? <img src={s.photoUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : s.name.slice(0, 1)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-2 font-semibold">
+                      {s.name}
+                      <span data-testid={`text-match-${id}`} title="Compatibility with this project" className="border border-primary/30 px-1.5 py-0.5 font-mono text-[11px] font-normal text-primary">{s.compatibility}% match</span>
+                      {s.applied && <span className="bg-accent px-2 py-0.5 text-xs font-normal text-accent-foreground">Applied</span>}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{s.major} · {s.hoursPerWeek} h/week · {s.skills.slice(0, 4).join(", ")}</p>
+                  </div>
                   <button data-testid={`button-profile-live-${id}`} onClick={() => setOpenId(s.id)} className={profBtn}><UserRound className="h-3.5 w-3.5" />Profile</button>
                 </>
-              ) : <Hidden title="Not currently shared" body="This student is not in the current consented list (opted out or removed). Details are hidden." />}
+              ) : <Hidden title="Not currently shared" body="This student is no longer opted in to discovery and has no active interest in this project. Details are hidden." />}
               <button data-testid={`button-remove-shortlist-live-${id}`} onClick={() => onRemove(k)} aria-label="Remove from shortlist" className={iconBtn}><UserMinus className="h-4 w-4" /></button>
             </li>
           );
