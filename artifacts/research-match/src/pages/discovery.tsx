@@ -13,6 +13,7 @@ import { ProjectDialog } from "@/components/project-dialog";
 import { useStore } from "@/lib/store";
 import { matchProject } from "@/lib/matching";
 import { useHybridScores, withHybridScore } from "@/lib/use-project-scores";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { DEPARTMENTS, type Project, type RecruitStatus } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -99,7 +100,7 @@ export default function Discovery() {
     <Layout>
       <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8">
         <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
-        <h1 className="font-display text-3xl md:text-4xl leading-[1.05] mt-2 mb-6">
+        <h1 className="font-display text-3xl md:text-4xl leading-[1.05] mt-2 mb-6" data-tour="ai-heading">
           AI <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">recommendations</em>
         </h1>
         <div className="rise space-y-4">
@@ -206,7 +207,7 @@ export default function Discovery() {
           )}
         </div>
         <aside className="space-y-4 xl:sticky xl:top-36 self-start">
-          <div className="rounded-2xl border bg-card p-5">
+          <div className="rounded-2xl border bg-card p-5" data-tour="ranking-sidebar">
             <p className="text-xs uppercase tracking-[0.16em] text-primary font-semibold">How ranking works</p>
             {scores ? (
               <>
@@ -246,6 +247,26 @@ export default function Discovery() {
         </aside>
       </section>
       <ProjectDialog project={open} onClose={() => setOpen(null)} />
+      <OnboardingTour
+        tourId="student-discover"
+        steps={[
+          {
+            selector: '[data-tour="ai-heading"]',
+            title: "AI recommendations",
+            body: "Labs ranked for you across every USC department. Each percentage blends 65% semantic similarity with 35% keyword precision — the same score everywhere on Labbe.",
+          },
+          {
+            selector: '[data-testid="filter-open"]',
+            title: "Filter the catalog",
+            body: "Narrow by recruiting status, paid roles, academic credit, or beginner-friendly labs. Only actively recruiting labs accept interest.",
+          },
+          {
+            selector: '[data-tour="ranking-sidebar"]',
+            title: "How scoring works",
+            body: "This panel always explains the current ranking method. Edit your skills, interests, and hours on your profile and the rankings update instantly.",
+          },
+        ]}
+      />
     </Layout>
   );
 }

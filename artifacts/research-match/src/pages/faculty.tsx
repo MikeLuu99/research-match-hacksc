@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { useMutation, useQuery } from "@/lib/backend";
 import { api } from "@/lib/convex-api";
 import { useStore } from "@/lib/store";
@@ -151,7 +152,7 @@ export default function Faculty() {
             Local demo only. Listings live in this browser's storage; nothing is published, recruited for, or emailed.
           </LocalNotice>
         )}
-        <div className="flex items-baseline justify-between">
+        <div className="flex items-baseline justify-between" data-tour="faculty-projects">
           <h2 className="font-display text-xl">Projects <span className="font-mono text-xs text-muted-foreground">{projects.length}</span></h2>
           <Button data-testid="button-new-project" onClick={() => setEditing("new")}><Plus className="mr-1 h-4 w-4" />New project</Button>
         </div>
@@ -208,6 +209,21 @@ export default function Faculty() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <OnboardingTour
+        tourId="faculty-dashboard"
+        steps={[
+          {
+            selector: '[data-testid="button-new-project"]',
+            title: "Post a project",
+            body: "Describe the project, responsibilities, required skills, hours, and whether it offers credit or pay. Status controls whether students can show interest.",
+          },
+          {
+            selector: '[data-tour="faculty-projects"]',
+            title: "Manage your listings",
+            body: "Expand a listing to edit or remove it. Projects you post feed AI candidate recommendations — students who opted in to faculty discovery are ranked by compatibility.",
+          },
+        ]}
+      />
     </Layout>
   );
 }
