@@ -140,7 +140,7 @@ export function AskLabbe() {
     <Layout>
       <PageHeader
         eyebrow={isFaculty ? "Ask LABBE AI · candidates" : "Ask LABBE"}
-        title="Your research assistant"
+        title="Your Research Assistant"
       >
         {isFaculty
           ? "Ask about consented students — skills, interests, availability. Answers rank real candidates with sources."

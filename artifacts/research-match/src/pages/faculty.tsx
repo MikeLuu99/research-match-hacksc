@@ -141,7 +141,7 @@ export default function Faculty() {
 
   return (
     <Layout>
-      <PageHeader eyebrow={mode === "live" ? "Lab workspace" : "Lab workspace · demo"} title="Your lab's listings">
+      <PageHeader eyebrow={mode === "live" ? "Lab workspace" : "Lab workspace · demo"} title="Your Lab's Listings">
         Create, edit and review your own project listings. Only you see and manage the projects you create.
       </PageHeader>
       <div className="max-w-4xl space-y-4 px-5 pb-12 md:px-10">
