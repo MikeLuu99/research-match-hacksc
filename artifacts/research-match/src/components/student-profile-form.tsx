@@ -185,7 +185,7 @@ export function StudentProfileForm({
         return;
       }
       window.location.assign(
-        `${window.location.origin}${import.meta.env.BASE_URL}app`,
+        `${window.location.origin}${import.meta.env.BASE_URL}app/student`,
       );
     } catch (err) {
       setError(

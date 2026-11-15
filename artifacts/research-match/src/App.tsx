@@ -37,7 +37,7 @@ function StudentRouteGate({ children }: { children: ReactNode }) {
     account.viewer?.accountType !== "faculty" &&
     isFacultyOnly
   )
-    return <Redirect to="~/app" replace />;
+    return <Redirect to="~/app/student" replace />;
   return <>{children}</>;
 }
 
@@ -47,6 +47,7 @@ function WorkspaceRoutes() {
       <StudentRouteGate>
         <Switch>
           <Route path="/" component={Discovery} />
+          <Route path="/student" component={Discovery} />
           <Route path="/saved" component={Saved} />
           <Route path="/applications" component={Applications} />
           <Route path="/profile" component={Profile} />

@@ -140,7 +140,7 @@ export default function AuthPage({
   if (account.viewer?.accountType)
     return (
       <Redirect
-        to={account.viewer.accountType === "faculty" ? "/app/faculty" : "/app"}
+        to={account.viewer.accountType === "faculty" ? "/app/faculty" : "/app/student"}
         replace
       />
     );

@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { useAccount } from "@/lib/auth";
 
 const NAV = [
-  { href: "/", label: "Discover", icon: Compass, roles: ["student"] },
+  { href: "/student", label: "Discover", icon: Compass, roles: ["student"] },
   { href: "/saved", label: "Saved", icon: Bookmark, roles: ["student"] },
   { href: "/applications", label: "Interest tracker", icon: Send, roles: ["student"] },
   { href: "/profile", label: "My profile", icon: UserRound, roles: ["student"] },

@@ -15,7 +15,7 @@ export default function Landing() {
   const { isAuthenticated, viewer } = useAccount();
   // Signed-in users belong in their workspace, not on the marketing page.
   if (isAuthenticated && viewer?.accountType)
-    return <Redirect to={viewer.accountType === "faculty" ? "~/app/faculty" : "~/app"} replace />;
+    return <Redirect to={viewer.accountType === "faculty" ? "~/app/faculty" : "~/app/student"} replace />;
   return (
     <div className="marketing-page">
       <a className="skip-link" href="#main-content">
