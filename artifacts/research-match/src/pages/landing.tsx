@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, Redirect } from "wouter";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { useAccount } from "@/lib/auth";
@@ -12,7 +12,10 @@ export function chooseRole(role: "student" | "faculty") {
 }
 
 export default function Landing() {
-  const { isAuthenticated } = useAccount();
+  const { isAuthenticated, viewer } = useAccount();
+  // Signed-in users belong in their workspace, not on the marketing page.
+  if (isAuthenticated && viewer?.accountType)
+    return <Redirect to={viewer.accountType === "faculty" ? "~/app/faculty" : "~/app"} replace />;
   return (
     <div className="marketing-page">
       <a className="skip-link" href="#main-content">
@@ -21,13 +24,9 @@ export default function Landing() {
       <header className="public-header page-width">
         <Brand />
         <div className="header-actions">
-          <Link className="text-link" href="/sign-in">
-            Sign in
-          </Link>
-          {isAuthenticated && (
-            <Link className="public-button button-small" href="/app">
-              Your workspace
-              <ArrowUpRight size={16} />
+          {!isAuthenticated && (
+            <Link className="text-link" href="/sign-in">
+              Sign in
             </Link>
           )}
         </div>
