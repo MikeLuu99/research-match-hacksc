@@ -4,6 +4,7 @@ import { useAction, useMutation } from "convex/react";
 import { api } from "@/lib/convex-api";
 import { USC_MAJORS, USC_MINORS } from "@/lib/usc-programs";
 import { RESEARCH_SKILLS } from "@/lib/research-skills";
+import { AutocompleteInput } from "@/components/autocomplete-input";
 import { useAccount } from "@/lib/auth";
 
 const SCHOOL_YEARS = [
@@ -88,6 +89,10 @@ export function StudentProfileForm({
   );
   const [skills, setSkills] = useState<string[]>(initial?.skills ?? []);
   const [skillDraft, setSkillDraft] = useState("");
+  const [major, setMajor] = useState(initial?.major ?? "");
+  const [minorsDraft, setMinorsDraft] = useState(
+    initial?.minors.join(", ") ?? "",
+  );
   const [resumeName, setResumeName] = useState(initial?.resumeFileName ?? "");
 
   function addSkill(raw: string) {
@@ -141,6 +146,7 @@ export function StudentProfileForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    event.currentTarget;
     const data = new FormData(event.currentTarget);
     const resumeInput = event.currentTarget.elements.namedItem(
       "resume",
@@ -159,8 +165,8 @@ export function StudentProfileForm({
     try {
       const resumeStorageId = resumeFile ? await uploadResume(resumeFile) : undefined;
       await upsertProfile({
-        major: String(data.get("major") ?? ""),
-        minors: splitTags(String(data.get("minors") ?? "")),
+        major: major.trim(),
+        minors: splitTags(minorsDraft),
         schoolYear: String(data.get("school-year") ?? "freshman") as
           | "freshman"
           | "sophomore"
@@ -198,16 +204,6 @@ export function StudentProfileForm({
 
   return (
     <form className="auth-form profile-form" onSubmit={submit}>
-      <datalist id="usc-majors-list">
-        {USC_MAJORS.map((program) => (
-          <option key={program.name} value={program.name} />
-        ))}
-      </datalist>
-      <datalist id="usc-minors-list">
-        {USC_MINORS.map((program) => (
-          <option key={program.name} value={program.name} />
-        ))}
-      </datalist>
       <div className="auth-field">
         <FieldLabel htmlFor="profile-major">Major</FieldLabel>
         <input
@@ -225,14 +221,13 @@ export function StudentProfileForm({
         <FieldLabel htmlFor="profile-minors" optional>
           Minors
         </FieldLabel>
-        <input
+        <AutocompleteInput
           id="profile-minors"
-          name="minors"
+          value={minorsDraft}
+          onChange={setMinorsDraft}
+          suggestions={USC_MINORS.map((program) => program.name)}
           placeholder="Optional — e.g. Computer Science"
-          maxLength={120}
           disabled={pending}
-          list="usc-minors-list"
-          defaultValue={initial?.minors.join(", ") ?? ""}
         />
         <p className="auth-help">USC minors only, one for now.</p>
       </div>
@@ -254,26 +249,14 @@ export function StudentProfileForm({
       </div>
       <div className="auth-field">
         <FieldLabel htmlFor="profile-skills">Skills</FieldLabel>
-        <datalist id="research-skills-list">
-          {RESEARCH_SKILLS.map((skill) => (
-            <option key={skill} value={skill} />
-          ))}
-        </datalist>
-        <input
+        <AutocompleteInput
           id="profile-skills"
-          name="skills"
-          list="research-skills-list"
+          value={skillDraft}
+          onChange={setSkillDraft}
+          suggestions={RESEARCH_SKILLS}
           placeholder="Start typing — pick a suggestion or add your own"
           disabled={pending}
-          value={skillDraft}
-          onChange={(event) => setSkillDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === ",") {
-              event.preventDefault();
-              addSkill(skillDraft);
-            }
-          }}
-          onBlur={() => addSkill(skillDraft)}
+          onPick={addSkill}
         />
         {skills.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
