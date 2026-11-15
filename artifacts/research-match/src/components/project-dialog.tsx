@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import type { Project } from "@/lib/data";
 import { defaultTemplate, matchProject } from "@/lib/matching";
+import { useHybridScores, withHybridScore } from "@/lib/use-project-scores";
+import { useMatchProfile } from "@/lib/use-match-profile";
 import { STATUS_LABEL, useStore } from "@/lib/store";
 import { InterestButton, RecruitPill, SaveButton, ScoreDial } from "./bits";
 import { useAccount } from "@/lib/auth";
@@ -13,13 +15,15 @@ import { useQuery } from "@/lib/backend";
 import { api } from "@/lib/convex-api";
 
 export function ProjectDialog({ project, onClose }: { project: Project | null; onClose: () => void }) {
-  const { profile, templates, setTemplate, interests } = useStore();
+  const { templates, setTemplate, interests } = useStore();
+  const profile = useMatchProfile();
   const account = useAccount();
   const live = account.isAuthenticated && account.viewer?.accountType === "student" && account.viewer.hasStudentProfile;
   const liveInterests = useQuery(api.interests.myInterests, live ? {} : "skip");
   const { toast } = useToast();
   const [text, setText] = useState("");
-  const m = project ? matchProject(profile, project) : null;
+  const scores = useHybridScores(!!project);
+  const m = project ? withHybridScore(matchProject(profile, project), project.sourceId ?? project.id, scores) : null;
   const pid = project?.id;
 
   useEffect(() => {
@@ -38,7 +42,7 @@ export function ProjectDialog({ project, onClose }: { project: Project | null; o
       <DialogContent className="max-w-3xl max-h-[92dvh] overflow-y-auto p-0 gap-0 bg-card">
         <div className="p-6 md:p-8 bg-gradient-to-br from-secondary via-card to-card border-b">
           <div className="flex items-start gap-4">
-            <ScoreDial score={m.score} size={68} />
+            <ScoreDial score={m.score} size={68} title={scores ? "AI match score" : "Demo match score"} />
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap gap-2 items-center">
                 <RecruitPill status={project.status} />
@@ -51,7 +55,9 @@ export function ProjectDialog({ project, onClose }: { project: Project | null; o
           </div>
           <p className="mt-4 text-sm leading-relaxed text-foreground/85">{project.description}</p>
           <p className="mt-3 text-[11px] font-mono text-muted-foreground">
-            Demo matching · text cosine {m.textSimilarity.toFixed(3)} · local text vectors, not live AI embeddings
+            {scores
+              ? "AI match · 65% semantic similarity + 35% keyword match (live profile embedding)"
+              : `Demo matching · text cosine ${m.textSimilarity.toFixed(3)} · local text vectors, not live AI embeddings`}
           </p>
         </div>
 

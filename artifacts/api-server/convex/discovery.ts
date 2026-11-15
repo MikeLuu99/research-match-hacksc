@@ -334,6 +334,111 @@ export const myMatches = action({
   },
 });
 
+// Full-corpus hybrid scoring: the identical 65% vector + 35% BM25 blend used
+// by myMatches, computed over the whole catalog (BM25 normalization is
+// corpus-relative, so the full corpus keeps percentages comparable with the
+// AI recommendation rows). Powers catalog cards, Saved and project details.
+const CORPUS_LIMIT = 128;
+
+function corpusScores(
+  vectorHits: { _id: unknown; _score: number }[],
+  studentTokens: string[],
+  projects: { id: string; text: string }[],
+  docs: {
+    id: string;
+    sourceId: string;
+  }[],
+): { sourceId: string; similarity: number }[] {
+  const bm25 = bm25Scores(studentTokens, projects);
+  const ranked = hybridRank(
+    vectorHits.map((hit) => ({ id: String(hit._id), similarity: hit._score })),
+    bm25,
+    CORPUS_LIMIT,
+    CORPUS_LIMIT,
+  );
+  const scoreById = new Map(ranked.map((entry) => [entry.id, entry.score]));
+  return docs
+    .map((doc) => ({ sourceId: doc.sourceId, similarity: scoreById.get(doc.id) ?? 0 }))
+    .sort((a, b) => b.similarity - a.similarity);
+}
+
+const corpusScoresReturn = {
+  ready: v.boolean(),
+  scores: v.array(
+    v.object({
+      sourceId: v.string(),
+      similarity: v.number(),
+    }),
+  ),
+};
+
+// Compatibility percentage for every project in the catalog, for the
+// signed-in student's profile. Falls back to the local demo matcher on the
+// frontend when the profile embedding is not ready yet.
+export const projectScores = action({
+  args: {},
+  returns: corpusScoresReturn,
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return { ready: false, scores: [] };
+    const profile: {
+      id: string;
+      embedding: number[];
+      embeddingModel: string;
+    } | null = await ctx.runQuery(studentProfileBySubjectRef, {
+      subject: identity.subject,
+    });
+    if (!profile || profile.embedding.length === 0)
+      return { ready: false, scores: [] };
+    if (profile.embeddingModel !== EMBEDDING_MODEL_ID)
+      return { ready: false, scores: [] };
+    const lexicon: {
+      studentTokens: string[];
+      projects: { id: string; text: string }[];
+    } | null = await ctx.runQuery(matchLexiconRef, {
+      subject: identity.subject,
+    });
+    if (!lexicon) return { ready: false, scores: [] };
+    const vectorHits = await ctx.vectorSearch("projects", "by_embedding", {
+      vector: profile.embedding,
+      limit: CORPUS_LIMIT,
+    });
+    const docs: { id: string; sourceId: string }[] = await ctx.runQuery(
+      projectsByIdsRef,
+      { ids: lexicon.projects.map((entry) => entry.id as never) },
+    );
+    return {
+      ready: true,
+      scores: corpusScores(vectorHits, lexicon.studentTokens, lexicon.projects, docs),
+    };
+  },
+});
+
+// Same full-corpus hybrid scores against the demo sample student, so the
+// public demo catalog matches the visitor AI recommendation rows.
+export const demoProjectScores = action({
+  args: {},
+  returns: corpusScoresReturn,
+  handler: async (ctx) => {
+    const projectLexicon: { id: string; text: string }[] = await ctx.runQuery(
+      makeFunctionReference<"query">("discovery:projectLexicon"),
+      {},
+    );
+    const vectorHits = await ctx.vectorSearch("projects", "by_embedding", {
+      vector: DEMO_STUDENT_EMBEDDING,
+      limit: CORPUS_LIMIT,
+    });
+    const docs: { id: string; sourceId: string }[] = await ctx.runQuery(
+      projectsByIdsRef,
+      { ids: projectLexicon.map((entry) => entry.id as never) },
+    );
+    return {
+      ready: true,
+      scores: corpusScores(vectorHits, DEMO_STUDENT_TOKENS, projectLexicon, docs),
+    };
+  },
+});
+
 // Faculty-side AI ranking: hybrid vector + BM25 ranking of consented students
 // against a lab.
 export const labCandidates = action({

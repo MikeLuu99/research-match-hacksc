@@ -84,21 +84,24 @@ export function bm25Scores(queryTokens: string[], docs: Doc[]): Map<string, numb
 
 // Hybrid ranking: fuse vector similarity and BM25 with a weighted blend, over
 // the union of each signal's top candidates. Returns ids with their hybrid
-// score, sorted descending, capped at `limit`.
+// score, sorted descending, capped at `limit`. `candidateLimit` defaults to
+// the top-24 discovery behavior; full-corpus scoring passes a larger value so
+// every project receives the same compatibility percentage.
 export function hybridRank(
   vectorHits: { id: string; similarity: number }[],
   bm25: Map<string, number>,
   limit: number,
+  candidateLimit = 24,
 ): { id: string; score: number; similarity: number }[] {
   const lexicalHits = [...bm25.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 24)
+    .slice(0, candidateLimit)
     .map(([id]) => id);
   const vectorById = new Map(
     vectorHits.map((hit) => [hit.id, hit.similarity]),
   );
   const candidates = new Set<string>([
-    ...vectorHits.slice(0, 24).map((hit) => hit.id),
+    ...vectorHits.slice(0, candidateLimit).map((hit) => hit.id),
     ...lexicalHits,
   ]);
   const ranked = [...candidates]

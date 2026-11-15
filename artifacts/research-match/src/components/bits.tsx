@@ -25,11 +25,11 @@ export function RecruitPill({ status }: { status: RecruitStatus }) {
   );
 }
 
-export function ScoreDial({ score, size = 56 }: { score: number; size?: number }) {
+export function ScoreDial({ score, size = 56, title = "Demo match score" }: { score: number; size?: number; title?: string }) {
   const r = size / 2 - 5;
   const c = 2 * Math.PI * r;
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }} title="Demo match score">
+    <div className="relative shrink-0" style={{ width: size, height: size }} title={title}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth={5} />
         <circle

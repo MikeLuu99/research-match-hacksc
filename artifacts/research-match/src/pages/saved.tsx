@@ -7,14 +7,18 @@ import { useMatchProfile } from "@/lib/use-match-profile";
 import { ProjectDialog } from "@/components/project-dialog";
 import { useStore } from "@/lib/store";
 import { matchProject } from "@/lib/matching";
+import { useHybridScores, withHybridScore } from "@/lib/use-project-scores";
 import type { Project } from "@/lib/data";
 
 export default function Saved() {
   const { saved } = useStore();
   const profile = useMatchProfile();
   const catalog = useCatalogProjects();
+  const scores = useHybridScores();
   const [open, setOpen] = useState<Project | null>(null);
-  const list = catalog.filter((p) => saved.includes(p.sourceId ?? p.id)).map((p) => ({ p, m: matchProject(profile, p) }));
+  const list = catalog
+    .filter((p) => saved.includes(p.sourceId ?? p.id))
+    .map((p) => ({ p, m: withHybridScore(matchProject(profile, p), p.sourceId ?? p.id, scores) }));
   return (
     <Layout>
       <PageHeader eyebrow="Saved" title="Your shortlist">Labs you bookmarked. Closed listings stay here so you can check back next term.</PageHeader>

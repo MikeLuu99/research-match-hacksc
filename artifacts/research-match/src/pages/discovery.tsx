@@ -12,6 +12,7 @@ import { RecruitPill, ProjectGrid } from "@/components/bits";
 import { ProjectDialog } from "@/components/project-dialog";
 import { useStore } from "@/lib/store";
 import { matchProject } from "@/lib/matching";
+import { useHybridScores, withHybridScore } from "@/lib/use-project-scores";
 import { DEPARTMENTS, type Project, type RecruitStatus } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -49,8 +50,16 @@ export default function Discovery() {
   const [open, setOpen] = useState<Project | null>(null);
   const PAGE_SIZE = 20;
   const [page, setPage] = useState(1);
+  const scores = useHybridScores();
 
-  const scored = useMemo(() => catalog.map((p) => ({ p, m: matchProject(profile, p) })), [catalog, profile]);
+  const scored = useMemo(
+    () =>
+      catalog.map((p) => ({
+        p,
+        m: withHybridScore(matchProject(profile, p), p.sourceId ?? p.id, scores),
+      })),
+    [catalog, profile, scores],
+  );
   const list = useMemo(() => {
     const t = q.trim().toLowerCase();
     return scored
@@ -199,14 +208,27 @@ export default function Discovery() {
         <aside className="space-y-4 xl:sticky xl:top-36 self-start">
           <div className="rounded-2xl border bg-card p-5">
             <p className="text-xs uppercase tracking-[0.16em] text-primary font-semibold">How ranking works</p>
-            <p className="font-mono text-[11px] mt-1 rounded bg-accent text-accent-foreground inline-block px-1.5">Skill + interest matching</p>
-            <ul className="mt-3 text-sm space-y-2 text-foreground/80">
-              <li><b className="font-mono text-xs text-primary">40%</b> cosine similarity of local word-count vectors</li>
-              <li><b className="font-mono text-xs text-primary">35%</b> required-skill coverage (softened for beginner labs)</li>
-              <li><b className="font-mono text-xs text-primary">15%</b> hours fit</li>
-              <li><b className="font-mono text-xs text-primary">10%</b> credit / pay preference</li>
-            </ul>
-            <p className="text-xs text-muted-foreground mt-3">Local text vectors computed in your browser, not live AI embeddings. Ineligible majors are halved.</p>
+            {scores ? (
+              <>
+                <p className="font-mono text-[11px] mt-1 rounded bg-accent text-accent-foreground inline-block px-1.5">AI hybrid ranking</p>
+                <ul className="mt-3 text-sm space-y-2 text-foreground/80">
+                  <li><b className="font-mono text-xs text-primary">65%</b> semantic similarity of your profile embedding</li>
+                  <li><b className="font-mono text-xs text-primary">35%</b> keyword match (BM25) across the full catalog</li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3">Same score as your AI recommendations, computed for every lab.</p>
+              </>
+            ) : (
+              <>
+                <p className="font-mono text-[11px] mt-1 rounded bg-accent text-accent-foreground inline-block px-1.5">Skill + interest matching</p>
+                <ul className="mt-3 text-sm space-y-2 text-foreground/80">
+                  <li><b className="font-mono text-xs text-primary">40%</b> cosine similarity of local word-count vectors</li>
+                  <li><b className="font-mono text-xs text-primary">35%</b> required-skill coverage (softened for beginner labs)</li>
+                  <li><b className="font-mono text-xs text-primary">15%</b> hours fit</li>
+                  <li><b className="font-mono text-xs text-primary">10%</b> credit / pay preference</li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3">Local text vectors computed in your browser, not live AI embeddings. Ineligible majors are halved.</p>
+              </>
+            )}
             <Link href="/settings" data-testid="link-matching-details" className="text-xs text-primary font-medium mt-2 inline-block hover:underline">Method details</Link>
           </div>
           <div className="rounded-2xl border bg-secondary/60 p-5">
