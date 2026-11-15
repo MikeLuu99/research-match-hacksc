@@ -8,12 +8,23 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
+import { InterestButton, SaveButton } from "@/components/bits";
 import { cn } from "@/lib/utils";
+
+type ChatCard = {
+  sourceId: string;
+  title: string;
+  department: string;
+  faculty: string;
+  summary: string;
+  open: boolean;
+};
 
 type Message = {
   role: "user" | "assistant";
   content: string;
   sources?: { sourceId: string; title: string; sourceUrl?: string }[];
+  cards?: ChatCard[];
 };
 
 const STARTERS = [
@@ -58,6 +69,7 @@ export function AskLabbe() {
           role: "assistant",
           content: result.reply,
           sources: result.sources.filter((s) => s.title),
+          cards: result.cards,
         },
       ]);
     } catch (err) {
@@ -123,7 +135,45 @@ export function AskLabbe() {
                 : "border border-primary/15 bg-background",
             )}
           >
-            <p className="whitespace-pre-line">{message.content}</p>
+            {message.content && (
+              <p className="whitespace-pre-line">{message.content}</p>
+            )}
+            {message.cards && message.cards.length > 0 && (
+              <div className={cn("mt-3 space-y-2", message.role === "user" && "mt-0")}>
+                {message.cards.map((card) => (
+                  <div
+                    key={card.sourceId}
+                    data-testid={`chat-card-${card.sourceId}`}
+                    className="border border-primary/15 bg-background p-4"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-display text-base leading-snug">{card.title}</h3>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          {card.department} · {card.faculty}
+                        </p>
+                      </div>
+                      <SaveButton id={card.sourceId} />
+                    </div>
+                    <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                      {card.summary}
+                    </p>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <InterestButton projectId={card.sourceId} open={card.open} />
+                      <span
+                        className={
+                          card.open
+                            ? "bg-chart-2 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-accent-foreground"
+                            : "border border-primary/25 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground"
+                        }
+                      >
+                        {card.open ? "recruiting" : "inquire"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {message.sources && message.sources.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5 border-t border-primary/10 pt-3">
                 {message.sources.map((source) => (

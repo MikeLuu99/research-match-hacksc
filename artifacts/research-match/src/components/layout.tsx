@@ -26,7 +26,6 @@ type NavItem = { href: string; label: string; icon: typeof Compass };
 
 const STUDENT_NAV: NavItem[] = [
   { href: "/student", label: "Discover", icon: Compass },
-  { href: "/ask", label: "Ask LABBE", icon: MessageCircleQuestion },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/applications", label: "Interest tracker", icon: Send },
 ];
@@ -37,6 +36,12 @@ const FACULTY_NAV: NavItem[] = [
   { href: "/faculty/shortlist", label: "Student shortlist", icon: ListChecks },
   { href: "/faculty/inbox", label: "Interest inbox", icon: Inbox },
 ];
+
+const ASK_SECTION: NavItem = {
+  href: "/ask",
+  label: "Ask LABBE",
+  icon: MessageCircleQuestion,
+};
 
 const BOTTOM_PROFILE: Record<"student" | "faculty", NavItem> = {
   student: { href: "/profile", label: "Student profile", icon: UserRound },
@@ -260,7 +265,17 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
           )}
           {nav.map(navLink)}
-          <div className="md:mt-auto md:border-t md:border-sidebar-border md:pt-2">
+          {view === "student" && (
+            <div className="md:mt-auto md:border-t md:border-sidebar-border md:pt-2">
+              {navLink(ASK_SECTION)}
+            </div>
+          )}
+          <div
+            className={cn(
+              "md:border-t md:border-sidebar-border md:pt-2",
+              view !== "student" && "md:mt-auto",
+            )}
+          >
             {navLink(BOTTOM_PROFILE[view])}
           </div>
           <LogOutButton />

@@ -9,7 +9,9 @@ import { action } from "./model";
 import { EMBEDDING_MODEL_ID, embedBatch } from "./embeddings";
 import { bm25Scores, hybridRank, tokenize } from "./ranking";
 
-const CHAT_MODEL = "gpt-4o-mini";
+// Chat runs through OpenRouter (embeddings stay on the OpenAI key).
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const CHAT_MODEL = "openai/gpt-4o-mini";
 const MAX_HISTORY = 6;
 
 const chatProjectByIds = internalQuery({
@@ -53,6 +55,16 @@ export const ask = action({
         sourceId: v.string(),
         title: v.string(),
         sourceUrl: v.optional(v.string()),
+      }),
+    ),
+    cards: v.array(
+      v.object({
+        sourceId: v.string(),
+        title: v.string(),
+        department: v.string(),
+        faculty: v.string(),
+        summary: v.string(),
+        open: v.boolean(),
       }),
     ),
   }),
@@ -126,16 +138,44 @@ export const ask = action({
       .map((message) => `${message.role === "user" ? "Student" : "Assistant"}: ${message.content}`)
       .join("\n");
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey)
+      throw new ConvexError(
+        "AI chat is not configured (missing OPENROUTER_API_KEY).",
+      );
+    const response = await fetch(OPENROUTER_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.EMBEDDING_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        "HTTP-Referer": process.env.SITE_URL ?? "https://labbe.pages.dev",
+        "X-Title": "LABBE",
       },
       body: JSON.stringify({
         model: CHAT_MODEL,
         temperature: 0.4,
         max_tokens: 700,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "show_projects",
+              description:
+                "Display lab project cards to the student in the chat UI. Call this whenever you recommend specific labs.",
+              parameters: {
+                type: "object",
+                properties: {
+                  sourceIds: {
+                    type: "array",
+                    description: "The id fields of the labs to display",
+                    items: { type: "string" },
+                  },
+                },
+                required: ["sourceIds"],
+              },
+            },
+          },
+        ],
         messages: [
           {
             role: "system",
@@ -162,10 +202,78 @@ export const ask = action({
         `AI chat failed (${response.status}): ${detail.slice(0, 200)}`,
       );
     }
-    const payload = (await response.json()) as {
-      choices?: { message?: { content?: string } }[];
+    const basePayload = (await response.json()) as {
+      choices?: {
+        message?: { content?: string; tool_calls?: { function?: { name?: string; arguments?: string } }[] };
+      }[];
     };
-    const reply = payload.choices?.[0]?.message?.content?.trim();
+    const firstChoice = basePayload.choices?.[0]?.message;
+    const toolCall = firstChoice?.tool_calls?.find(
+      (call) => call.function?.name === "show_projects",
+    );
+
+    // Tool call: the assistant picked the labs worth showing as cards.
+    if (toolCall?.function?.arguments) {
+      let picked: { sourceIds?: string[] } = {};
+      try {
+        picked = JSON.parse(toolCall.function.arguments) as {
+          sourceIds?: string[];
+        };
+      } catch {
+        picked = {};
+      }
+      const wanted = new Set(picked.sourceIds ?? []);
+      const cards = projects
+        .filter((project) => wanted.has(project.sourceId))
+        .map((project) => ({
+          sourceId: project.sourceId,
+          title: project.title,
+          department: project.department,
+          faculty: project.faculty,
+          summary: project.description.slice(0, 240),
+          open: project.recruitmentStatus !== "closed",
+        }));
+      // Second round: the model writes its conversational answer knowing
+      // the cards are displayed.
+      const second = await fetch(OPENROUTER_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": process.env.SITE_URL ?? "https://labbe.pages.dev",
+            "X-Title": "LABBE",
+          },
+          body: JSON.stringify({
+            model: CHAT_MODEL,
+            temperature: 0.4,
+            max_tokens: 700,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are LABBE, a friendly research-matching assistant for USC students. The lab cards for the projects you selected are now displayed to the student. Write a short conversational wrap-up (max ~120 words): why these fit, what to check next (hours, recruiting status), and suggest one refined follow-up. Do not repeat the card details.",
+              },
+              { role: "user", content: question },
+            ],
+          }),
+        },
+      );
+      const secondPayload = (await second.json()) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      const reply = secondPayload.choices?.[0]?.message?.content?.trim() ?? "";
+      return {
+        reply,
+        sources: cards.map((card) => ({
+          sourceId: card.sourceId,
+          title: card.title,
+          sourceUrl: projects.find((p) => p.sourceId === card.sourceId)?.sourceUrl,
+        })),
+        cards,
+      };
+    }
+
+    const reply = firstChoice?.content?.trim();
     if (!reply) throw new ConvexError("The assistant returned no answer.");
 
     return {
@@ -175,6 +283,7 @@ export const ask = action({
         title: project.title,
         sourceUrl: project.sourceUrl,
       })),
+      cards: [],
     };
   },
 });
