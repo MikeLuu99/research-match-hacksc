@@ -89,7 +89,7 @@ export default function Discovery() {
       <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8">
         <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
         <h1 className="font-display text-3xl md:text-4xl leading-[1.05] mt-2 mb-6">
-          AI matches for <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">your profile</em>
+          AI <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">recommendations</em>
         </h1>
         <div className="rise space-y-4">
           {account.isAuthenticated && account.viewer?.accountType === "student" && (

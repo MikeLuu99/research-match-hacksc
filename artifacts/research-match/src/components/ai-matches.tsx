@@ -103,7 +103,7 @@ export function AiMatches() {
         role="status"
       >
         <LoaderCircle className="animate-spin" size={14} />
-        {seeding ? "Loading the lab catalog (first visit embeds 82 labs)…" : "Computing AI matches…"}
+        {seeding ? "Loading the lab catalog (first visit embeds 82 labs)…" : "Computing AI recommendations…"}
       </div>
     );
 

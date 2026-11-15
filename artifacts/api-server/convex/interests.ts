@@ -92,12 +92,15 @@ export const myInterests = query({
         .query("projects")
         .withIndex("by_source", (q) => q.eq("sourceId", interest.sourceId))
         .unique();
+      // Skip interests on removed listings so deleted projects do not
+      // appear as ghost rows in the tracker.
+      if (!project) continue;
       out.push({
         interestId: interest._id,
         sourceId: interest.sourceId,
         status: interest.status,
         updatedAt: interest.updatedAt,
-        title: project?.title ?? interest.sourceId,
+        title: project.title,
         department: project?.department ?? "",
         faculty: project?.faculty ?? "",
         labStatus: project?.recruitmentStatus ?? "explore",

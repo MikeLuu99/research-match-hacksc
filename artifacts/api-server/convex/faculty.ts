@@ -224,6 +224,13 @@ export const removeProject = mutation({
     const project = await ctx.db.get(args.projectId);
     if (!project || project.ownerId !== user._id)
       throw new ConvexError("You can only remove your own projects.");
+    // Cascade: drop interest records for the removed listing so the
+    // student tracker does not show ghost rows.
+    const interests = await ctx.db
+      .query("interests")
+      .withIndex("by_source", (q) => q.eq("sourceId", project.sourceId))
+      .collect();
+    for (const interest of interests) await ctx.db.delete(interest._id);
     await ctx.db.delete(args.projectId);
     return null;
   },
