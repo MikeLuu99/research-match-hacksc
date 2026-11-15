@@ -225,13 +225,18 @@ export function Layout({ children }: { children: ReactNode }) {
         )}
       >
         <div className="hidden md:flex items-start justify-between px-4 pt-7 pb-6">
-          <div data-testid="link-home">
-            <div className="flex items-center gap-2">
+          <div>
+            <Link
+              href={view === "faculty" ? "/faculty" : "/student"}
+              data-testid="link-home"
+              aria-label={view === "faculty" ? "Lab workspace home" : "Discover home"}
+              className="flex items-center gap-2"
+            >
               <img src="/logo.svg" alt="" className="h-8 w-8 object-contain transition-colors" />
               {!collapsed && (
                 <span className="font-display text-2xl">LABBE</span>
               )}
-            </div>
+            </Link>
             {!collapsed && (
               <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground/60">
                 Demo · not an official USC product

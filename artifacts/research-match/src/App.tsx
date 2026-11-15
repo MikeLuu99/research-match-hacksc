@@ -47,12 +47,21 @@ function StudentRouteGate({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+// The workspace root is role-specific: signed-in faculty land in their lab
+// workspace rather than the student Discover page.
+function WorkspaceHome() {
+  const account = useAccount();
+  if (account.isAuthenticated && account.viewer?.accountType === "faculty")
+    return <Redirect to="/faculty" replace />;
+  return <Discovery />;
+}
+
 function WorkspaceRoutes() {
   return (
     <RoutedErrorBoundary>
       <StudentRouteGate>
         <Switch>
-          <Route path="/" component={Discovery} />
+          <Route path="/" component={WorkspaceHome} />
           <Route path="/student" component={Discovery} />
           <Route path="/ask" component={AskLabbe} />
           <Route path="/saved" component={Saved} />
