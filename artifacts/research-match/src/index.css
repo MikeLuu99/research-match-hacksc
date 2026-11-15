@@ -69,6 +69,21 @@
 
 /* LIGHT MODE */
 :root {
+  /* Cardinal Grid palette — global so public.css components (buttons,
+     form fields, notices) render inside the workspace too, not just on
+     the marketing/auth pages. */
+  --paper: #f0ebde;
+  --paper-2: #e6e0ce;
+  --cardinal: #822440;
+  --cardinal-deep: #6b1d33;
+  --cardinal-faint: rgba(130, 36, 64, 0.18);
+  --grid-line: rgba(130, 36, 64, 0.1);
+  --ink: #822440;
+  --ink-soft: rgba(130, 36, 64, 0.78);
+  --wine: #822440;
+  --gold: #ffc72c;
+  --gold-soft: #edc77b;
+
   --button-outline: rgba(0, 0, 0, 0.1);
   --badge-outline: rgba(0, 0, 0, 0.05);
 
