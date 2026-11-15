@@ -100,19 +100,20 @@ export default function Discovery() {
       </section>
 
             <section className="sticky top-0 z-20 bg-background/90 backdrop-blur border-y px-5 md:px-10 py-3 space-y-3">
-        <div className="flex flex-col md:flex-row gap-3">
-          <label className="relative flex-1">
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <p className="font-display text-lg text-primary md:w-[280px] shrink-0">Search All Opportunities</p>
+          <label className="relative md:w-[220px] shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               data-testid="input-search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search topics, skills, labs — try 'clinical' or 'robotics'"
+              placeholder="Search topics, skills, labs…"
               className="w-full h-11 rounded-xl border bg-card pl-10 pr-9 text-[15px] outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary/40 transition"
             />
             {q && <button data-testid="button-clear-search" onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>}
           </label>
-          <select data-testid="select-department" value={dept} onChange={(e) => setDept(e.target.value)} className="h-11 rounded-xl border bg-card px-3 text-[15px] hover:border-primary/40 transition">
+          <select data-testid="select-department" value={dept} onChange={(e) => setDept(e.target.value)} className="h-11 rounded-xl border bg-card px-3 text-[15px] hover:border-primary/40 transition md:flex-1">
             <option value="all">All departments</option>
             {depts.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
