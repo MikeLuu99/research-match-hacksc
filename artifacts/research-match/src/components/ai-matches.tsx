@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAction } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import {
   ArrowUpRight,
   Building2,
@@ -44,34 +44,54 @@ function cnScore(similarity: number) {
 // be refreshed after a profile edit.
 export function AiMatches() {
   const myMatches = useAction(api.discovery.myMatches);
+  const seedLabs = useMutation(api.projects.seedLabs);
+  const embedPending = useAction(api.projects.embedPendingProjects);
   const [state, setState] = useState<MatchesState | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
 
   const run = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      setState(await myMatches({}));
+      const result = (await myMatches({})) as MatchesState;
+      // Empty catalog: seed + embed once, then re-rank. The USC-email gate
+      // on seeding keeps this off for unauthenticated visitors.
+      if (result.ready && result.matches.length === 0 && !seeding) {
+        setSeeding(true);
+        try {
+          await seedLabs({});
+          await embedPending({});
+          setState((await myMatches({})) as MatchesState);
+          setSeeding(false);
+          setLoading(false);
+          return;
+        } catch {
+          setSeeding(false);
+        }
+      }
+      setState(result);
     } catch {
       setError("AI matching is unavailable right now. Try again shortly.");
     } finally {
+      setSeeding(false);
       setLoading(false);
     }
-  }, [myMatches]);
+  }, [myMatches, seedLabs, embedPending, seeding]);
 
   useEffect(() => {
     void run();
   }, [run]);
 
-  if (loading && !state)
+  if ((loading && !state) || seeding)
     return (
       <div
         className="flex items-center gap-2 py-8 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
         role="status"
       >
-        <LoaderCircle className="animate-spin" size={14} /> Computing AI
-        matches…
+        <LoaderCircle className="animate-spin" size={14} />
+        {seeding ? "Loading the lab catalog (first visit embeds 82 labs)…" : "Computing AI matches…"}
       </div>
     );
 

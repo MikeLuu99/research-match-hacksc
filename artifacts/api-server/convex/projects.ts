@@ -40,9 +40,8 @@ export const seedLabs = mutation({
       throw new ConvexError(
         "Only USC accounts (email ending in @usc.edu) can load the catalog.",
       );
-    const account = await accountProfileFor(ctx, user._id);
-    if (!account || account.accountType !== "faculty")
-      throw new ConvexError("Only faculty accounts can load the lab catalog.");
+    // The catalog is public USC data, so any signed-in USC user may trigger
+    // the seed; the faculty gate remains on candidate ranking.
     let inserted = 0;
     let updated = 0;
     for (const lab of LABS) {
@@ -142,8 +141,8 @@ export const pendingLabs = internalQuery({
   },
 });
 
-// Faculty action: embed every lab that lacks a vector. One batched request
-// covers the whole catalog (82 descriptions).
+// Embed every lab that lacks a vector (any signed-in USC user may trigger
+// this; one batched request covers the whole catalog).
 export const embedPendingProjects = action({
   args: {},
   returns: v.number(),

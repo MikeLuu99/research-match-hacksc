@@ -19,15 +19,11 @@ describe("seedLabs", () => {
     await expect(t.mutation(api.projects.seedLabs, {})).rejects.toThrow();
   });
 
-  it("refuses student accounts", async () => {
+  it("refuses non-USC accounts", async () => {
     const test = makeTest();
-    const student = await signIn(test, "student@usc.edu");
-    await student.mutation(api.users.completeProfile, {
-      name: "Student",
-      accountType: "student",
-    });
-    await expect(student.mutation(api.projects.seedLabs, {})).rejects.toThrow(
-      /faculty/i,
+    const outsider = await signIn(test, "outsider@gmail.com");
+    await expect(outsider.mutation(api.projects.seedLabs, {})).rejects.toThrow(
+      /@usc\.edu/i,
     );
   });
 

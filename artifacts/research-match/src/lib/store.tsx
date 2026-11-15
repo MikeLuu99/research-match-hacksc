@@ -84,7 +84,13 @@ function load(key: string, accountId?: string, accountName?: string): State {
   const state = freshState(accountId, accountName);
   try {
     const raw = localStorage.getItem(key);
-    if (raw) return { ...state, ...JSON.parse(raw) };
+    if (raw) {
+      const stored = JSON.parse(raw) as Partial<State>;
+      // A stale blob can carry an empty catalog (saved before the USC seed
+      // existed); refill from the generated dataset so discovery works.
+      if (!stored.projects?.length) stored.projects = state.projects;
+      return { ...state, ...stored };
+    }
   } catch {
     /* Fall back to a clean profile if storage is unavailable or invalid. */
   }
