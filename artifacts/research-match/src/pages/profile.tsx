@@ -4,7 +4,7 @@ import { LoaderCircle } from "lucide-react";
 import { FileText, Lock, Eye, X, Plus } from "lucide-react";
 import { Layout, PageHeader } from "@/components/layout";
 import {
-  StudentProfileForm,
+  ProfileEditor,
   type StudentProfileInitial,
 } from "@/components/student-profile-form";
 import { api } from "@/lib/convex-api";
@@ -79,7 +79,7 @@ function RealProfileEditor() {
       </PageHeader>
       <div className="px-5 md:px-10 pb-12 max-w-2xl">
         <div className="border border-primary/20 bg-card p-6">
-          <StudentProfileForm initial={initial} variant="editor" />
+          <ProfileEditor initial={initial} />
         </div>
       </div>
     </Layout>
