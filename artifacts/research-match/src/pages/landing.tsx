@@ -105,6 +105,14 @@ function ResearchPreview() {
   );
 }
 
+export function chooseRole(role: "student" | "faculty") {
+  try {
+    sessionStorage.setItem("labbe.role", role);
+  } catch {
+    // sessionStorage can be unavailable; onboarding falls back to student.
+  }
+}
+
 export default function Landing() {
   const { isAuthenticated } = useAccount();
   return (
@@ -149,13 +157,41 @@ export default function Landing() {
               interests with projects across USC—and discover a direction you
               hadn’t considered.
             </p>
-            <div className="hero-actions">
-              <Link className="public-button" href="/sign-up">
-                Find your research fit
-                <ArrowUpRight size={19} />
+            <div className="role-grid">
+              <Link
+                className="role-block"
+                to="/sign-in"
+                onClick={() => chooseRole("student")}
+                data-testid="link-role-student"
+              >
+                <span className="role-tag">For students</span>
+                <strong>Find your research fit</strong>
+                <small>
+                  AI matches you with labs across every USC department.
+                </small>
+                <span className="role-cta">
+                  Continue as a student <ArrowUpRight size={16} />
+                </span>
               </Link>
+              <Link
+                className="role-block role-block-faculty"
+                to="/sign-in"
+                onClick={() => chooseRole("faculty")}
+                data-testid="link-role-faculty"
+              >
+                <span className="role-tag">For faculty &amp; PIs</span>
+                <strong>Recruit the right students</strong>
+                <small>
+                  Post your lab and review AI-ranked, opted-in candidates.
+                </small>
+                <span className="role-cta">
+                  Continue as faculty <ArrowUpRight size={16} />
+                </span>
+              </Link>
+            </div>
+            <div className="hero-actions">
               <Link href="/demo" className="secondary-link">
-                Explore the demo
+                Or explore the demo first
                 <ArrowRight size={17} />
               </Link>
             </div>

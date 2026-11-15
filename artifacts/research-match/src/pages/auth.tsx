@@ -1,11 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Redirect } from "wouter";
-import {
-  ArrowUpRight,
-  FlaskConical,
-  GraduationCap,
-  LoaderCircle,
-} from "lucide-react";
+import { ArrowUpRight, LoaderCircle } from "lucide-react";
+import { chooseRole } from "@/pages/landing";
 import { useAccount } from "@/lib/auth";
 import type { AccountType } from "@/lib/auth-validation";
 import { AuthFrame } from "@/components/auth-frame";
@@ -17,9 +13,18 @@ import {
 import { StudentProfileForm } from "@/components/student-profile-form";
 import { UscEmailGate } from "@/components/usc-email-gate";
 
+function readRole(): AccountType {
+  try {
+    const role = sessionStorage.getItem("labbe.role");
+    return role === "faculty" ? "faculty" : "student";
+  } catch {
+    return "student";
+  }
+}
+
 function OnboardingForm() {
   const { completeProfile, viewer } = useAccount();
-  const [accountType, setAccountType] = useState<AccountType>("student");
+  const [accountType, setAccountType] = useState<AccountType>(readRole);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -53,47 +58,22 @@ function OnboardingForm() {
           disabled={pending}
         />
       </div>
-      <fieldset disabled={pending} className="account-types">
-        <legend>I’m here as a…</legend>
-        {(
-          [
-            {
-              value: "student",
-              title: "Student",
-              description: "Find your place in research",
-              icon: GraduationCap,
-            },
-            {
-              value: "faculty",
-              title: "Professor / research team",
-              description: "Find your next collaborator",
-              icon: FlaskConical,
-            },
-          ] as const
-        ).map((option) => (
-          <label
-            key={option.value}
-            className={
-              accountType === option.value
-                ? "account-option selected"
-                : "account-option"
-            }
-          >
-            <input
-              type="radio"
-              name="account-type"
-              value={option.value}
-              checked={accountType === option.value}
-              onChange={() => setAccountType(option.value)}
-            />
-            <option.icon size={21} />
-            <span>
-              <strong>{option.title}</strong>
-              <small>{option.description}</small>
-            </span>
-          </label>
-        ))}
-      </fieldset>
+      <p className="auth-help">
+        You’re joining as a{" "}
+        <strong>{accountType === "faculty" ? "faculty member" : "student"}</strong>{" "}
+        — picked on the home page.{" "}
+        <button
+          type="button"
+          onClick={() => {
+            const next: AccountType =
+              accountType === "student" ? "faculty" : "student";
+            chooseRole(next);
+            setAccountType(next);
+          }}
+        >
+          Switch to {accountType === "student" ? "faculty" : "student"}
+        </button>
+      </p>
       <p className="auth-help">
         Your profile starts private. You decide when to share it with research
         teams.
