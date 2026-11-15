@@ -50,7 +50,11 @@ export const send = mutation({
       isViewer: true,
       text: question,
     });
-    await ctx.scheduler.runAfter(0, makeFunctionReference<"action">("chat:answer"), {});
+    await ctx.scheduler.runAfter(
+      0,
+      makeFunctionReference<"action">("chat:answer"),
+      { subject: identity.subject },
+    );
     return null;
   },
 });
@@ -70,7 +74,7 @@ export const clear = mutation({
   },
 });
 
-const myHistory = internalQuery({
+export const myHistory = internalQuery({
   args: { subject: v.string() },
   handler: async (ctx, args) => {
     const messages = await ctx.db
@@ -78,13 +82,13 @@ const myHistory = internalQuery({
       .withIndex("by_owner", (q) => q.eq("ownerSubject", args.subject))
       .collect();
     return messages
-      .sort((a, b) => a.text.length - b.text.length)
+      .filter((message) => message.text.trim().length > 0)
       .slice(-MAX_HISTORY)
       .map((message) => ({ isViewer: message.isViewer, text: message.text }));
   },
 });
 
-const chatProjectByIds = internalQuery({
+export const chatProjectByIds = internalQuery({
   args: { ids: v.array(v.id("projects")) },
   handler: async (ctx, args) => {
     const out = [];
@@ -166,12 +170,10 @@ export const updateBotMessage = internalMutation({
 
 // The scheduled brain: retrieve, stream the completion, persist cards.
 export const answer = action({
-  args: {},
+  args: { subject: v.string() },
   returns: v.null(),
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
-    const subject = identity.subject;
+  handler: async (ctx, args) => {
+    const subject = args.subject;
     const history: { isViewer: boolean; text: string }[] = await ctx.runQuery(
       makeFunctionReference<"query">("chat:myHistory"),
       { subject },
