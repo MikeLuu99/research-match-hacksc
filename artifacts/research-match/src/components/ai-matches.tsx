@@ -8,7 +8,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
-import { InterestButton } from "@/components/bits";
+import { InterestButton, SaveButton } from "@/components/bits";
 
 type MatchResult = {
   sourceId: string;
