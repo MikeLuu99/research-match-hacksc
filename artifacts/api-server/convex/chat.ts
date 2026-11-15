@@ -11,7 +11,9 @@ import { bm25Scores, hybridRank, tokenize } from "./ranking";
 
 // Chat runs through OpenRouter (embeddings stay on the OpenAI key).
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const CHAT_MODEL = "openai/gpt-4o-mini";
+const CHAT_MODEL =
+    process.env.OPENROUTER_CHAT_MODEL ??
+    "nvidia/nemotron-3-ultra-550b-a55b";
 const MAX_HISTORY = 6;
 
 const chatProjectByIds = internalQuery({
@@ -273,7 +275,10 @@ export const ask = action({
       };
     }
 
-    const reply = firstChoice?.content?.trim();
+    const reply =
+      (firstChoice?.content ?? "")
+        .replace(/^[\s\S]*?<\/think>/, "")
+        .trim() || (firstChoice?.content ?? "").trim();
     if (!reply) throw new ConvexError("The assistant returned no answer.");
 
     return {

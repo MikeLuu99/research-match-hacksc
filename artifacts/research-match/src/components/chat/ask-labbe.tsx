@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
+import { Layout, PageHeader } from "@/components/layout";
 import { InterestButton, SaveButton } from "@/components/bits";
 import { cn } from "@/lib/utils";
 
@@ -84,7 +85,13 @@ export function AskLabbe() {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-230px)] min-h-[420px] flex-col border border-primary/20 bg-card">
+    <Layout>
+      <PageHeader eyebrow="Ask LABBE" title="Your research assistant">
+        Ask anything about USC research — answers are grounded in the live
+        catalog with sources.
+      </PageHeader>
+      <div className="px-5 pb-12 md:px-10">
+      <div className="flex h-[calc(100dvh-420px)] min-h-[420px] flex-col border border-primary/20 bg-card">
       <div className="flex items-center gap-2 border-b border-primary/15 px-5 py-4">
         <Sparkles className="text-chart-2" size={18} />
         <h2 className="font-display text-xl">Ask LABBE</h2>
@@ -238,6 +245,8 @@ export function AskLabbe() {
           <CornerDownLeft size={17} />
         </button>
       </form>
-    </div>
+      </div>
+      </div>
+    </Layout>
   );
 }
