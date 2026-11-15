@@ -22,24 +22,41 @@ describe("scheduled AI actions", () => {
 
   it("resolves the project lookup and persists a generated embedding", async () => {
     const { t } = makeTest();
-    const projectId = await t.run(ctx => ctx.db.insert("projects", {
-      sourceId: "background-test", title: "Research", department: "CS",
-      description: "Research project", faculty: "Faculty", requiredSkills: [],
-      preferredSkills: [], hoursPerWeek: 5, offersCredit: false,
-      beginnerFriendly: true, recruitmentStatus: "open", embeddingModel: "",
-      embedding: [], ownerId: "project-owner",
-    }));
-    const vector = Array.from({ length: 1536 }, (_, i) => i === 0 ? 1 : 0);
+    const projectId = await t.run((ctx) =>
+      ctx.db.insert("projects", {
+        sourceId: "background-test",
+        title: "Research",
+        department: "CS",
+        description: "Research project",
+        faculty: "Faculty",
+        requiredSkills: [],
+        preferredSkills: [],
+        hoursPerWeek: 5,
+        offersCredit: false,
+        beginnerFriendly: true,
+        recruitmentStatus: "open",
+        embeddingModel: "",
+        embedding: [],
+        ownerId: "project-owner",
+      }),
+    );
+    const vector = Array.from({ length: 1536 }, (_, i) => (i === 0 ? 1 : 0));
     vi.stubEnv("EMBEDDING_API_KEY", "test-placeholder");
-    const provider = vi.fn().mockResolvedValue(new Response(
-      JSON.stringify({ data: [{ embedding: vector }] }), { status: 200 },
-    ));
+    const provider = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ data: [{ embedding: vector }] }), {
+          status: 200,
+        }),
+      );
     vi.stubGlobal("fetch", provider);
 
-    await t.action(makeFunctionReference<"action">("faculty:embedProject"), { projectId });
+    await t.action(makeFunctionReference<"action">("faculty:embedProject"), {
+      projectId,
+    });
 
     expect(provider).toHaveBeenCalledOnce();
-    const project = await t.run(ctx => ctx.db.get(projectId));
+    const project = await t.run((ctx) => ctx.db.get(projectId));
     expect(project?.embedding).toEqual(vector);
     expect(project?.embeddingModel).toBe("openai/text-embedding-3-small");
   });
@@ -49,11 +66,17 @@ describe("scheduled AI actions", () => {
     vi.stubEnv("OPENROUTER_API_KEY", "");
     const test = makeTest();
     const me = await signIn(test, "student@usc.edu");
-    await me.mutation(api.chat.send, { question: "Which labs match my interests?" });
-    await test.t.finishAllScheduledFunctions(() => { vi.runAllTimers(); });
+    await me.mutation(api.chat.send, {
+      question: "Which labs match my interests?",
+    });
+    await test.t.finishAllScheduledFunctions(() => {
+      vi.runAllTimers();
+    });
     const messages = await me.query(api.chat.myMessages, {});
-    expect(messages.filter(message => message.isViewer)).toHaveLength(1);
-    expect(messages.filter(message => !message.isViewer)).toHaveLength(1);
-    expect(new Set(messages.map(message => message.ownerSubject)).size).toBe(1);
+    expect(messages.filter((message) => message.isViewer)).toHaveLength(1);
+    expect(messages.filter((message) => !message.isViewer)).toHaveLength(1);
+    expect(new Set(messages.map((message) => message.ownerSubject)).size).toBe(
+      1,
+    );
   });
 });

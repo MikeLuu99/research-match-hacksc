@@ -205,3 +205,10 @@ ResearchMatch is more customized to students' syllabi, schedules, and academic c
 - Live Better Auth account flows require the frontend public Convex URLs and deployment-side `BETTER_AUTH_SECRET` and `SITE_URL`. These credentials are pending.
 - GitHub Actions builds frontend artifacts. The manually dispatched Convex deployment workflow requires the production environment deploy key. No frontend hosting destination is configured.
 - Interactive browser verification was unavailable in this session. Do not describe untested live authentication or deployment as verified.
+
+## Background Jobs and Offline Demo
+
+- AI jobs that accept an account or record ID (`chat.answer`, `users.embedStudent`, and `faculty.embedProject`) are internal actions. Schedule them from authenticated mutations; do not expose them as public endpoints.
+- Optional-backend UI components import query/mutation/action hooks from `src/lib/backend.ts`. The authentication provider uses Convex's native hooks. Preserve the demo's ability to render without Convex environment variables.
+- Project details and catalog cards share `InterestButton` for live interest submission. Re-sending an active request must preserve faculty decisions; only withdrawn requests may be reopened by students.
+- Empty AI results may initiate catalog setup once per mounted signed-in student view. Avoid making setup state a dependency that retriggers its own effect.

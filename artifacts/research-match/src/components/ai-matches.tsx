@@ -49,7 +49,12 @@ function cnScore(similarity: number) {
 export function AiMatches() {
   const account = useAccount();
   if (!account.isConfigured)
-    return <p className="py-8 text-sm text-muted-foreground">Explore the catalog below. AI recommendations become available when the backend is connected.</p>;
+    return (
+      <p className="py-8 text-sm text-muted-foreground">
+        Explore the catalog below. AI recommendations become available when the
+        backend is connected.
+      </p>
+    );
   return <ConnectedAiMatches />;
 }
 
@@ -73,12 +78,17 @@ function useAiMatchResults() {
     setLoading(true);
     setError("");
     try {
-      const result = (realUser
-        ? await myMatches({})
-        : await demoMatches({})) as MatchesState;
+      const result = (
+        realUser ? await myMatches({}) : await demoMatches({})
+      ) as MatchesState;
       // Empty catalog: seed + embed once, then re-rank. The USC-email gate
       // on seeding keeps this off for unauthenticated visitors.
-      if (realUser && result.ready && result.matches.length === 0 && !attemptedSeed.current) {
+      if (
+        realUser &&
+        result.ready &&
+        result.matches.length === 0 &&
+        !attemptedSeed.current
+      ) {
         attemptedSeed.current = true;
         setSeeding(true);
         try {
@@ -118,7 +128,9 @@ function ConnectedAiMatches() {
         role="status"
       >
         <LoaderCircle className="animate-spin" size={14} />
-        {seeding ? "Loading the lab catalog (first visit embeds 82 labs)…" : "Computing AI recommendations…"}
+        {seeding
+          ? "Loading the lab catalog (first visit embeds 82 labs)…"
+          : "Computing AI recommendations…"}
       </div>
     );
 
@@ -197,10 +209,7 @@ function ConnectedAiMatches() {
                 {match.summary}
               </p>
               <div className="mt-3 flex items-center gap-2">
-                <InterestButton
-                  projectId={match.sourceId}
-                  open={match.open}
-                />
+                <InterestButton projectId={match.sourceId} open={match.open} />
                 {match.sourceUrl && (
                   <a
                     href={match.sourceUrl}

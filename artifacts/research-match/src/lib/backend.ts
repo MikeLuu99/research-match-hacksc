@@ -23,7 +23,9 @@ function useOfflineMutation<Mutation extends FunctionReference<"mutation">>(
 ): ReactMutation<Mutation> {
   return useMemo(() => {
     const mutation: ReactMutation<Mutation> = Object.assign(
-      async () => { throw new Error("Connect the backend to save account data."); },
+      async () => {
+        throw new Error("Connect the backend to save account data.");
+      },
       { withOptimisticUpdate: () => mutation },
     );
     return mutation;
@@ -39,5 +41,7 @@ function useOfflineAction<Action extends FunctionReference<"action">>(
 }
 
 export const useQuery = backendConfigured ? useConvexQuery : useOfflineQuery;
-export const useMutation = backendConfigured ? useConvexMutation : useOfflineMutation;
+export const useMutation = backendConfigured
+  ? useConvexMutation
+  : useOfflineMutation;
 export const useAction = backendConfigured ? useConvexAction : useOfflineAction;
