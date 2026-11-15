@@ -16,6 +16,8 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useQuery } from "convex/react";
+import { api } from "@/lib/convex-api";
 import { cn } from "@/lib/utils";
 import { useAccount } from "@/lib/auth";
 
@@ -145,19 +147,35 @@ export function Layout({ children }: { children: ReactNode }) {
   const role = account.isAuthenticated
     ? account.viewer?.accountType ?? "student"
     : "demo";
-  const mine = interests.filter((i) => i.studentId === profile.id).length;
+  // Badges use the real pipeline for signed-in accounts; the browser-local
+  // store only feeds the unauthenticated demo.
+  const liveStudent =
+    account.isAuthenticated &&
+    account.viewer?.accountType === "student" &&
+    account.viewer.hasStudentProfile;
+  const liveFaculty =
+    account.isAuthenticated && account.viewer?.accountType === "faculty";
+  const liveInterests = useQuery(
+    api.interests.myInterests,
+    liveStudent ? {} : "skip",
+  );
+  const liveInbox = useQuery(api.interests.labInbox, liveFaculty ? {} : "skip");
+  const mine = liveStudent
+    ? (liveInterests ?? []).filter((i) => i.status !== "withdrawn").length
+    : interests.filter((i) => i.studentId === profile.id).length;
   const counts: Record<string, number> = {
     "/saved": saved.length,
     "/applications": mine,
-    "/faculty/shortlist": projects.reduce(
-      (n, p) => n + (shortlists[p.id] ?? []).length,
-      0,
-    ),
-    "/faculty/inbox": interests.filter(
-      (i) =>
-        i.status === "interested" &&
-        projects.some((p) => p.id === i.projectId),
-    ).length,
+    "/faculty/shortlist": liveFaculty
+      ? 0
+      : projects.reduce((n, p) => n + (shortlists[p.id] ?? []).length, 0),
+    "/faculty/inbox": liveFaculty
+      ? (liveInbox ?? []).filter((i) => i.status === "interested").length
+      : interests.filter(
+          (i) =>
+            i.status === "interested" &&
+            projects.some((p) => p.id === i.projectId),
+        ).length,
   };
   const view: "student" | "faculty" =
     role === "demo"
