@@ -36,6 +36,8 @@ export const studentProfileFields = {
   bio: v.optional(v.string()),
   // Weekly availability as comma-separated day-hour tokens ("mon-9,tue-14").
   schedule: v.optional(v.string()),
+  // Marks the sample student that powers the public demo experience.
+  demoSample: v.optional(v.boolean()),
 };
 
 export default defineSchema({

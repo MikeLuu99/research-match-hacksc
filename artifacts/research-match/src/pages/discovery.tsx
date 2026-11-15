@@ -89,31 +89,12 @@ export default function Discovery() {
         <h1 className="font-display text-3xl md:text-4xl leading-[1.05] mt-2 mb-6">
           AI matches for <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">your profile</em>
         </h1>
-        {account.isAuthenticated && account.viewer?.accountType === "student" && account.viewer.hasStudentProfile ? (
-          <div className="rise space-y-4">
+        <div className="rise space-y-4">
+          {account.isAuthenticated && account.viewer?.accountType === "student" && (
             <SetupChecklist />
-            <AiMatches />
-          </div>
-        ) : (
-          <div className="rise border border-primary/20 bg-card p-6 max-w-2xl">
-            <h2 className="font-display text-xl">Sign in to see your AI matches</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              USC students get labs ranked by their skills, interests and
-              schedule. You can still browse the full catalog below, or try
-              the sample student in the demo.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Link className="public-button button-small" href="/sign-in">
-                Sign in with USC
-                <ArrowUpRight size={15} />
-              </Link>
-              <Link href="/demo" className="secondary-link">
-                Use the demo student
-                <ArrowRight size={15} />
-              </Link>
-            </div>
-          </div>
-        )}
+          )}
+          <AiMatches />
+        </div>
       </section>
 
             <section className="sticky top-0 z-20 bg-background/90 backdrop-blur border-y px-5 md:px-10 py-3 space-y-3">

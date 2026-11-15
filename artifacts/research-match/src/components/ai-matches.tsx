@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
 import { InterestButton, SaveButton } from "@/components/bits";
+import { useAccount } from "@/lib/auth";
 
 type MatchResult = {
   sourceId: string;
@@ -23,6 +24,8 @@ type MatchResult = {
 
 type MatchesState = {
   ready: boolean;
+  demo?: boolean;
+  studentName?: string;
   matches: MatchResult[];
 };
 
@@ -44,7 +47,13 @@ function cnScore(similarity: number) {
 // embedding. Vector search runs action-side, so this loads on demand and can
 // be refreshed after a profile edit.
 export function AiMatches() {
+  const account = useAccount();
+  const realUser =
+    account.isAuthenticated &&
+    account.viewer?.accountType === "student" &&
+    account.viewer.hasStudentProfile;
   const myMatches = useAction(api.discovery.myMatches);
+  const demoMatches = useAction(api.discovery.demoMatches);
   const seedLabs = useMutation(api.projects.seedLabs);
   const embedPending = useAction(api.projects.embedPendingProjects);
   const [state, setState] = useState<MatchesState | null>(null);
@@ -56,7 +65,9 @@ export function AiMatches() {
     setLoading(true);
     setError("");
     try {
-      const result = (await myMatches({})) as MatchesState;
+      const result = (realUser
+        ? await myMatches({})
+        : await demoMatches({})) as MatchesState;
       // Empty catalog: seed + embed once, then re-rank. The USC-email gate
       // on seeding keeps this off for unauthenticated visitors.
       if (result.ready && result.matches.length === 0 && !seeding) {
@@ -79,7 +90,7 @@ export function AiMatches() {
       setSeeding(false);
       setLoading(false);
     }
-  }, [myMatches, seedLabs, embedPending, seeding]);
+  }, [realUser, myMatches, demoMatches, seedLabs, embedPending, seeding]);
 
   useEffect(() => {
     void run();
@@ -124,6 +135,11 @@ export function AiMatches() {
         <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
           <Sparkles className="h-3 w-3 text-chart-2" /> Ranked by AI relevance
           (semantic + keywords)
+          {state.demo && (
+            <span className="ml-2 bg-chart-2 px-2 py-0.5 text-accent-foreground">
+              demo student · {state.studentName ?? "Jane Doe"}
+            </span>
+          )}
         </span>
         <button
           onClick={() => void run()}

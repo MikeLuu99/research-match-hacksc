@@ -16,6 +16,7 @@ const projectsByIdsRef = makeFunctionReference<"query">("discovery:projectsByIds
 const labByIdRef = makeFunctionReference<"query">("discovery:labById");
 const studentsByIdsRef = makeFunctionReference<"query">("discovery:studentsByIds");
 const matchLexiconRef = makeFunctionReference<"query">("discovery:matchLexicon");
+const demoLexiconRef = makeFunctionReference<"query">("discovery:demoLexicon");
 const candidateLexiconRef = makeFunctionReference<"query">(
   "discovery:candidateLexicon",
 );
@@ -159,6 +160,119 @@ export const studentsByIds = internalQuery({
       });
     }
     return out;
+  },
+});
+
+// The demo sample student's profile: powers the public demo experience so
+// visitors see the same AI ranking as signed-in students.
+export const demoLexicon = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const student = await ctx.db
+      .query("students")
+      .withIndex("by_owner", (q) => q.eq("ownerSubject", "demo"))
+      .unique();
+    if (!student || !student.demoSample) return null;
+    if (student.embedding.length === 0) return null;
+    if (student.embeddingModel !== EMBEDDING_MODEL_ID) return null;
+    const studentTokens = tokenize(
+      [
+        student.major,
+        ...student.skills,
+        ...student.interests,
+        ...student.experience.map(
+          (entry: { role: string; org: string; description: string }) =>
+            `${entry.role} ${entry.org} ${entry.description}`,
+        ),
+      ].join(" "),
+    );
+    const projects = await ctx.db.query("projects").collect();
+    return {
+      embedding: student.embedding,
+      studentTokens,
+      projects: projects.map((project) => ({
+        id: project._id,
+        text: [
+          project.title,
+          project.department,
+          project.faculty,
+          project.description,
+          ...project.requiredSkills,
+          ...project.preferredSkills,
+        ].join(" "),
+      })),
+    };
+  },
+});
+
+export const demoMatches = action({
+  args: {},
+  returns: v.object({
+    ready: v.boolean(),
+    demo: v.boolean(),
+    studentName: v.optional(v.string()),
+    matches: v.array(
+      v.object({
+        sourceId: v.string(),
+        title: v.string(),
+        department: v.string(),
+        summary: v.string(),
+        faculty: v.string(),
+        sourceUrl: v.optional(v.string()),
+        similarity: v.number(),
+        open: v.boolean(),
+      }),
+    ),
+  }),
+  handler: async (ctx) => {
+    const lexicon: {
+      embedding: number[];
+      studentTokens: string[];
+      projects: { id: string; text: string }[];
+    } | null = await ctx.runQuery(demoLexiconRef, {});
+    if (!lexicon) return { ready: false, demo: true, matches: [] };
+    const vectorHits = await ctx.vectorSearch("projects", "by_embedding", {
+      vector: lexicon.embedding,
+      limit: 24,
+    });
+    const bm25 = bm25Scores(lexicon.studentTokens, lexicon.projects);
+    const ranked = hybridRank(
+      vectorHits.map((hit) => ({ id: String(hit._id), similarity: hit._score })),
+      bm25,
+      10,
+    );
+    if (!ranked.length)
+      return { ready: true, demo: true, matches: [] };
+    const docs: {
+      id: string;
+      sourceId: string;
+      title: string;
+      department: string;
+      summary: string;
+      faculty: string;
+      sourceUrl?: string;
+      open: boolean;
+    }[] = await ctx.runQuery(projectsByIdsRef, {
+      ids: ranked.map((entry) => entry.id as never),
+    });
+    const scoreById = new Map(ranked.map((entry) => [entry.id, entry.score]));
+    return {
+      ready: true,
+      demo: true,
+      studentName: "Jane Doe",
+      matches: docs
+        .map((doc) => ({
+          sourceId: doc.sourceId,
+          title: doc.title,
+          department: doc.department,
+          summary: doc.summary,
+          faculty: doc.faculty,
+          sourceUrl: doc.sourceUrl,
+          similarity: scoreById.get(doc.id) ?? 0,
+          open: doc.open,
+        }))
+        .sort((a, b) => b.similarity - a.similarity),
+    };
   },
 });
 
