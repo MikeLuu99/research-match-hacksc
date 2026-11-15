@@ -268,7 +268,7 @@ function ProfileFields({
         <ExperienceEditor pending={pending} initial={initial} />
       </fieldset>
       <div className="auth-field">
-        <FieldLabel htmlFor="profile-schedule">
+        <FieldLabel htmlFor="profile-schedule" optional>
           Weekly availability
         </FieldLabel>
         <p className="auth-help">
