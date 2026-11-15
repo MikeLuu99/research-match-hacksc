@@ -34,6 +34,10 @@ export async function studentProfileForOwner(
     .unique();
 }
 
+// Temporarily disabled so two test accounts (e.g. one personal Gmail) can
+// exercise the student <-> faculty interactions. Flip to true before launch.
+export const REQUIRE_USC_EMAIL = false;
+
 export function isUscEmail(email: string | null | undefined) {
   return Boolean(email && email.toLowerCase().endsWith("@usc.edu"));
 }
@@ -128,7 +132,7 @@ export const completeProfile = mutation({
     const user = await authComponent.getAuthUser(ctx);
     const existing = await accountProfileFor(ctx, user._id);
     if (existing) return null;
-    if (!isUscEmail(user.email))
+    if (REQUIRE_USC_EMAIL && !isUscEmail(user.email))
       throw new ConvexError(
         "Sign in with your USC email (ending in @usc.edu) to create an account.",
       );
@@ -153,7 +157,7 @@ export const generateResumeUploadUrl = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new ConvexError("Sign in to upload a resume.");
     const uploader = await authComponent.safeGetAuthUser(ctx);
-    if (!uploader || !isUscEmail(uploader.email))
+    if (REQUIRE_USC_EMAIL && (!uploader || !isUscEmail(uploader.email)))
       throw new ConvexError(
         "Only USC accounts (email ending in @usc.edu) can upload resumes.",
       );

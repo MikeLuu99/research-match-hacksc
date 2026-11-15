@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LABS } from "./labData";
 import { api } from "./_generated/api";
 import { makeTest, signIn } from "../test/helpers";
+import { REQUIRE_USC_EMAIL } from "./users";
 
 describe("labCatalogStatus", () => {
   it("starts empty", async () => {
@@ -19,7 +20,7 @@ describe("seedLabs", () => {
     await expect(t.mutation(api.projects.seedLabs, {})).rejects.toThrow();
   });
 
-  it("refuses non-USC accounts", async () => {
+  it.skipIf(!REQUIRE_USC_EMAIL)("refuses non-USC accounts", async () => {
     const test = makeTest();
     const outsider = await signIn(test, "outsider@gmail.com");
     await expect(outsider.mutation(api.projects.seedLabs, {})).rejects.toThrow(

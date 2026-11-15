@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeTest, signIn, type TestContext } from "../test/helpers";
+import { REQUIRE_USC_EMAIL } from "./users";
 import { api } from "./_generated/api";
 
 const PROFILE = {
@@ -39,7 +40,7 @@ describe("current", () => {
 });
 
 describe("completeProfile", () => {
-  it("rejects non-USC email addresses", async () => {
+  it.skipIf(!REQUIRE_USC_EMAIL)("rejects non-USC email addresses", async () => {
     const test = makeTest();
     const me = await signIn(test, "outsider@gmail.com");
     await expect(

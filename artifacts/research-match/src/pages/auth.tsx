@@ -12,6 +12,7 @@ import {
 } from "@/components/auth-form";
 import { StudentProfileForm } from "@/components/student-profile-form";
 import { UscEmailGate } from "@/components/usc-email-gate";
+import { REQUIRE_USC_EMAIL } from "@/lib/config";
 
 function readRole(): AccountType {
   try {
@@ -144,7 +145,11 @@ export default function AuthPage({
         replace
       />
     );
-  if (account.isAuthenticated && !account.viewer?.uscEmail)
+  if (
+    REQUIRE_USC_EMAIL &&
+    account.isAuthenticated &&
+    !account.viewer?.uscEmail
+  )
     return <UscEmailGate />;
   if (account.isAuthenticated)
     return (

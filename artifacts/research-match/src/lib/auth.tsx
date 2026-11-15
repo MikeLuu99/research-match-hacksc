@@ -9,6 +9,7 @@ import {
 import { authClient } from "./auth-client";
 import { api } from "./convex-api";
 import { authErrorMessage, type AccountType } from "./auth-validation";
+import { REQUIRE_USC_EMAIL } from "./config";
 
 interface Account {
   isConfigured: boolean;
