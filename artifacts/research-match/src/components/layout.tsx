@@ -27,7 +27,6 @@ const STUDENT_NAV: NavItem[] = [
   { href: "/student", label: "Discover", icon: Compass },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/applications", label: "Interest tracker", icon: Send },
-  { href: "/profile", label: "My profile", icon: UserRound },
 ];
 
 const FACULTY_NAV: NavItem[] = [
@@ -37,10 +36,9 @@ const FACULTY_NAV: NavItem[] = [
   { href: "/faculty/inbox", label: "Interest inbox", icon: Inbox },
 ];
 
-const FAC_PROFILE: NavItem = {
-  href: "/faculty/profile",
-  label: "Faculty profile",
-  icon: GraduationCap,
+const BOTTOM_PROFILE: Record<"student" | "faculty", NavItem> = {
+  student: { href: "/profile", label: "Student profile", icon: UserRound },
+  faculty: { href: "/faculty/profile", label: "Faculty profile", icon: GraduationCap },
 };
 
 // Demo-only view switch. Signed-in accounts keep their single role.
@@ -260,11 +258,9 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
           )}
           {nav.map(navLink)}
-          {view === "faculty" && (
-            <div className="md:mt-auto md:border-t md:border-sidebar-border md:pt-2">
-              {navLink(FAC_PROFILE)}
-            </div>
-          )}
+          <div className="md:mt-auto md:border-t md:border-sidebar-border md:pt-2">
+            {navLink(BOTTOM_PROFILE[view])}
+          </div>
           <LogOutButton />
         </nav>
         <div className="hidden md:block p-5 text-xs text-sidebar-foreground/60 leading-relaxed">
