@@ -39,6 +39,7 @@ export type LiveStudent = Student;
 type Student = {
   id: string;
   name: string;
+  photoUrl?: string;
   major: string;
   schedule?: string;
   minors: string[];
@@ -50,6 +51,34 @@ type Student = {
   workStudy: boolean;
   seekingCredit: boolean;
 };
+
+// Student's optional profile photo, or their initials when none is set.
+function StudentAvatar({ student, size }: { student: Student; size: number }) {
+  const initials = student.name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+  return (
+    <span
+      className="grid shrink-0 place-items-center overflow-hidden rounded-full border border-primary/20 bg-primary/8 font-mono text-xs text-primary"
+      style={{ width: size, height: size }}
+      aria-hidden="true"
+    >
+      {student.photoUrl ? (
+        <img
+          src={student.photoUrl}
+          alt=""
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        initials
+      )}
+    </span>
+  );
+}
 
 function SkillChips({ items }: { items: string[] }) {
   if (!items.length)
@@ -96,16 +125,19 @@ function PrivateFields() {
 function StudentDetail({ student }: { student: Student }) {
   return (
     <div className="space-y-5">
-      <div>
-        <DialogTitle className="font-display text-2xl">
-          {student.name}
-        </DialogTitle>
-        <DialogDescription className="mt-1">
-          {student.major}
-          {student.minors.length ? ` · Minors: ${student.minors.join(", ")}` : ""}{" "}
-          · {YEAR_LABEL[student.schoolYear]} · {student.hoursPerWeek} h/week
-          available
-        </DialogDescription>
+      <div className="flex items-center gap-4">
+        <StudentAvatar student={student} size={64} />
+        <div className="min-w-0">
+          <DialogTitle className="font-display text-2xl">
+            {student.name}
+          </DialogTitle>
+          <DialogDescription className="mt-1">
+            {student.major}
+            {student.minors.length ? ` · Minors: ${student.minors.join(", ")}` : ""}{" "}
+            · {YEAR_LABEL[student.schoolYear]} · {student.hoursPerWeek} h/week
+            available
+          </DialogDescription>
+        </div>
       </div>
       <div className="flex flex-wrap gap-2">
         {student.workStudy && (
@@ -225,11 +257,14 @@ function CandidateCard({
           )}
         </button>
       )}
-      <div className="pr-10">
-        <p className="font-semibold">{student.name}</p>
-        <p className="text-xs text-muted-foreground">
-          {student.major} · {YEAR_LABEL[student.schoolYear]}
-        </p>
+      <div className="flex items-center gap-3 pr-10">
+        <StudentAvatar student={student} size={40} />
+        <div className="min-w-0">
+          <p className="font-semibold">{student.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {student.major} · {YEAR_LABEL[student.schoolYear]}
+          </p>
+        </div>
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1">
