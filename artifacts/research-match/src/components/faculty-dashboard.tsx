@@ -93,7 +93,7 @@ function PrivateFields() {
   );
 }
 
-export function StudentDetail({ student }: { student: Student }) {
+function StudentDetail({ student }: { student: Student }) {
   return (
     <div className="space-y-5">
       <div>

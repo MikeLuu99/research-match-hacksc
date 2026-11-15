@@ -42,7 +42,7 @@ export interface FacultyProfile {
   accepting: boolean;
 }
 
-export const DEFAULT_FACULTY: FacultyProfile = {
+const DEFAULT_FACULTY: FacultyProfile = {
   name: "Dr. Imani Okafor (fictional)",
   title: "Associate Professor",
   department: "Preventive Medicine",
