@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { STATUS_LABEL, useStore, type InterestStatus } from "@/lib/store";
+import { FacultyDashboard } from "@/components/faculty-dashboard";
+import { useAccount } from "@/lib/auth";
 import { DEMO_STUDENTS, DEPARTMENTS, type Level, type Project, type RecruitStatus } from "@/lib/data";
 import { matchProject } from "@/lib/matching";
 import { cn } from "@/lib/utils";
@@ -81,6 +83,15 @@ function ProjectForm({ initial, onSave, onCancel }: { initial: Project | null; o
 const FAC_STAGES: InterestStatus[] = ["interested", "conversation", "accepted", "declined"];
 
 export default function Faculty() {
+  const account = useAccount();
+  // Signed-in faculty get the real candidate dashboard over their Convex
+  // account; the public demo keeps the browser-local fictional workspace.
+  if (account.isAuthenticated && account.viewer?.accountType === "faculty")
+    return <FacultyDashboard />;
+  return <DemoFaculty />;
+}
+
+function DemoFaculty() {
   const { projects, profile, interests, upsertProject, removeProject, setInterestStatus } = useStore();
   const { toast } = useToast();
   const [selId, setSelId] = useState<string | null>(projects[0]?.id ?? null);

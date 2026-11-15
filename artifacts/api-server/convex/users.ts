@@ -24,15 +24,22 @@ async function studentProfileForOwner(
     .unique();
 }
 
+async function accountProfileFor(
+  ctx: { db: GenericDatabaseReader<DataModel> },
+  authUserId: string,
+) {
+  return await ctx.db
+    .query("accountProfiles")
+    .withIndex("by_auth_user", (q) => q.eq("authUserId", authUserId))
+    .unique();
+}
+
 export const current = query({
   args: {},
   handler: async (ctx) => {
     const user = await authComponent.safeGetAuthUser(ctx);
     if (!user) return null;
-    const profile = await ctx.db
-      .query("accountProfiles")
-      .withIndex("by_auth_user", (q) => q.eq("authUserId", user._id))
-      .unique();
+    const profile = await accountProfileFor(ctx, user._id);
     const student = profile
       ? await studentProfileForOwner(ctx, user._id)
       : null;
@@ -54,6 +61,56 @@ export const myStudentProfile = query({
   },
 });
 
+const studentListing = v.object({
+  id: v.string(),
+  name: v.string(),
+  major: v.string(),
+  schoolYear,
+  skills: v.array(v.string()),
+  interests: v.array(v.string()),
+  experience: v.array(
+    v.object({
+      role: v.string(),
+      org: v.string(),
+      description: v.string(),
+    }),
+  ),
+  hoursPerWeek: v.number(),
+  workStudy: v.boolean(),
+  seekingCredit: v.boolean(),
+});
+
+// Faculty discovery over student profiles. Only explicit recruitment-consent
+// records are returned, and resume files/parse timestamps stay private.
+export const listStudents = query({
+  args: {},
+  returns: v.array(studentListing),
+  handler: async (ctx) => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+    if (!user) throw new ConvexError("Sign in to view student candidates.");
+    const account = await accountProfileFor(ctx, user._id);
+    if (!account || account.accountType !== "faculty")
+      throw new ConvexError(
+        "Only faculty accounts can view student candidates.",
+      );
+    const students = await ctx.db.query("students").collect();
+    return students
+      .filter((student) => student.recruitmentConsent)
+      .map((student) => ({
+        id: student._id,
+        name: student.name,
+        major: student.major,
+        schoolYear: student.schoolYear,
+        skills: student.skills,
+        interests: student.interests,
+        experience: student.experience,
+        hoursPerWeek: student.hoursPerWeek,
+        workStudy: student.workStudy,
+        seekingCredit: student.seekingCredit,
+      }));
+  },
+});
+
 export const completeProfile = mutation({
   args: {
     name: v.string(),
@@ -62,10 +119,7 @@ export const completeProfile = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    const existing = await ctx.db
-      .query("accountProfiles")
-      .withIndex("by_auth_user", (q) => q.eq("authUserId", user._id))
-      .unique();
+    const existing = await accountProfileFor(ctx, user._id);
     if (existing) return null;
     const name = args.name.trim();
     if (name.length < 2 || name.length > 80)
@@ -103,10 +157,7 @@ export const upsertStudentProfile = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    const account = await ctx.db
-      .query("accountProfiles")
-      .withIndex("by_auth_user", (q) => q.eq("authUserId", user._id))
-      .unique();
+    const account = await accountProfileFor(ctx, user._id);
     if (!account || account.accountType !== "student")
       throw new ConvexError("Only student accounts can save a student profile.");
 

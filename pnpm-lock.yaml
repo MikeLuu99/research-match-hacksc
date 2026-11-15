@@ -199,6 +199,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.9
+      convex-test:
+        specifier: ^0.0.71
+        version: 0.0.71(convex@1.50.0(react@19.1.0))
       esbuild:
         specifier: 0.28.2
         version: 0.28.2
@@ -1647,6 +1650,11 @@ packages:
         optional: true
       zod:
         optional: true
+
+  convex-test@0.0.71:
+    resolution: {integrity: sha512-sHptDSWL0b2Og6to5R9/GoCHF7XGNXIAxQDJnA8UYYZa8yym9mfC03h3C47LS3Bj2BIO9lD0pKIv2H7dP+VKPA==}
+    peerDependencies:
+      convex: ^1.43.0
 
   convex@1.50.0:
     resolution: {integrity: sha512-WzzCad5hyzU4zzW0ChyUGB3Mil4LgRYMYii9cyQtC24WQnfaRgkZB0IKyhIIgRm1a2IXiGJoZnVYYSfttiap3Q==}
@@ -4000,6 +4008,10 @@ snapshots:
       react: 19.1.0
       typescript: 5.9.3
       zod: 4.6.5
+
+  convex-test@0.0.71(convex@1.50.0(react@19.1.0)):
+    dependencies:
+      convex: 1.50.0(react@19.1.0)
 
   convex@1.50.0(react@19.1.0):
     dependencies:
