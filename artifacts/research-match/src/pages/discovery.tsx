@@ -6,6 +6,7 @@ import { Layout, EmptyState } from "@/components/layout";
 import { AiMatches } from "@/components/ai-matches";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { useAccount } from "@/lib/auth";
+import { useCatalogProjects } from "@/lib/use-catalog-projects";
 import { RecruitPill, ProjectGrid } from "@/components/bits";
 import { ProjectDialog } from "@/components/project-dialog";
 import { useStore } from "@/lib/store";
@@ -32,7 +33,8 @@ function Chip({ on, onClick, children, id, size = "sm" }: { on: boolean; onClick
 
 export default function Discovery() {
   const account = useAccount();
-  const { projects, profile } = useStore();
+  const { profile } = useStore();
+  const catalog = useCatalogProjects();
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("all");
   // Chips are filters: nothing toggled = the full catalog. Selecting one or
@@ -46,7 +48,7 @@ export default function Discovery() {
   const PAGE_SIZE = 20;
   const [page, setPage] = useState(1);
 
-  const scored = useMemo(() => projects.map((p) => ({ p, m: matchProject(profile, p) })), [projects, profile]);
+  const scored = useMemo(() => catalog.map((p) => ({ p, m: matchProject(profile, p) })), [catalog, profile]);
   const list = useMemo(() => {
     const t = q.trim().toLowerCase();
     return scored
@@ -62,7 +64,7 @@ export default function Discovery() {
       .sort((a, b) => (sort === "match" ? b.m.score - a.m.score : sort === "hours" ? a.p.minHours - b.p.minHours : a.p.title.localeCompare(b.p.title)));
   }, [scored, q, dept, statuses, paid, credit, beginner, sort]);
 
-  const depts = Array.from(new Set([...DEPARTMENTS, ...projects.map((p) => p.department)]));
+  const depts = Array.from(new Set([...DEPARTMENTS, ...catalog.map((p) => p.department)]));
   const toggleStatus = (s: RecruitStatus) => setStatuses((x) => (x.includes(s) ? x.filter((y) => y !== s) : [...x, s]));
   const clear = () => {
     setQ("");
@@ -128,7 +130,7 @@ export default function Discovery() {
           <Chip id="paid" on={paid} onClick={() => setPaid(!paid)}>Paid</Chip>
           <Chip id="credit" on={credit} onClick={() => setCredit(!credit)}>Academic credit</Chip>
           <Chip id="beginner" on={beginner} onClick={() => setBeginner(!beginner)}>Beginner friendly</Chip>
-          <span className="ml-auto text-sm text-muted-foreground font-mono" data-testid="text-result-count">{list.length} of {projects.length}</span>
+          <span className="ml-auto text-sm text-muted-foreground font-mono" data-testid="text-result-count">{list.length} of {catalog.length}</span>
         </div>
       </section>
 

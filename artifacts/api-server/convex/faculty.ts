@@ -106,6 +106,16 @@ function facultyView(project: {
   };
 }
 
+// Public: faculty-created listings, mapped to the frontend Project shape so
+// students can browse, search and save them alongside the USC catalog.
+export const publishedProjects = query({
+  args: {},
+  handler: async (ctx) => {
+    const projects = await ctx.db.query("projects").collect();
+    return projects.filter((p) => p.ownerId !== undefined).map(facultyView);
+  },
+});
+
 export const myProjects = query({
   args: {},
   handler: async (ctx) => {

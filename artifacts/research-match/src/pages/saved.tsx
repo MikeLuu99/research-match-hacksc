@@ -2,15 +2,17 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
 import { ProjectGrid } from "@/components/bits";
+import { useCatalogProjects } from "@/lib/use-catalog-projects";
 import { ProjectDialog } from "@/components/project-dialog";
 import { useStore } from "@/lib/store";
 import { matchProject } from "@/lib/matching";
 import type { Project } from "@/lib/data";
 
 export default function Saved() {
-  const { projects, saved, profile } = useStore();
+  const { saved, profile } = useStore();
+  const catalog = useCatalogProjects();
   const [open, setOpen] = useState<Project | null>(null);
-  const list = projects.filter((p) => saved.includes(p.id)).map((p) => ({ p, m: matchProject(profile, p) }));
+  const list = catalog.filter((p) => saved.includes(p.id)).map((p) => ({ p, m: matchProject(profile, p) }));
   return (
     <Layout>
       <PageHeader eyebrow="Saved" title="Your shortlist">Labs you bookmarked. Closed listings stay here so you can check back next term.</PageHeader>
