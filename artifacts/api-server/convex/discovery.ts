@@ -118,7 +118,7 @@ export const projectsByIds = internalQuery({
         summary: project.description,
         faculty: project.faculty,
         sourceUrl: project.sourceUrl,
-        open: project.recruitmentStatus === "open",
+        open: project.recruitmentStatus !== "closed",
       });
     }
     return out;

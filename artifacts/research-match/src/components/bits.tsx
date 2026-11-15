@@ -175,7 +175,7 @@ function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResult; onOp
         {p.paid && <span className="inline-flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" />Paid</span>}
         {m.learningPotential && <span className="inline-flex items-center gap-1 text-chart-3 font-medium"><Sprout className="h-3.5 w-3.5" />Learning potential</span>}
         <span className="ml-auto text-primary font-medium opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">Why this match</span>
-        <InterestButton projectId={p.sourceId ?? p.id} open={p.status === "open"} />
+        <InterestButton projectId={p.sourceId ?? p.id} open={p.status !== "closed"} />
       </div>
     </article>
   );

@@ -27,8 +27,10 @@ export const expressInterest = mutation({
       .withIndex("by_source", (q) => q.eq("sourceId", args.sourceId))
       .unique();
     if (!project) throw new ConvexError("Lab not found.");
-    if (project.recruitmentStatus !== "open")
-      throw new ConvexError("This lab is not accepting interest right now.");
+    if (project.recruitmentStatus === "closed")
+      throw new ConvexError(
+        "This lab is closed — it is not accepting interest right now.",
+      );
     const existing = await ctx.db
       .query("interests")
       .withIndex("by_student", (q) => q.eq("studentId", profile._id))
