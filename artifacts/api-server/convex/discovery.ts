@@ -106,8 +106,17 @@ export const myMatches = action({
     } | null = await ctx.runQuery(studentProfileBySubjectRef, {
       subject: identity.subject,
     });
-    if (!profile || profile.embedding.length === 0)
+    if (!profile) return { ready: false, matches: [] };
+    if (profile.embedding.length === 0) {
+      // Self-heal legacy profiles saved before the embedding pipeline:
+      // regenerate the vector instead of waiting forever.
+      await ctx.scheduler.runAfter(
+        0,
+        makeFunctionReference<"action">("users:embedStudent"),
+        { studentId: profile.id as never },
+      );
       return { ready: false, matches: [] };
+    }
     if (profile.embeddingModel !== EMBEDDING_MODEL_ID)
       return { ready: false, matches: [] };
     const matches = await ctx.vectorSearch("projects", "by_embedding", {
