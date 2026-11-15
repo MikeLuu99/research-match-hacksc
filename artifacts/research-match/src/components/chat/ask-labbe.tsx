@@ -136,7 +136,7 @@ export function AskLabbe() {
       <div className="flex h-[calc(100dvh-330px)] min-h-[560px] flex-col border border-primary/20 bg-card">
       <div className="flex items-center gap-2 border-b border-primary/15 px-5 py-4">
         <Sparkles className="text-chart-2" size={18} />
-        <h2 className="font-display text-xl">Ask LABBE</h2>
+        <h2 className="font-display text-xl">Ask LABBE AI</h2>
         <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           AI over {82}+ USC labs
         </span>

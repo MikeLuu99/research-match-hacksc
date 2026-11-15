@@ -26,6 +26,7 @@ type NavItem = { href: string; label: string; icon: typeof Compass };
 
 const STUDENT_NAV: NavItem[] = [
   { href: "/student", label: "Discover", icon: Compass },
+  { href: "/ask", label: "Ask LABBE AI", icon: MessageCircleQuestion },
   { href: "/ask", label: "Ask LABBE", icon: MessageCircleQuestion },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/applications", label: "Interest tracker", icon: Send },
@@ -224,7 +225,7 @@ export function Layout({ children }: { children: ReactNode }) {
         )}
       >
         <div className="hidden md:flex items-start justify-between px-4 pt-7 pb-6">
-          <Link href="/" className="block group" data-testid="link-home">
+          <div data-testid="link-home">
             <div className="flex items-center gap-2">
               <img src="/logo.svg" alt="" className="h-8 w-8 object-contain transition-colors" />
               {!collapsed && (
@@ -236,7 +237,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 Demo · not an official USC product
               </p>
             )}
-          </Link>
+          </div>
           <button
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             onClick={toggleCollapsed}
