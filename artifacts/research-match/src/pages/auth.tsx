@@ -5,6 +5,7 @@ import { chooseRole } from "@/pages/landing";
 import { useAccount } from "@/lib/auth";
 import type { AccountType } from "@/lib/auth-validation";
 import { AuthFrame } from "@/components/auth-frame";
+import { InfoTip } from "@/components/info-tip";
 import {
   AUTH_COPY,
   CredentialsForm,
@@ -74,10 +75,22 @@ function OnboardingForm() {
         >
           Switch to {accountType === "student" ? "faculty" : "student"}
         </button>
+        <InfoTip
+          testId="tip-account-type"
+          label={`What a ${accountType === "faculty" ? "faculty" : "student"} account includes`}
+        >
+          {accountType === "faculty"
+            ? "Post research projects, browse AI-ranked student candidates who opted in, and manage interest requests in one faculty workspace."
+            : "Get AI project matches across every USC department, save labs to your shortlist, send interest requests, and track replies — all in one student workspace."}
+        </InfoTip>
       </p>
       <p className="auth-help">
         Your profile starts private. You decide when to share it with research
         teams.
+        <InfoTip testId="tip-privacy" label="Who can see your profile">
+          Your profile stays private by default. Others only see it after you
+          express interest in a lab or turn on recruitment visibility yourself.
+        </InfoTip>
       </p>
       {error && (
         <p className="auth-error" role="alert">
