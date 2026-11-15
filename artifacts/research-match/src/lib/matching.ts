@@ -6,7 +6,7 @@ import type { Project, StudentProfile } from "./data";
 
 const STOP = new Set("a an the and or of to in for with on at by from is are be as we our this that it into can how who".split(" "));
 
-export function tokenize(text: string): string[] {
+function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .replace(/[^a-z0-9+#\s-]/g, " ")
@@ -20,7 +20,7 @@ function vec(parts: [string, number][]): Map<string, number> {
   return m;
 }
 
-export function cosine(a: Map<string, number>, b: Map<string, number>): number {
+function cosine(a: Map<string, number>, b: Map<string, number>): number {
   let dot = 0, na = 0, nb = 0;
   a.forEach((v, k) => { na += v * v; const o = b.get(k); if (o) dot += v * o; });
   b.forEach((v) => { nb += v * v; });

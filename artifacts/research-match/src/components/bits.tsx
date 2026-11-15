@@ -66,7 +66,7 @@ export function SaveButton({ id }: { id: string }) {
   );
 }
 
-export function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResult; onOpen: () => void; i?: number }) {
+function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResult; onOpen: () => void; i?: number }) {
   return (
     <article
       data-testid={`card-project-${p.id}`}
@@ -102,5 +102,23 @@ export function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResul
         <span className="ml-auto text-primary font-medium opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">Why this match</span>
       </div>
     </article>
+  );
+}
+
+export function ProjectGrid({
+  list,
+  onOpen,
+  className,
+}: {
+  list: { p: Project; m: MatchResult }[];
+  onOpen: (p: Project) => void;
+  className: string;
+}) {
+  return (
+    <div className={cn("grid gap-4", className)}>
+      {list.map(({ p, m }, i) => (
+        <ProjectCard key={p.id} p={p} m={m} i={i} onOpen={() => onOpen(p)} />
+      ))}
+    </div>
   );
 }

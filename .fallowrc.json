@@ -4,6 +4,17 @@
     "**/convex/_generated/**",
     "**/dist/**",
     "**/*.tsbuildinfo",
-    "!artifacts/mockup-sandbox/src/.generated/**"
-  ]
+    "artifacts/mockup-sandbox/**"
+  ],
+  "rules": {
+    "complexity-cyclomatic": "warn",
+    "complexity-cognitive": "warn",
+    "complexity-crap": "warn",
+    "high-complexity": "warn"
+  },
+  "duplicates": {
+    "ignore": [
+      "**/index.css"
+    ]
+  }
 }

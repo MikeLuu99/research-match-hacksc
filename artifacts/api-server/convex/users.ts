@@ -1,16 +1,8 @@
 import { ConvexError, v } from "convex/values";
 import type { GenericDatabaseReader } from "convex/server";
 import { authComponent } from "./auth";
+import { schoolYear, studentProfileFields } from "./schema";
 import { action, mutation, query, type DataModel } from "./model";
-
-const schoolYear = v.union(
-  v.literal("freshman"),
-  v.literal("sophomore"),
-  v.literal("junior"),
-  v.literal("senior"),
-  v.literal("masters"),
-  v.literal("phd"),
-);
 
 function cleanTagList(raw: string[], label: string, maxItems: number) {
   const tags = raw
@@ -104,21 +96,7 @@ export const generateResumeUploadUrl = action({
 // once embeddings are backfilled.
 export const upsertStudentProfile = mutation({
   args: {
-    major: v.string(),
-    schoolYear,
-    skills: v.array(v.string()),
-    interests: v.array(v.string()),
-    experience: v.array(
-      v.object({
-        role: v.string(),
-        org: v.string(),
-        description: v.string(),
-      }),
-    ),
-    hoursPerWeek: v.number(),
-    workStudy: v.boolean(),
-    seekingCredit: v.boolean(),
-    recruitmentConsent: v.boolean(),
+    ...studentProfileFields,
     resumeStorageId: v.optional(v.string()),
     resumeFileName: v.optional(v.string()),
   },

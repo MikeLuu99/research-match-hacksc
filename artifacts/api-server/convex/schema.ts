@@ -3,6 +3,36 @@ import { v } from "convex/values";
 
 // A model identifier is persisted so vectors from different models are never
 // compared accidentally. Configure the embedding provider before importing.
+export const schoolYear = v.union(
+  v.literal("freshman"),
+  v.literal("sophomore"),
+  v.literal("junior"),
+  v.literal("senior"),
+  v.literal("masters"),
+  v.literal("phd"),
+);
+
+// Profile fields shared between the students table and the profile upsert
+// mutation so both stay in sync.
+export const studentProfileFields = {
+  major: v.string(),
+  schoolYear,
+  skills: v.array(v.string()),
+  interests: v.array(v.string()),
+  experience: v.array(
+    v.object({
+      role: v.string(),
+      org: v.string(),
+      description: v.string(),
+    }),
+  ),
+  hoursPerWeek: v.number(),
+  workStudy: v.boolean(),
+  seekingCredit: v.boolean(),
+  // Only explicit opt-in records may appear in reverse matching.
+  recruitmentConsent: v.boolean(),
+};
+
 export default defineSchema({
   accountProfiles: defineTable({
     authUserId: v.string(),
@@ -39,29 +69,7 @@ export default defineSchema({
   students: defineTable({
     ownerSubject: v.string(),
     name: v.string(),
-    major: v.string(),
-    schoolYear: v.union(
-      v.literal("freshman"),
-      v.literal("sophomore"),
-      v.literal("junior"),
-      v.literal("senior"),
-      v.literal("masters"),
-      v.literal("phd"),
-    ),
-    skills: v.array(v.string()),
-    interests: v.array(v.string()),
-    experience: v.array(
-      v.object({
-        role: v.string(),
-        org: v.string(),
-        description: v.string(),
-      }),
-    ),
-    hoursPerWeek: v.number(),
-    workStudy: v.boolean(),
-    seekingCredit: v.boolean(),
-    // Only explicit opt-in records may appear in reverse matching.
-    recruitmentConsent: v.boolean(),
+    ...studentProfileFields,
     // Resume is stored as a file; parsed structured data lands in
     // experience/skills. Embeddings are generated once a provider is configured.
     resumeStorageId: v.optional(v.string()),

@@ -5,7 +5,7 @@ import {
   type ReactNode,
 } from 'react';
 
-export interface ErrorFallbackProps {
+interface ErrorFallbackProps {
   error: Error;
   resetError: () => void;
 }

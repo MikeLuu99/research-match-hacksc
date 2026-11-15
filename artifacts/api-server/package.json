@@ -13,10 +13,8 @@
   "dependencies": {
     "@convex-dev/better-auth": "0.13.0",
     "@workspace/api-zod": "workspace:*",
-    "@workspace/db": "workspace:*",
     "better-auth": "1.7.23",
     "convex": "^1.50.0",
-    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "drizzle-orm": "catalog:",
     "express": "^5.3.0",
@@ -25,11 +23,9 @@
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
-    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
-    "convex-test": "^0.0.71",
     "esbuild": "0.28.2",
     "esbuild-plugin-pino": "^2.3.3",
     "pino-pretty": "^13.2.0",

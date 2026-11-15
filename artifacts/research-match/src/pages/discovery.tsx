@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Search, X, ArrowUpRight } from "lucide-react";
 import { Layout, EmptyState } from "@/components/layout";
-import { ProjectCard, RecruitPill } from "@/components/bits";
+import { RecruitPill, ProjectGrid } from "@/components/bits";
 import { ProjectDialog } from "@/components/project-dialog";
 import { useStore } from "@/lib/store";
 import { matchProject } from "@/lib/matching";
@@ -130,9 +130,7 @@ export default function Discovery() {
       <section className="px-5 md:px-10 py-8 grid xl:grid-cols-[1fr_280px] gap-8">
         <div>
           {list.length ? (
-            <div className="grid md:grid-cols-2 gap-4">
-              {list.map(({ p, m }, i) => <ProjectCard key={p.id} p={p} m={m} i={i} onOpen={() => setOpen(p)} />)}
-            </div>
+            <ProjectGrid list={list} onOpen={setOpen} className="md:grid-cols-2" />
           ) : (
             <EmptyState
               title="No labs fit those filters"

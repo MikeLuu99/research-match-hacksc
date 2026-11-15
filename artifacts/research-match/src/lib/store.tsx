@@ -15,7 +15,7 @@ export type InterestStatus =
   | "declined"
   | "withdrawn";
 
-export interface Interest {
+interface Interest {
   id: string;
   projectId: string;
   studentId: string;
