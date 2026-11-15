@@ -1,28 +1,25 @@
 .marketing-page,
 .auth-page {
-  /* Cardinal Grid — Cobalt Grid adapted to USC: warm cream paper, one
-     softened cardinal ink, gold accents, permanent graph-paper grid. */
-  --paper: #f0ebde;
-  --paper-2: #e6e0ce;
-  --cardinal: #822440;
-  --cardinal-deep: #6b1d33;
-  --cardinal-faint: rgba(130, 36, 64, 0.18);
-  --grid-line: rgba(130, 36, 64, 0.1);
-  --ink: var(--cardinal);
-  --ink-soft: rgba(130, 36, 64, 0.78);
-  --wine: var(--cardinal);
-  --gold: #ffc72c;
-  --gold-soft: #edc77b;
+  /* Labbe premium palette: beige paper, white cards, true cardinal,
+     gold accents. */
+  --paper: #faf6ef;
+  --paper-2: #f3ece1;
+  --cardinal: #990000;
+  --cardinal-deep: #7a0000;
+  --cardinal-faint: #e8e0d3;
+  --grid-line: rgba(153, 0, 0, 0.07);
+  --ink: #1f1f1f;
+  --ink-soft: #6b645a;
+  --wine: #990000;
+  --gold: #ffcc00;
+  --gold-text: #c99700;
+  --gold-soft: #ffcc00;
   --app-font-serif: "Newsreader", Georgia, serif;
   --app-font-sans: "Hanken Grotesk", "Inter", sans-serif;
   --app-font-mono: "DM Mono", ui-monospace, monospace;
   color: var(--ink);
   background-color: var(--paper);
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size:
-    clamp(28px, 2.2vw, 44px) clamp(28px, 2.2vw, 44px);
+  background-image: linear-gradient(180deg, #f3ece1 0%, var(--paper) 55%);
 }
 .marketing-page a,
 .auth-page a,
@@ -108,12 +105,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 22px;
+  gap: 10px;
   border: 1px solid var(--cardinal);
-  border-radius: 0;
+  border-radius: 999px;
   background: var(--cardinal);
-  color: #fdf6ec;
-  padding: 17px 23px;
+  color: #ffffff;
+  padding: 14px 26px;
   font-family: var(--app-font-sans);
   font-size: 12px;
   font-weight: 600;
@@ -123,6 +120,7 @@
 }
 .public-button:hover {
   background: var(--cardinal-deep);
+  transform: translateY(-1px);
 }
 .public-button:disabled {
   opacity: 0.5;
@@ -734,11 +732,11 @@
 }
 .button-gold {
   background: var(--gold);
-  color: #4a1526;
+  color: #1f1f1f;
   border-color: var(--gold);
 }
 .button-gold:hover {
-  background: #ffd65e;
+  background: #ffd900;
 }
 .closing-section {
   text-align: center;
@@ -916,12 +914,12 @@
 .auth-field input {
   width: 100%;
   min-width: 0;
-  height: 49px;
-  background: #fbf7eb;
+  height: 48px;
+  background: #ffffff;
   border: 1px solid var(--cardinal-faint);
-  border-radius: 0;
+  border-radius: 12px;
   padding: 12px 14px;
-  font-size: 13px;
+  font-size: 16px;
 }
 .auth-field input::placeholder {
   color: rgba(130, 36, 64, 0.45);
@@ -959,11 +957,11 @@
 .profile-form textarea {
   width: 100%;
   min-width: 0;
-  background: #fbf7eb;
+  background: #ffffff;
   border: 1px solid var(--cardinal-faint);
-  border-radius: 0;
+  border-radius: 12px;
   padding: 12px 14px;
-  font-size: 13px;
+  font-size: 16px;
   font-family: inherit;
 }
 .profile-form select {
@@ -1000,10 +998,10 @@
 .experience-entry {
   display: grid;
   gap: 9px;
-  padding: 13px;
+  padding: 16px;
   border: 1px solid var(--cardinal-faint);
-  border-radius: 0;
-  background: #fbf7eb;
+  border-radius: 16px;
+  background: #ffffff;
 }
 .experience-row {
   display: grid;
@@ -1078,8 +1076,8 @@
   align-items: center;
   justify-content: center;
   gap: 15px;
-  border: 1px solid var(--cardinal);
-  border-radius: 0;
+  border: 1px solid var(--cardinal-faint);
+  border-radius: 999px;
   min-height: 49px;
   font-family: var(--app-font-sans);
   font-size: 12px;
@@ -1110,12 +1108,12 @@
   margin-top: auto;
 }
 .auth-notice {
-  font-size: 12px;
-  color: #4a1526;
-  background: rgba(255, 199, 44, 0.14);
-  border: 1px solid rgba(255, 199, 44, 0.55);
+  font-size: 13px;
+  color: #7a5a00;
+  background: #fff4cc;
+  border: 1px solid #f0df9a;
   padding: 13px 15px;
-  border-radius: 0;
+  border-radius: 12px;
   line-height: 1.7;
   margin-top: 23px;
 }
@@ -1124,10 +1122,10 @@
   text-underline-offset: 3px;
 }
 .auth-error {
-  color: var(--cardinal-deep);
-  background: rgba(130, 36, 64, 0.07);
+  color: #b3261e;
+  background: #fdeeee;
   padding: 12px 14px;
-  border-radius: 0;
+  border-radius: 12px;
   font-size: 12px;
   line-height: 1.6;
 }
@@ -1151,9 +1149,9 @@
   align-items: center;
   gap: 13px;
   border: 1px solid var(--cardinal-faint);
-  border-radius: 0;
+  border-radius: 16px;
   padding: 17px;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
 }
 .account-option input {
@@ -1741,4 +1739,96 @@
 }
 .landing-solo h1 em {
   font-style: normal;
+}
+
+
+/* Premium soft-card pass (Labbe design spec) */
+.match-sample {
+  border: 1px solid #e8e0d3;
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(31, 31, 31, 0.04);
+}
+.match-badge {
+  border-radius: 999px;
+  background: #fff4cc;
+  color: #7a5a00;
+  padding: 3px 10px;
+  font-family: var(--app-font-mono);
+  font-size: 12px;
+}
+.match-badge-soft {
+  border-radius: 999px;
+  background: #f3ece1;
+  color: #4a443c;
+  padding: 3px 10px;
+  font-family: var(--app-font-mono);
+  font-size: 12px;
+}
+.role-block {
+  border-radius: 999px;
+  padding: 16px 28px;
+}
+.role-block strong {
+  font-size: 17px;
+}
+.role-block small {
+  display: none;
+}
+.match-sample-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.match-sample-note {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #9a9286;
+}
+.hero-flask {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: var(--gold);
+  color: #1f1f1f;
+}
+.cta-panel {
+  border-radius: 24px;
+}
+.split-section {
+  border-top: 1px solid #e8e0d3;
+}
+.split-section:last-of-type {
+  border-bottom: 1px solid #e8e0d3;
+}
+.faq-item {
+  border: 1px solid #e8e0d3;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+}
+.faq-item summary::after {
+  content: "+";
+  font-family: var(--app-font-mono);
+  color: #990000;
+  font-size: 18px;
+}
+.faq-item[open] summary::after {
+  content: "\2212";
+}
+.step-number {
+  border-radius: 999px !important;
+  background: var(--gold);
+  color: #1f1f1f;
+  padding: 4px 0 4px 14px;
+}
+.quote-card {
+  border-radius: 20px;
+}
+.schedule-cell {
+  border-radius: 6px;
 }

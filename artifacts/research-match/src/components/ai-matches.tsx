@@ -7,6 +7,7 @@ import {
   Sparkles,
   UserRound,
 } from "lucide-react";
+import { MascotLoading } from "@/components/mascot";
 import { api } from "@/lib/convex-api";
 import { InterestButton, SaveButton } from "@/components/bits";
 import { useAccount } from "@/lib/auth";

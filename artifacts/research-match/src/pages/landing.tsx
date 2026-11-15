@@ -19,6 +19,7 @@ import { DEMO_STUDENTS } from "@/lib/data";
 import { USC_PROJECTS } from "@/lib/usc-projects";
 import { matchProject } from "@/lib/matching";
 import { ScheduleGrid } from "@/components/schedule-grid";
+import { FlaskMascot, MascotPeek } from "@/components/mascot";
 
 export function chooseRole(role: "student" | "faculty") {
   try {
@@ -233,14 +234,18 @@ export default function Landing() {
       </header>
       <main id="main-content">
         <section className="landing-solo page-width">
-          <div className="hero-flask" aria-hidden="true">
-            <FlaskConical size={30} />
-          </div>
-          <h1 className="text-4xl md:text-6xl font-display leading-[1.02] mt-5">
-            Find your lab.
-            <br />
-            <em className="text-primary not-italic">Fight on.</em>
-          </h1>
+          <div className="relative w-full flex flex-col items-center">
+            <div className="absolute -top-2 right-2 md:right-16" aria-hidden="true">
+              <MascotPeek size={72} />
+            </div>
+            <div className="hero-flask" aria-hidden="true">
+              <FlaskConical size={30} />
+            </div>
+            <h1 className="text-[40px] md:text-[62px] font-display leading-[1.06] tracking-[-0.02em] mt-6">
+              Find your lab.
+              <br />
+              <em className="text-primary not-italic">Fight on.</em>
+            </h1>
           <p className="mt-5 text-muted-foreground max-w-xl text-[15px] leading-relaxed">
             The lab you're looking for may not know you're looking. Labbe uses
             AI to match USC students with research teams by skills, interests,
@@ -278,6 +283,7 @@ export default function Landing() {
             Matching across Dornsife · Viterbi · Keck · Annenberg · Marshall
           </p>
           <SampleMatchCard />
+          </div>
         </section>
 
         <section className="value-strip page-width" aria-label="Labbe at a glance">
@@ -399,6 +405,9 @@ export default function Landing() {
 
         <section className="closing-section page-width">
           <h2>Trojans told us research was hard to find.</h2>
+          <p className="text-muted-foreground text-sm mt-2">
+            Quotes from our student survey and interviews — carousel coming soon.
+          </p>
           <div className="quote-grid">
             {QUOTES.map((quote) => (
               <div key={quote} className="match-sample quote-card">
@@ -426,9 +435,7 @@ export default function Landing() {
         </section>
 
         <section className="cta-panel page-width">
-          <div className="hero-flask hero-flask-gold" aria-hidden="true">
-            <FlaskConical size={30} />
-          </div>
+          <FlaskMascot size={84} mood="celebrate" />
           <h2>Your lab is out there.</h2>
           <p>Upload your resume and see your matches in minutes.</p>
           <Link href="/sign-up" className="public-button button-gold">
