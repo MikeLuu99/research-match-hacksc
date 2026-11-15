@@ -69,7 +69,7 @@ export function ProjectDialog({ project, onClose }: { project: Project | null; o
             {[
               ["Hours", `${project.minHours}-${project.maxHours} h/wk`, hoursLabel],
               ["Academic credit", project.credit ? "Offered" : "Not offered", m.creditFit === null ? "You didn't request credit" : m.creditFit ? "Matches your preference" : "You requested credit"],
-              ["Compensation", project.paid ? "Paid" : "Unpaid", m.paidFit === false ? "You prefer paid" : ""],
+              ["Compensation", project.paid ? (project.volunteer ? "Paid or volunteer" : "Paid") : project.volunteer ? "Volunteer" : "Unpaid", m.paidFit === false ? "You prefer paid" : ""],
               ["Eligibility", m.eligible ? "Eligible" : "Check with PI", project.eligibleMajors.join(", ")],
             ].map(([k, v, sub]) => (
               <div key={k} className="rounded-xl border bg-background/60 p-3">

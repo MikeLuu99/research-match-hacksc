@@ -36,7 +36,7 @@ function ProjectDetails({
         <div><p className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-primary">Required skills</p><div className="flex flex-wrap gap-1.5">{p.requiredSkills.length ? p.requiredSkills.map((s) => <span key={s} className={chip}>{s}</span>) : <span className="text-muted-foreground">None</span>}</div></div>
         <div><p className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-primary">Nice to have</p><div className="flex flex-wrap gap-1.5">{p.niceSkills.length ? p.niceSkills.map((s) => <span key={s} className="border border-dashed border-primary/30 px-2 py-0.5">{s}</span>) : <span className="text-muted-foreground">None</span>}</div></div>
         <p><span className="font-semibold">Eligible majors:</span> {p.eligibleMajors.join(", ")}</p>
-        <p><span className="font-semibold">Level:</span> {p.level} · {p.paid ? "paid" : "unpaid"} · {p.credit ? "credit" : "no credit"}</p>
+        <p><span className="font-semibold">Level:</span> {p.level} · {p.paid ? "paid" : "unpaid"} · {p.credit ? "credit" : "no credit"}{p.volunteer ? " · volunteer" : ""}</p>
         <p><span className="font-semibold">Keywords:</span> {p.keywords.join(", ") || "none"}</p>
         <p className="font-mono"><span className="font-sans font-semibold">Activity:</span> {requests} requests · {(shortlists[p.id] ?? []).length} shortlisted</p>
       </div>
@@ -103,6 +103,7 @@ export default function Faculty() {
       maxHours: project.maxHours,
       paid: project.paid,
       credit: project.credit,
+      volunteer: project.volunteer ?? false,
       status,
       level: project.level,
     };

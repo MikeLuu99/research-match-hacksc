@@ -21,6 +21,7 @@ export function ProjectForm({ initial, onSave, onCancel }: { initial: Project | 
     maxHours: String(initial?.maxHours ?? 10),
     paid: initial?.paid ?? false,
     credit: initial?.credit ?? true,
+    volunteer: initial?.volunteer ?? false,
     status: (initial?.status ?? "open") as RecruitStatus,
     level: (initial?.level ?? "beginner") as Level,
   });
@@ -37,7 +38,7 @@ export function ProjectForm({ initial, onSave, onCancel }: { initial: Project | 
       summary: f.summary.trim(), description: f.description.trim() || f.summary.trim(),
       requiredSkills: csv(f.requiredSkills), niceSkills: csv(f.niceSkills), keywords: csv(f.keywords),
       eligibleMajors: csv(f.eligibleMajors).length ? csv(f.eligibleMajors) : ["Any"],
-      minHours: min, maxHours: max, paid: f.paid, credit: f.credit, status: f.status, level: f.level,
+      minHours: min, maxHours: max, paid: f.paid, credit: f.credit, volunteer: f.volunteer, status: f.status, level: f.level,
     });
   };
   return (
@@ -56,10 +57,12 @@ export function ProjectForm({ initial, onSave, onCancel }: { initial: Project | 
       <label>Min h/week<input data-testid="input-project-min" type="number" className={input} value={f.minHours} onChange={set("minHours")} /></label>
       <label>Max h/week<input data-testid="input-project-max" type="number" className={input} value={f.maxHours} onChange={set("maxHours")} /></label>
       <label>Level<select data-testid="select-project-level" className={input} value={f.level} onChange={set("level")}><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></label>
-      <div className="flex items-end gap-4 font-normal pb-2">
+      <fieldset className="md:col-span-2 flex flex-wrap items-center gap-x-5 gap-y-2 font-normal pb-2">
+        <legend className="mb-1 font-semibold">Compensation (pick any)</legend>
         <label className="flex items-center gap-2"><input data-testid="check-project-paid" type="checkbox" checked={f.paid} onChange={(e) => setF({ ...f, paid: e.target.checked })} />Paid</label>
         <label className="flex items-center gap-2"><input data-testid="check-project-credit" type="checkbox" checked={f.credit} onChange={(e) => setF({ ...f, credit: e.target.checked })} />Credit</label>
-      </div>
+        <label className="flex items-center gap-2"><input data-testid="check-project-volunteer" type="checkbox" checked={f.volunteer} onChange={(e) => setF({ ...f, volunteer: e.target.checked })} />Volunteer</label>
+      </fieldset>
       {err && <p className="md:col-span-2 text-destructive text-xs font-normal">{err}</p>}
       <div className="md:col-span-2 flex justify-end gap-2 pt-2">
         <Button variant="ghost" onClick={onCancel} data-testid="button-cancel-project">Cancel</Button>

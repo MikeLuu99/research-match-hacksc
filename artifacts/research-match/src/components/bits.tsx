@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Bookmark, BookmarkCheck, Check, Clock, GraduationCap, DollarSign, Sprout, Send } from "lucide-react";
+import { Bookmark, BookmarkCheck, Check, Clock, GraduationCap, DollarSign, HeartHandshake, Sprout, Send } from "lucide-react";
 import type { Project, RecruitStatus } from "@/lib/data";
 import type { MatchResult } from "@/lib/matching";
 import { useStore } from "@/lib/store";
@@ -173,6 +173,7 @@ function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResult; onOp
         <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{p.minHours}-{p.maxHours} h/wk</span>
         {p.credit && <span className="inline-flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" />Credit</span>}
         {p.paid && <span className="inline-flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" />Paid</span>}
+        {p.volunteer && <span className="inline-flex items-center gap-1"><HeartHandshake className="h-3.5 w-3.5" />Volunteer</span>}
         {m.learningPotential && <span className="inline-flex items-center gap-1 text-chart-3 font-medium"><Sprout className="h-3.5 w-3.5" />Learning potential</span>}
         <span className="ml-auto text-primary font-medium opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">Why this match</span>
         <InterestButton projectId={p.sourceId ?? p.id} open={p.status !== "closed"} />

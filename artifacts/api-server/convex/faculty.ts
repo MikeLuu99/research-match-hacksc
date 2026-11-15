@@ -53,6 +53,7 @@ const projectArgs = {
   maxHours: v.number(),
   paid: v.boolean(),
   credit: v.boolean(),
+  volunteer: v.optional(v.boolean()),
   status: v.union(
     v.literal("open"),
     v.literal("closed"),
@@ -82,6 +83,8 @@ function facultyView(project: {
   maxHours?: number;
   hoursPerWeek: number;
   offersCredit: boolean;
+  paid?: boolean;
+  volunteer?: boolean;
   beginnerFriendly: boolean;
   recruitmentStatus: "open" | "closed" | "explore";
   level?: "beginner" | "intermediate" | "advanced";
@@ -100,8 +103,9 @@ function facultyView(project: {
     niceSkills: project.preferredSkills,
     minHours: project.minHours ?? project.hoursPerWeek,
     maxHours: project.maxHours ?? project.hoursPerWeek,
-    paid: false,
+    paid: project.paid ?? false,
     credit: project.offersCredit,
+    volunteer: project.volunteer ?? false,
     status:
       project.recruitmentStatus === "explore"
         ? "exploration"
@@ -155,6 +159,8 @@ export const createProject = mutation({
       preferredSkills: args.niceSkills.slice(0, 15),
       hoursPerWeek: Math.round(((args.minHours + args.maxHours) / 2) * 10) / 10,
       offersCredit: args.credit,
+      paid: args.paid,
+      volunteer: args.volunteer ?? false,
       beginnerFriendly: args.level === "beginner",
       recruitmentStatus: args.status,
       embeddingModel: "",
@@ -194,6 +200,8 @@ export const updateProject = mutation({
       preferredSkills: fields.niceSkills.slice(0, 15),
       hoursPerWeek: Math.round(((fields.minHours + fields.maxHours) / 2) * 10) / 10,
       offersCredit: fields.credit,
+      paid: fields.paid,
+      volunteer: fields.volunteer ?? false,
       beginnerFriendly: fields.level === "beginner",
       recruitmentStatus: fields.status,
       labName: fields.labName.trim().slice(0, 120),

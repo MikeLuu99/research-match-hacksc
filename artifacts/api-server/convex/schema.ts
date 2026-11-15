@@ -119,6 +119,9 @@ export default defineSchema({
     preferredSkills: v.array(v.string()),
     hoursPerWeek: v.number(),
     offersCredit: v.boolean(),
+    // Optional so catalog rows and older listings still validate.
+    paid: v.optional(v.boolean()),
+    volunteer: v.optional(v.boolean()),
     beginnerFriendly: v.boolean(),
     recruitmentStatus: v.union(
       v.literal("open"),

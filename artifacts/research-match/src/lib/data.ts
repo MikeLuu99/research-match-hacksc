@@ -17,6 +17,8 @@ export interface Project {
   maxHours: number;
   paid: boolean;
   credit: boolean;
+  /** Unpaid volunteer position. Optional so catalog and seed data stay valid. */
+  volunteer?: boolean;
   status: RecruitStatus;
   level: Level;
   eligibleMajors: string[]; // "Any" allowed
