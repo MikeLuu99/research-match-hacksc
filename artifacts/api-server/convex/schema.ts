@@ -73,6 +73,7 @@ export default defineSchema({
           faculty: v.string(),
           summary: v.string(),
           open: v.boolean(),
+          studentId: v.optional(v.string()),
         }),
       ),
     ),

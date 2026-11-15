@@ -75,6 +75,19 @@ export const clear = mutation({
   },
 });
 
+const studentProfileBySubjectRef = makeFunctionReference<"query">(
+  "users:studentProfileBySubject",
+);
+const accountProfileBySubjectRef = makeFunctionReference<"query">(
+  "users:accountProfileBySubject",
+);
+const studentLexiconRef = makeFunctionReference<"query">(
+  "chat:studentLexicon",
+);
+const chatStudentByIdsRef = makeFunctionReference<"query">(
+  "chat:chatStudentByIds",
+);
+
 export const myHistory = internalQuery({
   args: { subject: v.string() },
   handler: async (ctx, args) => {
@@ -100,6 +113,8 @@ export const studentContext = internalQuery({
     return {
       name: profile.name,
       major: profile.major,
+      embedding: profile.embedding,
+      embeddingModel: profile.embeddingModel,
       minors: profile.minors ?? [],
       schoolYear: profile.schoolYear,
       skills: profile.skills,
@@ -111,6 +126,51 @@ export const studentContext = internalQuery({
       scheduleHours: (profile.schedule ?? "").split(",").filter(Boolean).length,
       hasResume: Boolean(profile.resumeStorageId),
     };
+  },
+});
+
+export const studentLexicon = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const students = await ctx.db.query("students").collect();
+    return students
+      .filter((student) => student.recruitmentConsent)
+      .map((student) => ({
+        id: student._id,
+        text: [
+          student.name,
+          student.major,
+          ...student.skills,
+          ...student.interests,
+          student.bio ?? "",
+        ].join(" "),
+      }));
+  },
+});
+
+// Role-aware retrieval for the chat: students rank labs; faculty rank
+// consented students. Returns prompt context, entity cards, and the
+// student's profile block.
+
+export const chatStudentByIds = internalQuery({
+  args: { ids: v.array(v.id("students")) },
+  handler: async (ctx, args) => {
+    const out = [];
+    for (const id of args.ids) {
+      const student = await ctx.db.get(id);
+      if (!student?.recruitmentConsent) continue;
+      out.push({
+        studentId: student._id,
+        name: student.name,
+        major: student.major,
+        schoolYear: student.schoolYear,
+        skills: student.skills,
+        interests: student.interests,
+        bio: student.bio ?? "",
+        scheduleHours: (student.schedule ?? "").split(",").filter(Boolean).length,
+      });
+    }
+    return out;
   },
 });
 
@@ -223,17 +283,12 @@ export const answer = action({
       return null;
     }
 
-    // Retrieval: hybrid ranking of the catalog against the question.
-    const lexicon: { id: string; text: string }[] = await ctx.runQuery(
-      makeFunctionReference<"query">("discovery:projectLexicon"),
-      {},
-    );
-    const profile = await ctx.runQuery(
-      makeFunctionReference<"query">("users:studentProfileBySubject"),
-      { subject },
-    );
-
-    const student: {
+    // Role: students get labs; faculty get consented students.
+    const account: { accountType: string; name: string } | null =
+      await ctx.runQuery(accountProfileBySubjectRef, { subject });
+    const role = account?.accountType ?? "student";
+    const questionVector = (await embedBatch([question]))[0];
+    const studentProfile: {
       name: string;
       major: string;
       minors: string[];
@@ -244,55 +299,170 @@ export const answer = action({
       hoursPerWeek: number;
       workStudy: boolean;
       seekingCredit: boolean;
-      scheduleHours: number;
-      hasResume: boolean;
+      schedule: string;
+      resumeStorageId?: string;
+      embedding: number[];
+      embeddingModel: string;
     } | null = await ctx.runQuery(
       makeFunctionReference<"query">("chat:studentContext"),
       { subject },
     );
-    const vectorHits = await ctx.vectorSearch("projects", "by_embedding", {
-      vector:
-        profile &&
-        profile.embeddingModel === EMBEDDING_MODEL_ID &&
-        profile.embedding.length > 0
-          ? profile.embedding
-          : (await embedBatch([question]))[0],
-      limit: 24,
-    });
-    const bm25 = bm25Scores(tokenize(question), lexicon);
-    const ranked = hybridRank(
-      vectorHits.map((hit) => ({ id: String(hit._id), similarity: hit._score })),
-      bm25,
-      8,
-    );
-    const projects: {
+
+    let context: string;
+    let entities: {
       sourceId: string;
       title: string;
       department: string;
       faculty: string;
-      description: string;
-      requiredSkills: string[];
-      hoursPerWeek: number;
-      offersCredit: boolean;
-      recruitmentStatus: string;
+      summary: string;
+      open: boolean;
+      studentId?: string;
       sourceUrl?: string;
-    }[] = await ctx.runQuery(
-      makeFunctionReference<"query">("chat:chatProjectByIds"),
-      { ids: ranked.map((entry) => entry.id as never) },
-    );
+    }[];
+    let profileBlock: string;
 
-    const context = projects
-      .map(
-        (project, index) =>
-          `[${index + 1}] ${project.title} — ${project.department} — PI: ${
-            project.faculty
-          } — ${project.description} Skills: ${project.requiredSkills.join(
-            ", ",
-          )} — ${project.hoursPerWeek} h/week — ${
-            project.offersCredit ? "credit available" : "no credit"
-          } — status: ${project.recruitmentStatus} — id: ${project.sourceId}`,
-      )
-      .join("\n");
+    if (role === "faculty") {
+      const lexicon: { id: string; text: string }[] = await ctx.runQuery(
+        makeFunctionReference<"query">("chat:studentLexicon"),
+        {},
+      );
+      const vectorHits = await ctx.vectorSearch("students", "by_embedding", {
+        vector: questionVector,
+        limit: 24,
+        filter: (q) => q.eq("recruitmentConsent", true),
+      });
+      const bm25 = bm25Scores(tokenize(question), lexicon);
+      const ranked = hybridRank(
+        vectorHits.map((hit) => ({
+          id: String(hit._id),
+          similarity: hit._score,
+        })),
+        bm25,
+        8,
+      );
+      const students: {
+        studentId: string;
+        name: string;
+        major: string;
+        schoolYear: string;
+        skills: string[];
+        interests: string[];
+        bio: string;
+        scheduleHours: number;
+      }[] = await ctx.runQuery(chatStudentByIdsRef, {
+        ids: ranked.map((entry) => entry.id as never),
+      });
+      context = students
+        .map(
+          (student, index) =>
+            `[${index + 1}] ${student.name} — ${student.major} — ${
+              student.schoolYear
+            } — Skills: ${student.skills.join(", ")} — Interests: ${student.interests.join(
+              ", ",
+            )}${student.bio ? ` — ${student.bio}` : ""} — ${
+              student.scheduleHours
+            } h/week available — id: ${student.studentId}`,
+        )
+        .join("\n");
+      entities = students.map((student) => ({
+        sourceId: student.studentId,
+        title: student.name,
+        department: `${student.major} · ${student.schoolYear}`,
+        faculty: student.skills.slice(0, 3).join(", "),
+        summary: student.bio || `Interests: ${student.interests.join(", ")}`,
+        open: true,
+        studentId: student.studentId,
+      }));
+      profileBlock =
+        "You are chatting with a faculty account — help them find suitable student researchers.";
+    } else {
+      const vector =
+        studentProfile &&
+        studentProfile.embeddingModel === EMBEDDING_MODEL_ID &&
+        studentProfile.embedding.length > 0
+          ? studentProfile.embedding
+          : questionVector;
+      const lexicon: { id: string; text: string }[] = await ctx.runQuery(
+        makeFunctionReference<"query">("discovery:projectLexicon"),
+        {},
+      );
+      const vectorHits = await ctx.vectorSearch("projects", "by_embedding", {
+        vector,
+        limit: 24,
+      });
+      const bm25 = bm25Scores(tokenize(question), lexicon);
+      const ranked = hybridRank(
+        vectorHits.map((hit) => ({
+          id: String(hit._id),
+          similarity: hit._score,
+        })),
+        bm25,
+        8,
+      );
+      const projects: {
+        sourceId: string;
+        title: string;
+        department: string;
+        faculty: string;
+        description: string;
+        requiredSkills: string[];
+        hoursPerWeek: number;
+        offersCredit: boolean;
+        recruitmentStatus: string;
+        sourceUrl?: string;
+      }[] = await ctx.runQuery(
+        makeFunctionReference<"query">("chat:chatProjectByIds"),
+        { ids: ranked.map((entry) => entry.id as never) },
+      );
+      context = projects
+        .map(
+          (project, index) =>
+            `[${index + 1}] ${project.title} — ${project.department} — PI: ${
+              project.faculty
+            } — ${project.description} Skills: ${project.requiredSkills.join(
+              ", ",
+            )} — ${project.hoursPerWeek} h/week — ${
+              project.offersCredit ? "credit available" : "no credit"
+            } — status: ${project.recruitmentStatus} — id: ${project.sourceId}`,
+        )
+        .join("\n");
+      entities = projects.map((project) => ({
+        sourceId: project.sourceId,
+        title: project.title,
+        department: project.department,
+        faculty: project.faculty,
+        summary: project.description.slice(0, 240),
+        open: project.recruitmentStatus !== "closed",
+        sourceUrl: project.sourceUrl,
+      }));
+      profileBlock = studentProfile
+        ? [
+            `Name: ${studentProfile.name ?? "Student"}`,
+            `Major: ${studentProfile.major}`,
+            (studentProfile.minors ?? []).length
+              ? `Minors: ${(studentProfile.minors ?? []).join(", ")}`
+              : "",
+            `Year: ${studentProfile.schoolYear}`,
+            (studentProfile.skills ?? []).length
+              ? `Skills: ${(studentProfile.skills ?? []).join(", ")}`
+              : "",
+            (studentProfile.interests ?? []).length
+              ? `Research interests: ${(studentProfile.interests ?? []).join(", ")}`
+              : "",
+            (studentProfile.bio ?? "").trim()
+              ? `About: ${(studentProfile.bio ?? "").trim()}`
+              : "",
+            `Availability: ${studentProfile.hoursPerWeek} h/week${
+              (studentProfile.schedule ?? "").trim() ? " (weekly schedule set)" : ""
+            }`,
+            studentProfile.workStudy ? "Work-Study eligible" : "",
+            studentProfile.seekingCredit ? "Seeking academic credit" : "",
+            studentProfile.resumeStorageId ? "Resume on file" : "No resume uploaded",
+          ]
+          .filter(Boolean)
+          .join("\n")
+        : "No saved profile yet — ask what they are looking for.";
+    }
 
     const historyBlock = history
       .slice(-MAX_HISTORY)
@@ -307,28 +477,6 @@ export const answer = action({
       makeFunctionReference<"mutation">("chat:addBotMessageMutation"),
       { subject },
     )) as { id: string };
-
-    const profileBlock = student
-      ? [
-          `Name: ${student.name}`,
-          `Major: ${student.major}`,
-          student.minors.length ? `Minors: ${student.minors.join(", ")}` : "",
-          `Year: ${student.schoolYear}`,
-          student.skills.length ? `Skills: ${student.skills.join(", ")}` : "",
-          student.interests.length
-            ? `Research interests: ${student.interests.join(", ")}`
-            : "",
-          student.bio ? `About: ${student.bio}` : "",
-          `Availability: ${student.hoursPerWeek} h/week${
-            student.scheduleHours > 0 ? " (weekly schedule set)" : ""
-          }`,
-          student.workStudy ? "Work-Study eligible" : "",
-          student.seekingCredit ? "Seeking academic credit" : "",
-          student.hasResume ? "Resume on file" : "No resume uploaded",
-        ]
-          .filter(Boolean)
-          .join("\n")
-      : "No saved profile yet — ask what they are looking for.";
 
     const system = [
       "You are LABBE, a friendly research-matching assistant for USC students.",
@@ -467,15 +615,16 @@ export const answer = action({
           picked = {};
         }
         const wanted = new Set(picked.sourceIds ?? []);
-        const cards = projects
-          .filter((project) => wanted.has(project.sourceId))
-          .map((project) => ({
-            sourceId: project.sourceId,
-            title: project.title,
-            department: project.department,
-            faculty: project.faculty,
-            summary: project.description.slice(0, 240),
-            open: project.recruitmentStatus !== "closed",
+        const cards = entities
+          .filter((entity) => wanted.has(entity.sourceId))
+          .map((entity) => ({
+            sourceId: entity.sourceId,
+            title: entity.title,
+            department: entity.department,
+            faculty: entity.faculty,
+            summary: entity.summary,
+            open: entity.open,
+            studentId: entity.studentId,
           }));
         text = text.trim();
         if (text) {
@@ -519,7 +668,7 @@ export const answer = action({
             sources: cards.map((card) => ({
               sourceId: card.sourceId,
               title: card.title,
-              sourceUrl: projects.find((p) => p.sourceId === card.sourceId)
+              sourceUrl: entities.find((e) => e.sourceId === card.sourceId)
                 ?.sourceUrl,
             })),
             cards,
@@ -534,10 +683,10 @@ export const answer = action({
           messageId: bot.id,
           text,
           done: true,
-          sources: projects.map((project) => ({
-            sourceId: project.sourceId,
-            title: project.title,
-            sourceUrl: project.sourceUrl,
+          sources: entities.map((entity) => ({
+            sourceId: entity.sourceId,
+            title: entity.title,
+            sourceUrl: entity.sourceUrl,
           })),
         },
       );
