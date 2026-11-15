@@ -221,10 +221,12 @@
 .role-block {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   border: 1.5px solid var(--cardinal);
   background: var(--paper-2);
-  padding: 18px 20px;
+  padding: 20px 24px;
+  text-align: center;
   transition: background 0.2s, transform 0.2s;
 }
 .role-block:hover {
@@ -267,7 +269,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -1309,10 +1311,12 @@
 .role-block {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   border: 1.5px solid var(--cardinal);
   background: var(--paper-2);
-  padding: 18px 20px;
+  padding: 20px 24px;
+  text-align: center;
   transition: background 0.2s, transform 0.2s;
 }
 .role-block:hover {
@@ -1355,7 +1359,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
