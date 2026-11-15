@@ -275,22 +275,37 @@ function ProfileFields({
         )}
       </div>
       <label className="profile-check">
-        <input type="checkbox" name="work-study" disabled={pending} />
-        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        <input
+          type="checkbox"
+          name="work-study"
+          defaultChecked={initial?.workStudy ?? false}
+          disabled={pending}
+        />
+        <span className="mr-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           Optional
         </span>
         I have Federal Work-Study eligibility
       </label>
       <label className="profile-check">
-        <input type="checkbox" name="seeking-credit" disabled={pending} />
-        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        <input
+          type="checkbox"
+          name="seeking-credit"
+          defaultChecked={initial?.seekingCredit ?? false}
+          disabled={pending}
+        />
+        <span className="mr-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           Optional
         </span>
         I’m looking to earn academic credit
       </label>
       <label className="profile-check">
-        <input type="checkbox" name="recruitment-consent" disabled={pending} />
-        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        <input
+          type="checkbox"
+          name="recruitment-consent"
+          defaultChecked={initial?.recruitmentConsent ?? false}
+          disabled={pending}
+        />
+        <span className="mr-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           Optional
         </span>
         Professors may discover my profile when recruiting. Your profile stays
