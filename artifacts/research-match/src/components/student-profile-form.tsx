@@ -598,6 +598,28 @@ export function ProfileEditor({
         }
       }}
     >
+      <div className="flex flex-wrap items-center gap-3 border border-primary/20 bg-card p-4">
+        {error && (
+          <p className="auth-error m-0 flex-1" role="alert">
+            {error}
+          </p>
+        )}
+        {saved && (
+          <p
+            className="m-0 flex flex-1 items-center gap-2 text-sm font-semibold text-primary"
+            role="status"
+          >
+            <Check size={16} /> Profile saved — embedding is regenerating.
+          </p>
+        )}
+        <button
+          className="public-button ml-auto"
+          disabled={pending || !account.isConfigured}
+        >
+          {pending && <LoaderCircle className="animate-spin" size={18} />}
+          {pending ? "Saving…" : "Save profile"}
+        </button>
+      </div>
       <ProfileFields
         initial={initial}
         pending={pending}
@@ -607,24 +629,6 @@ export function ProfileEditor({
         addSkill={addSkill}
         removeSkill={removeSkill}
       />
-      {error && (
-        <p className="auth-error" role="alert">
-          {error}
-        </p>
-      )}
-      {saved && (
-        <p className="auth-notice flex items-center gap-2" role="status">
-          <Check size={16} /> Profile saved. Your data is submitted and the
-          embedding is regenerating — AI matches refresh in a few seconds.
-        </p>
-      )}
-      <button
-        className="public-button auth-submit"
-        disabled={pending || !account.isConfigured}
-      >
-        {pending && <LoaderCircle className="animate-spin" size={18} />}
-        {pending ? "Saving…" : "Save profile"}
-      </button>
     </form>
   );
 }
