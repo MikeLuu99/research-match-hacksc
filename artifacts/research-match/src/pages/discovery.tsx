@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Search, X, ArrowUpRight } from "lucide-react";
 import { Layout, EmptyState } from "@/components/layout";
@@ -14,14 +14,14 @@ import { cn } from "@/lib/utils";
 
 type Sort = "match" | "hours" | "title";
 
-function Chip({ on, onClick, children, id }: { on: boolean; onClick: () => void; children: ReactNode; id: string }) {
+function Chip({ on, onClick, children, id, size = "sm" }: { on: boolean; onClick: () => void; children: ReactNode; id: string; size?: "sm" | "lg" }) {
   return (
     <button
       data-testid={`filter-${id}`}
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:-translate-y-px",
-        on ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-card hover:border-primary/40 hover:text-primary",
+        "rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-200",
+        on ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:border-primary/40 hover:text-primary",
       )}
     >
       {children}
@@ -42,6 +42,8 @@ export default function Discovery() {
   const [beginner, setBeginner] = useState(false);
   const [sort, setSort] = useState<Sort>("match");
   const [open, setOpen] = useState<Project | null>(null);
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const scored = useMemo(() => projects.map((p) => ({ p, m: matchProject(profile, p) })), [projects, profile]);
   const list = useMemo(() => {
@@ -75,11 +77,16 @@ export default function Discovery() {
   };
   const openCount = scored.filter(({ p }) => p.status === "open").length;
 
+  // Reset pagination whenever any filter input changes.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [q, dept, statuses, paid, credit, beginner, sort]);
+
   return (
     <Layout>
       {account.isAuthenticated && account.viewer?.accountType === "student" && account.viewer.hasStudentProfile ? (
         <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
           <h1 className="font-display text-3xl md:text-4xl leading-[1.05] mt-2 mb-6">
             AI matches for <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">your profile</em>
           </h1>
@@ -90,7 +97,7 @@ export default function Discovery() {
       ) : (
       <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8 grid lg:grid-cols-[1.4fr_1fr] gap-8 items-end">
         <div className="rise">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
           <h1 className="font-display text-4xl md:text-6xl leading-[1.02] mt-3">
             Hi {profile.name.split(" ")[0]}. Your skills travel <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">further</em> than your department.
           </h1>
@@ -128,36 +135,51 @@ export default function Discovery() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search topics, skills, labs — try 'clinical' or 'robotics'"
-              className="w-full h-11 rounded-xl border bg-card pl-10 pr-9 text-sm outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary/40 transition"
+              className="w-full h-11 rounded-xl border bg-card pl-10 pr-9 text-[15px] outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary/40 transition"
             />
             {q && <button data-testid="button-clear-search" onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>}
           </label>
-          <select data-testid="select-department" value={dept} onChange={(e) => setDept(e.target.value)} className="h-11 rounded-xl border bg-card px-3 text-sm hover:border-primary/40 transition">
+          <select data-testid="select-department" value={dept} onChange={(e) => setDept(e.target.value)} className="h-11 rounded-xl border bg-card px-3 text-[15px] hover:border-primary/40 transition">
             <option value="all">All departments</option>
             {depts.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
-          <select data-testid="select-sort" value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="h-11 rounded-xl border bg-card px-3 text-sm hover:border-primary/40 transition">
+          <select data-testid="select-sort" value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="h-11 rounded-xl border bg-card px-3 text-[15px] hover:border-primary/40 transition">
             <option value="match">Sort: best match</option>
             <option value="hours">Sort: fewest hours</option>
             <option value="title">Sort: A-Z</option>
           </select>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          <Chip id="open" on={statuses.includes("open")} onClick={() => toggleStatus("open")}>Open recruiting</Chip>
-          <Chip id="exploration" on={statuses.includes("exploration")} onClick={() => toggleStatus("exploration")}>Lab exploration</Chip>
-          <Chip id="closed" on={statuses.includes("closed")} onClick={() => toggleStatus("closed")}>Show closed</Chip>
-          <span className="w-px h-5 bg-border mx-1" />
-          <Chip id="paid" on={paid} onClick={() => setPaid(!paid)}>Paid</Chip>
-          <Chip id="credit" on={credit} onClick={() => setCredit(!credit)}>Academic credit</Chip>
-          <Chip id="beginner" on={beginner} onClick={() => setBeginner(!beginner)}>Beginner friendly</Chip>
-          <span className="ml-auto text-xs text-muted-foreground font-mono" data-testid="text-result-count">{list.length} of {projects.length}</span>
+          <Chip size="lg" id="open" on={statuses.includes("open")} onClick={() => toggleStatus("open")}>Open recruiting</Chip>
+          <Chip size="lg" id="exploration" on={statuses.includes("exploration")} onClick={() => toggleStatus("exploration")}>Lab exploration</Chip>
+          <Chip size="lg" id="closed" on={statuses.includes("closed")} onClick={() => toggleStatus("closed")}>Show closed</Chip>
+          <span className="w-px h-6 bg-border mx-1" />
+          <Chip size="lg" id="paid" on={paid} onClick={() => setPaid(!paid)}>Paid</Chip>
+          <Chip size="lg" id="credit" on={credit} onClick={() => setCredit(!credit)}>Academic credit</Chip>
+          <Chip size="lg" id="beginner" on={beginner} onClick={() => setBeginner(!beginner)}>Beginner friendly</Chip>
+          <span className="ml-auto text-sm text-muted-foreground font-mono" data-testid="text-result-count">{list.length} of {projects.length}</span>
         </div>
       </section>
 
       <section className="px-5 md:px-10 py-8 grid xl:grid-cols-[1fr_280px] gap-8">
         <div>
           {list.length ? (
-            <ProjectGrid list={list} onOpen={setOpen} className="md:grid-cols-2" />
+            <>
+              <ProjectGrid
+                list={list.slice(0, visibleCount)}
+                onOpen={setOpen}
+                className="md:grid-cols-2"
+              />
+              {list.length > visibleCount && (
+                <button
+                  data-testid="button-show-more"
+                  onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                  className="mt-5 border border-primary/40 px-5 py-3 text-sm font-semibold text-primary hover:bg-primary/5"
+                >
+                  Show more ({list.length - visibleCount} remaining)
+                </button>
+              )}
+            </>
           ) : (
             <EmptyState
               title="No labs fit those filters"
@@ -168,7 +190,7 @@ export default function Discovery() {
         </div>
         <aside className="space-y-4 xl:sticky xl:top-36 self-start">
           <div className="rounded-2xl border bg-card p-5">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-primary font-semibold">How ranking works</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-primary font-semibold">How ranking works</p>
             <p className="font-mono text-[11px] mt-1 rounded bg-accent text-accent-foreground inline-block px-1.5">Demo matching</p>
             <ul className="mt-3 text-sm space-y-2 text-foreground/80">
               <li><b className="font-mono text-xs text-primary">40%</b> cosine similarity of local word-count vectors</li>

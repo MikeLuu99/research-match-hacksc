@@ -79,22 +79,22 @@ function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResult; onOp
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <RecruitPill status={p.status} />
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{p.department}</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider">{p.department}</span>
           </div>
           <h3 className="font-display text-lg leading-snug mt-1.5 group-hover:text-primary transition-colors">{p.title}</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">{p.lab}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{p.lab}</p>
         </div>
         <SaveButton id={p.id} />
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed">{p.summary}</p>
       <div className="flex flex-wrap gap-1.5">
         {p.requiredSkills.map((s) => (
-          <span key={s} className={cn("rounded-md px-2 py-0.5 text-xs border", m.matchedSkills.includes(s) ? "bg-primary/8 border-primary/25 text-primary" : "border-dashed text-muted-foreground")}>
+          <span key={s} className={cn("rounded-md px-2 py-1 text-sm border", m.matchedSkills.includes(s) ? "bg-primary/8 border-primary/25 text-primary" : "border-dashed text-muted-foreground")}>
             {s}
           </span>
         ))}
       </div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground pt-2 border-t border-dashed">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground pt-2 border-t border-dashed">
         <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{p.minHours}-{p.maxHours} h/wk</span>
         {p.credit && <span className="inline-flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" />Credit</span>}
         {p.paid && <span className="inline-flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" />Paid</span>}

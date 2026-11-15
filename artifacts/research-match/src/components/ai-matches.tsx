@@ -120,7 +120,7 @@ export function AiMatches() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
           <Sparkles className="h-3 w-3 text-chart-2" /> Ranked by AI relevance
           (semantic + keywords)
         </span>
@@ -158,15 +158,15 @@ export function AiMatches() {
                   </span>
                 )}
               </p>
-              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+              <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                 {match.summary}
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <span
                   className={
                     match.open
-                      ? "bg-chart-2 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-accent-foreground"
-                      : "border border-primary/25 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground"
+                      ? "bg-chart-2 px-2 py-0.5 font-mono text-xs uppercase tracking-[0.08em] text-accent-foreground"
+                      : "border border-primary/25 px-2 py-0.5 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground"
                   }
                 >
                   {match.open ? "recruiting" : "inquire"}
