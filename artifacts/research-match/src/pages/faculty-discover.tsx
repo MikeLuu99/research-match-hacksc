@@ -41,8 +41,8 @@ function LiveDiscover() {
   const list = shortlists[p?.id ?? ""] ?? [];
   return (
     <Layout>
-      <PageHeader eyebrow="Discover students · live" title="Students who opted in to faculty discovery.">
-        Real student profiles from your account's faculty view, plus AI ranking against the USC lab catalog.
+      <PageHeader eyebrow="Discover students · live" title="Interested Students">
+        Students who applied to your projects, plus recommended students who opted in to faculty discovery.
       </PageHeader>
       <div className="max-w-5xl space-y-4 px-5 pb-5 md:px-10">
         {p ? (
@@ -92,7 +92,7 @@ function DemoDiscover() {
   const applicants = rows.filter((r) => r.applied);
   const others = rows.filter((r) => !r.applied);
 
-  if (!p) return <Layout><PageHeader eyebrow="Discover students" title="No project to rank against" /><div className="px-5 md:px-10"><EmptyState title="Create a project first" body="Students are ranked against one of your listings." action={<Link href="/faculty" className="inline-block bg-primary px-4 py-2 text-sm text-primary-foreground">Open lab workspace</Link>} /></div></Layout>;
+  if (!p) return <Layout><PageHeader eyebrow="Discover students" title="No Project To Rank Against" /><div className="px-5 md:px-10"><EmptyState title="Create a project first" body="Students are ranked against one of your listings." action={<Link href="/faculty" className="inline-block bg-primary px-4 py-2 text-sm text-primary-foreground">Open lab workspace</Link>} /></div></Layout>;
 
   const section = (title: string, items: typeof rows, empty: string, offset: number, tag?: string) => (
     <section>
@@ -105,7 +105,7 @@ function DemoDiscover() {
 
   return (
     <Layout>
-      <PageHeader eyebrow={`Discover students · demo · ${p.department}`} title="Students who already speak your lab's language.">
+      <PageHeader eyebrow={`Discover students · demo · ${p.department}`} title="Interested Students">
         Opted-in fictional students and direct applicants from any department, ranked by demo matching. Cross-department fits are the point.
       </PageHeader>
       <div className="max-w-4xl space-y-5 px-5 pb-12 md:px-10">

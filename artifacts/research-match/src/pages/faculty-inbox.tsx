@@ -110,7 +110,7 @@ export default function FacultyInbox() {
 
   return (
     <Layout>
-      <PageHeader eyebrow={live ? "Interest inbox" : "Interest inbox · demo"} title="Who raised a hand">
+      <PageHeader eyebrow={live ? "Interest inbox" : "Interest inbox · demo"} title="Interest Box">
         {live
           ? "Real student interest in your own project listings. Update a status and the student sees it in their tracker."
           : "Requests across your listings. Review the message and set a status."}

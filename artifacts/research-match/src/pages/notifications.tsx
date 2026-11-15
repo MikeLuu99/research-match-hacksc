@@ -26,7 +26,7 @@ export default function Notifications() {
   if (!account.isAuthenticated)
     return (
       <Layout>
-        <PageHeader eyebrow="Notifications" title="Stay in the loop">
+        <PageHeader eyebrow="Notifications" title="Notification">
           Notifications are tied to an account.
         </PageHeader>
         <div className="px-5 pb-12 md:px-10">
@@ -40,7 +40,7 @@ export default function Notifications() {
 
   return (
     <Layout>
-      <PageHeader eyebrow="Notifications" title="What changed">
+      <PageHeader eyebrow="Notifications" title="Notification">
         {account.viewer?.accountType === "faculty"
           ? "New and withdrawn interest in your listings."
           : "Status updates on the labs you sent interest to."}

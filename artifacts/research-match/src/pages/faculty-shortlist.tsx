@@ -39,7 +39,7 @@ export default function FacultyShortlist() {
 
   return (
     <Layout>
-      <PageHeader eyebrow={live ? "Student shortlist · browser-local" : "Student shortlist · demo"} title="Keep the ones worth a conversation.">
+      <PageHeader eyebrow={live ? "Student shortlist · browser-local" : "Student shortlist · demo"} title="Student Shortlist">
         A per-project list saved in this browser. Switch projects at the top; remove anyone at any time.
       </PageHeader>
       <div className="max-w-4xl space-y-4 px-5 pb-12 md:px-10">
