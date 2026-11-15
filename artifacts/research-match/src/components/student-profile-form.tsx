@@ -1,5 +1,5 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { Check, LoaderCircle, Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { Check, ImagePlus, LoaderCircle, Plus, Trash2, UserRound } from "lucide-react";
 import { useAction, useMutation } from "convex/react";
 import { api } from "@/lib/convex-api";
 import { USC_MAJORS, USC_MINORS } from "@/lib/usc-programs";
@@ -20,6 +20,15 @@ const SCHOOL_YEARS = [
 ] as const;
 
 const MAX_RESUME_BYTES = 8 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+function photoFileProblem(file: File) {
+  if (!PHOTO_TYPES.includes(file.type.toLowerCase()))
+    return "Choose a JPEG, PNG, WebP or GIF image.";
+  if (file.size > MAX_PHOTO_BYTES) return "Photos must be 2 MB or smaller.";
+  return null;
+}
 
 interface ExperienceEntry {
   role: string;
@@ -74,6 +83,7 @@ export type StudentProfileInitial = {
   seekingCredit: boolean;
   recruitmentConsent: boolean;
   resumeFileName?: string;
+  photoUrl?: string;
 };
 
 type ProfileFormValues = {
@@ -106,6 +116,111 @@ function valuesFromInitial(
     recruitmentConsent: initial?.recruitmentConsent ?? false,
     resumeFileName: initial?.resumeFileName ?? "",
   };
+}
+
+// Optional profile picture with a live preview. The file input keeps the
+// chosen image for the submit handler; "remove-photo" clears a saved one.
+function PhotoField({
+  initialUrl,
+  pending,
+}: {
+  initialUrl?: string;
+  pending: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | undefined>(initialUrl);
+  const [removed, setRemoved] = useState(false);
+  const [problem, setProblem] = useState("");
+
+  useEffect(
+    () => () => {
+      if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
+    },
+    [preview],
+  );
+
+  function onChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const issue = photoFileProblem(file);
+    if (issue) {
+      setProblem(issue);
+      event.target.value = "";
+      return;
+    }
+    setProblem("");
+    setRemoved(false);
+    setPreview(URL.createObjectURL(file));
+  }
+
+  function clear() {
+    if (inputRef.current) inputRef.current.value = "";
+    setPreview(undefined);
+    setProblem("");
+    setRemoved(Boolean(initialUrl));
+  }
+
+  return (
+    <div className="auth-field">
+      <FieldLabel htmlFor="profile-photo" optional>
+        Profile photo
+      </FieldLabel>
+      <div className="flex items-center gap-4">
+        <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border border-primary/25 bg-primary/5 text-primary/60">
+          {preview ? (
+            <img
+              src={preview}
+              alt="Profile photo preview"
+              data-testid="img-profile-photo-preview"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <UserRound size={32} aria-hidden="true" />
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label
+            htmlFor="profile-photo"
+            className="inline-flex cursor-pointer items-center gap-1.5 border border-primary/25 px-3 py-1.5 text-xs hover:bg-primary/5"
+          >
+            <ImagePlus size={14} /> {preview ? "Change photo" : "Upload photo"}
+          </label>
+          {preview && (
+            <button
+              type="button"
+              data-testid="button-remove-photo"
+              disabled={pending}
+              onClick={clear}
+              className="inline-flex items-center gap-1.5 border border-primary/25 px-3 py-1.5 text-xs hover:text-destructive"
+            >
+              <Trash2 size={14} /> Remove
+            </button>
+          )}
+        </div>
+      </div>
+      <input
+        ref={inputRef}
+        id="profile-photo"
+        name="photo"
+        type="file"
+        accept={PHOTO_TYPES.join(",")}
+        disabled={pending}
+        onChange={onChange}
+        className="sr-only"
+      />
+      {removed && <input type="hidden" name="remove-photo" value="on" />}
+      {problem ? (
+        <p className="auth-error" role="alert">
+          {problem}
+        </p>
+      ) : (
+        <p className="auth-help">
+          JPEG, PNG, WebP or GIF, up to 2 MB. Professors see it with your
+          profile. You can skip this.
+        </p>
+      )}
+    </div>
+  );
 }
 
 // Shared editable fields for onboarding and the profile editor — one markup,
@@ -148,6 +263,7 @@ function ProfileFields({
           <option key={skill} value={skill} />
         ))}
       </datalist>
+      <PhotoField initialUrl={initial?.photoUrl} pending={pending} />
       <div className="auth-field">
         <FieldLabel htmlFor="profile-major">Major</FieldLabel>
         <input
@@ -446,6 +562,7 @@ async function submitProfile(
   experience: ExperienceEntry[],
   pending: (value: boolean) => void,
   requestUploadUrl: (args: {}) => Promise<{ url: string }>,
+  requestPhotoUploadUrl: (args: {}) => Promise<{ url: string }>,
   upsertProfile: (args: Record<string, unknown>) => Promise<unknown>,
   setError: (message: string) => void,
 ) {
@@ -454,6 +571,17 @@ async function submitProfile(
     "resume",
   ) as HTMLInputElement | null;
   const resumeFile = resumeInput?.files?.[0];
+  const photoInput = form.elements.namedItem(
+    "photo",
+  ) as HTMLInputElement | null;
+  const photoFile = photoInput?.files?.[0];
+  if (photoFile) {
+    const issue = photoFileProblem(photoFile);
+    if (issue) {
+      setError(issue);
+      return false;
+    }
+  }
   if (skills.length === 0 && splitTags(String(data.get("interests") ?? "")).length === 0) {
     setError("Add at least one skill or research interest to save your profile.");
     form.querySelector<HTMLElement>("#profile-skills")?.focus();
@@ -478,6 +606,18 @@ async function submitProfile(
       resumeStorageId = uploaded.storageId;
       resumeFileName = resumeFile.name;
     }
+    let photoStorageId: string | undefined;
+    if (photoFile) {
+      const { url } = await requestPhotoUploadUrl({});
+      const response = await fetch(url, {
+        method: "POST",
+        body: photoFile,
+        headers: { "Content-Type": photoFile.type },
+      });
+      if (!response.ok) throw new Error("Photo upload failed.");
+      const uploaded = (await response.json()) as { storageId: string };
+      photoStorageId = uploaded.storageId;
+    }
     await upsertProfile({
       major: String(data.get("major") ?? ""),
       schedule: String(data.get("schedule") ?? "").trim(),
@@ -499,6 +639,8 @@ async function submitProfile(
       recruitmentConsent: data.get("recruitment-consent") === "on",
       resumeStorageId,
       resumeFileName,
+      photoStorageId,
+      removePhoto: !photoStorageId && data.get("remove-photo") === "on",
     });
     return true;
   } catch (err) {
@@ -522,6 +664,7 @@ export function StudentProfileForm({
   const account = useAccount();
   const upsertProfile = useMutation(api.users.upsertStudentProfile);
   const requestUploadUrl = useAction(api.users.generateResumeUploadUrl);
+  const requestPhotoUploadUrl = useAction(api.users.generatePhotoUploadUrl);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [skills, setSkills] = useState<string[]>(initial?.skills ?? []);
@@ -558,6 +701,7 @@ export function StudentProfileForm({
           experienceRef.current,
           setPending,
           requestUploadUrl,
+          requestPhotoUploadUrl,
           upsertProfile,
           setError,
         );
@@ -604,6 +748,7 @@ export function ProfileEditor({
   const account = useAccount();
   const upsertProfile = useMutation(api.users.upsertStudentProfile);
   const requestUploadUrl = useAction(api.users.generateResumeUploadUrl);
+  const requestPhotoUploadUrl = useAction(api.users.generatePhotoUploadUrl);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -641,6 +786,7 @@ export function ProfileEditor({
           experienceRef.current,
           setPending,
           requestUploadUrl,
+          requestPhotoUploadUrl,
           upsertProfile,
           setError,
         );

@@ -147,6 +147,8 @@ export default defineSchema({
     resumeStorageId: v.optional(v.string()),
     resumeFileName: v.optional(v.string()),
     resumeParsedAt: v.optional(v.number()),
+    // Optional profile picture (image file in Convex storage).
+    photoStorageId: v.optional(v.id("_storage")),
     embeddingModel: v.string(),
     embedding: v.array(v.float64()),
   })

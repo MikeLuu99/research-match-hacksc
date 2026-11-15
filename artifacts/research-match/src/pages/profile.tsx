@@ -71,6 +71,7 @@ function RealProfileEditor() {
         seekingCredit: profile.seekingCredit,
         recruitmentConsent: profile.recruitmentConsent,
         resumeFileName: profile.resumeFileName,
+        photoUrl: profile.photoUrl,
       }
     : undefined;
   return (

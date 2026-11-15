@@ -13,6 +13,17 @@ import {
   studentEmbeddingText,
 } from "./embeddings";
 import { action, mutation, query, type DataModel } from "./model";
+import { photoProblem } from "./photos";
+import type { GenericId } from "convex/values";
+import type { StorageReader } from "convex/server";
+
+async function photoUrlFor(
+  ctx: { storage: StorageReader },
+  storageId: GenericId<"_storage"> | undefined,
+) {
+  if (!storageId) return undefined;
+  return (await ctx.storage.getUrl(storageId)) ?? undefined;
+}
 
 function cleanTagList(raw: string[], label: string, maxItems: number) {
   const tags = raw
@@ -77,13 +88,19 @@ export const myStudentProfile = query({
   handler: async (ctx) => {
     const user = await authComponent.safeGetAuthUser(ctx);
     if (!user) return null;
-    return await studentProfileForOwner(ctx, user._id);
+    const profile = await studentProfileForOwner(ctx, user._id);
+    if (!profile) return null;
+    return {
+      ...profile,
+      photoUrl: await photoUrlFor(ctx, profile.photoStorageId),
+    };
   },
 });
 
 const studentListing = v.object({
   id: v.string(),
   name: v.string(),
+  photoUrl: v.optional(v.string()),
   ...studentProfileFields,
 });
 
@@ -102,11 +119,15 @@ export const listStudents = query({
         "Only faculty accounts can view student candidates.",
       );
     const students = await ctx.db.query("students").collect();
-    return students
-      .filter((student) => student.recruitmentConsent)
-      .map((student) => ({
+    const consenting = students.filter((student) => student.recruitmentConsent);
+    const photoUrls = await Promise.all(
+      consenting.map((student) => photoUrlFor(ctx, student.photoStorageId)),
+    );
+    return consenting
+      .map((student, index) => ({
         id: student._id,
         name: student.name,
+        photoUrl: photoUrls[index],
         major: student.major,
         minors: student.minors ?? [],
         schoolYear: student.schoolYear,
@@ -165,6 +186,21 @@ export const generateResumeUploadUrl = action({
   },
 });
 
+export const generatePhotoUploadUrl = action({
+  args: {},
+  returns: v.object({ url: v.string() }),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Sign in to upload a photo.");
+    const uploader = await authComponent.safeGetAuthUser(ctx);
+    if (REQUIRE_USC_EMAIL && (!uploader || !isUscEmail(uploader.email)))
+      throw new ConvexError(
+        "Only USC accounts (email ending in @usc.edu) can upload photos.",
+      );
+    return { url: await ctx.storage.generateUploadUrl() };
+  },
+});
+
 // Embeddings are left empty until a provider is configured. Vector search only
 // matches records with vectors, so profiles stay visible to the matching code
 // once embeddings are backfilled.
@@ -176,6 +212,10 @@ export const upsertStudentProfile = mutation({
     schedule: v.optional(v.string()),
     resumeStorageId: v.optional(v.string()),
     resumeFileName: v.optional(v.string()),
+    // Optional profile picture: a new upload replaces the old one, and
+    // removePhoto clears it. Leaving both out keeps the current photo.
+    photoStorageId: v.optional(v.id("_storage")),
+    removePhoto: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -212,8 +252,30 @@ export const upsertStudentProfile = mutation({
       }));
     if (args.resumeStorageId !== undefined && args.resumeStorageId.length === 0)
       throw new ConvexError("Resume upload failed. Please try again.");
+    if (args.photoStorageId !== undefined) {
+      const problem = photoProblem(
+        await ctx.db.system.get(args.photoStorageId),
+      );
+      if (problem) {
+        await ctx.storage.delete(args.photoStorageId).catch(() => {});
+        throw new ConvexError(problem);
+      }
+    }
 
     const profile = await studentProfileForOwner(ctx, user._id);
+    const oldPhoto = profile?.photoStorageId;
+    const photoPatch =
+      args.photoStorageId !== undefined
+        ? { photoStorageId: args.photoStorageId }
+        : args.removePhoto
+          ? { photoStorageId: undefined }
+          : {};
+    if (
+      oldPhoto &&
+      "photoStorageId" in photoPatch &&
+      photoPatch.photoStorageId !== oldPhoto
+    )
+      await ctx.storage.delete(oldPhoto);
     const patch = {
       name: account.name,
       major,
@@ -235,6 +297,7 @@ export const upsertStudentProfile = mutation({
             resumeParsedAt: Date.now(),
           }
         : {}),
+      ...photoPatch,
     };
     let studentId: string;
     if (profile) {
