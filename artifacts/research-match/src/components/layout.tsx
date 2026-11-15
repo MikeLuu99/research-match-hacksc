@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import {
+  MessageCircleQuestion,
   PanelLeftClose,
   PanelLeftOpen,
   Compass,
@@ -25,6 +26,7 @@ type NavItem = { href: string; label: string; icon: typeof Compass };
 
 const STUDENT_NAV: NavItem[] = [
   { href: "/student", label: "Discover", icon: Compass },
+  { href: "/ask", label: "Ask LABBE", icon: MessageCircleQuestion },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/applications", label: "Interest tracker", icon: Send },
 ];

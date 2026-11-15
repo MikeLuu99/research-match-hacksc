@@ -21,6 +21,7 @@ import FacultyDiscover from "@/pages/faculty-discover";
 import FacultyShortlist from "@/pages/faculty-shortlist";
 import FacultyInbox from "@/pages/faculty-inbox";
 import FacultyProfile from "@/pages/faculty-profile";
+import { AskLabbe } from "@/components/chat/ask-labbe";
 import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth";
@@ -53,6 +54,7 @@ function WorkspaceRoutes() {
         <Switch>
           <Route path="/" component={Discovery} />
           <Route path="/student" component={Discovery} />
+          <Route path="/ask" component={AskLabbe} />
           <Route path="/saved" component={Saved} />
           <Route path="/applications" component={Applications} />
           <Route path="/profile" component={Profile} />
