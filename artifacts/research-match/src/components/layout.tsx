@@ -261,10 +261,7 @@ export function Layout({ children }: { children: ReactNode }) {
           )}
           {nav.map(navLink)}
           <div
-            className={cn(
-              "md:border-t md:border-sidebar-border md:pt-2",
-              view !== "student" && "md:mt-auto",
-            )}
+            className="md:mt-auto md:border-t md:border-sidebar-border md:pt-2"
           >
             {navLink(BOTTOM_PROFILE[view])}
           </div>
