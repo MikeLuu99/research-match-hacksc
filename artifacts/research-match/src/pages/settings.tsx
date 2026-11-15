@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw } from "lucide-react";
 import { Layout, PageHeader } from "@/components/layout";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -44,7 +45,7 @@ export default function Settings() {
 
   return (
     <Layout>
-      <PageHeader eyebrow="Data sources & matching" title="What's real, and what's demo">
+      <PageHeader eyebrow="Data sources & matching" title="What's real, and what's demo" tour="settings-header">
         Integration statuses come live from the server. Nothing here is faked.
       </PageHeader>
       <div className="px-5 md:px-10 pb-12 grid lg:grid-cols-2 gap-6">
@@ -116,6 +117,14 @@ export default function Settings() {
           </div>
         </section>
       </div>
+    <OnboardingTour
+      tourId="student-settings"
+      steps={[{
+        selector: '[data-tour="settings-header"]',
+        title: "Transparency hub",
+        body: "What's real data versus browser-local demo, plus the full matching method behind every percentage you see.",
+      }]}
+    />
     </Layout>
   );
 }

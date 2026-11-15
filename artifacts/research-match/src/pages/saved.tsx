@@ -6,6 +6,7 @@ import { useCatalogProjects } from "@/lib/use-catalog-projects";
 import { useMatchProfile } from "@/lib/use-match-profile";
 import { ProjectDialog } from "@/components/project-dialog";
 import { InfoTip } from "@/components/info-tip";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { useStore } from "@/lib/store";
 import { matchProject } from "@/lib/matching";
 import { useHybridScores, withHybridScore } from "@/lib/use-project-scores";
@@ -23,6 +24,7 @@ export default function Saved() {
   return (
     <Layout>
         <PageHeader
+          tour="saved-header"
           eyebrow="Saved"
           title={
             <span>
@@ -43,6 +45,14 @@ export default function Saved() {
         )}
       </div>
       <ProjectDialog project={open} onClose={() => setOpen(null)} />
+      <OnboardingTour
+        tourId="student-saved"
+        steps={[{
+          selector: '[data-tour="saved-header"]',
+          title: "Your shortlist",
+          body: "Bookmarks from any page land here, including closed listings you want to revisit next term. Percentages come from the same AI hybrid score as Discover.",
+        }]}
+      />
     </Layout>
   );
 }

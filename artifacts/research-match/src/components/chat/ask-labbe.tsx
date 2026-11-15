@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
 import { useAccount } from "@/lib/auth";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { Layout, PageHeader } from "@/components/layout";
 import { InterestButton, SaveButton } from "@/components/bits";
 import { cn } from "@/lib/utils";
@@ -150,7 +151,7 @@ export function AskLabbe() {
       <div className="flex h-[calc(100dvh-330px)] min-h-[560px] flex-col border border-primary/20 bg-card">
       <div className="flex items-center gap-2 border-b border-primary/15 px-5 py-4">
         <Sparkles className="text-chart-2" size={18} />
-        <h2 className="font-display text-xl">Ask LABBE AI</h2>
+        <h2 className="font-display text-xl" data-tour="ask-header">Ask LABBE AI</h2>
         <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           AI over {82}+ USC labs
         </span>
@@ -304,6 +305,14 @@ export function AskLabbe() {
       </form>
       </div>
       </div>
+    <OnboardingTour
+      tourId="student-ask"
+      steps={[{
+        selector: '[data-tour="ask-header"]',
+        title: "Ask LABBE",
+        body: "A research assistant that knows the lab catalog. Ask about skills, hours, labs, or why a project matched — it answers with the projects themselves.",
+      }]}
+    />
     </Layout>
   );
 }

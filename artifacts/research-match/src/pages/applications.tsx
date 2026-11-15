@@ -6,6 +6,7 @@ import { Trash2, LoaderCircle } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
 import { RecruitPill } from "@/components/bits";
 import { ProjectDialog } from "@/components/project-dialog";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { STATUS_LABEL, useStore, type InterestStatus } from "@/lib/store";
 import type { Project } from "@/lib/data";
 import { api } from "@/lib/convex-api";
@@ -37,7 +38,7 @@ export default function Applications() {
   const mine = interests.filter((i) => i.studentId === profile.id);
   return (
     <Layout>
-      <PageHeader eyebrow="Interest tracker" title="Where things stand">Track each conversation. Faculty see the same request in their workspace and can update it.</PageHeader>
+      <PageHeader eyebrow="Interest tracker" title="Where things stand" tour="tracker-header">Track each conversation. Faculty see the same request in their workspace and can update it.</PageHeader>
       <div className="px-5 md:px-10 pb-12">
         {live ? (
           liveInterests === undefined ? (
@@ -128,6 +129,14 @@ export default function Applications() {
         )}
       </div>
       <ProjectDialog project={open} onClose={() => setOpen(null)} />
+      <OnboardingTour
+        tourId="student-tracker"
+        steps={[{
+          selector: '[data-tour="tracker-header"]',
+          title: "Interest tracker",
+          body: "Every interest request you send lands here. Faculty review it and update the status — contacted, in conversation, accepted — and you see the change immediately.",
+        }]}
+      />
     </Layout>
   );
 }

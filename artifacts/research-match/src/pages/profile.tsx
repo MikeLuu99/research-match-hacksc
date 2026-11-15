@@ -3,6 +3,7 @@ import { useQuery } from "@/lib/backend";
 import { LoaderCircle } from "lucide-react";
 import { FileText, Lock, Eye, X, Plus } from "lucide-react";
 import { Layout, PageHeader } from "@/components/layout";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import {
   ProfileEditor,
   type StudentProfileInitial,
@@ -76,7 +77,7 @@ function RealProfileEditor() {
     : undefined;
   return (
     <Layout>
-      <PageHeader eyebrow="My profile" title={account.viewer?.name ?? "Your profile"}>
+      <PageHeader eyebrow="My profile" title={account.viewer?.name ?? "Your profile"} tour="profile-header">
         Saved to your account — updating it also refreshes your embedding, so
         AI matches stay current.
       </PageHeader>
@@ -85,6 +86,14 @@ function RealProfileEditor() {
           <ProfileEditor initial={initial} />
         </div>
       </div>
+      <OnboardingTour
+        tourId="student-profile"
+        steps={[{
+          selector: '[data-tour="profile-header"]',
+          title: "Your profile drives your matches",
+          body: "Skills, interests, hours, and credit needs feed the ranking. Saving changes refreshes your profile embedding, so AI matches stay current.",
+        }]}
+      />
     </Layout>
   );
 }

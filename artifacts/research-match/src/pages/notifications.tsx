@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { CheckCheck, Inbox, LoaderCircle, Send, UserMinus } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { api } from "@/lib/convex-api";
 import { useAccount } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -40,11 +41,19 @@ export default function Notifications() {
 
   return (
     <Layout>
-      <PageHeader eyebrow="Notifications" title="Notification">
+      <PageHeader eyebrow="Notifications" title="Notification" tour="notifications-header">
         {account.viewer?.accountType === "faculty"
           ? "New and withdrawn interest in your listings."
           : "Status updates on the labs you sent interest to."}
       </PageHeader>
+      <OnboardingTour
+        tourId="notifications-tour"
+        steps={[{
+          selector: '[data-tour="notifications-header"]',
+          title: "Notifications",
+          body: "Interest and status updates for your account land here — new interest for faculty, faculty decisions for students.",
+        }]}
+      />
       <div className="max-w-3xl space-y-4 px-5 pb-12 md:px-10">
         {data === undefined ? (
           <p

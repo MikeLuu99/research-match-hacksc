@@ -4,6 +4,7 @@ import { useQuery } from "@/lib/backend";
 import { Lock, UserMinus, UserRound } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
 import { InfoTip } from "@/components/info-tip";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { ScoreDial } from "@/components/bits";
 import { LiveStudentDialog, type LiveStudent } from "@/components/faculty-dashboard";
 import { api } from "@/lib/convex-api";
@@ -44,6 +45,7 @@ export default function FacultyShortlist() {
   return (
     <Layout>
       <PageHeader
+        tour="shortlist-header"
         eyebrow={live ? "Student shortlist · browser-local" : "Student shortlist · demo"}
         title={
           <span>
@@ -81,6 +83,14 @@ export default function FacultyShortlist() {
           <DemoRows keys={mine} projectId={p.id} onRemove={(k) => { toggleShortlist(p.id, k); toast({ title: "Removed from shortlist" }); }} />
         )}
       </div>
+    <OnboardingTour
+      tourId="faculty-shortlist"
+      steps={[{
+        selector: '[data-tour="shortlist-header"]',
+        title: "Student Shortlist",
+        body: "Your per-project candidate list, stored in this browser only. Shortlisting never notifies the student — reach out to start a conversation.",
+      }]}
+    />
     </Layout>
   );
 }

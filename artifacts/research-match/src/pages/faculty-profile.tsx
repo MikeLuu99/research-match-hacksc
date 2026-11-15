@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Plus } from "lucide-react";
 import { Layout, PageHeader } from "@/components/layout";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useStore, type FacultyProfile as FP } from "@/lib/store";
@@ -21,7 +22,7 @@ export default function FacultyProfile() {
 
   return (
     <Layout>
-      <PageHeader eyebrow={live ? "Faculty profile · browser-local" : "Faculty profile · sample"} title={faculty.name || "Unnamed faculty"}>
+      <PageHeader eyebrow={live ? "Faculty profile · browser-local" : "Faculty profile · sample"} title={faculty.name || "Unnamed faculty"} tour="faculty-profile-header">
         Saved automatically to this browser, separately from any student profile.
       </PageHeader>
       <div className="grid gap-6 px-5 pb-12 md:px-10 lg:grid-cols-[1fr_320px]">
@@ -66,6 +67,14 @@ export default function FacultyProfile() {
           <LocalNotice>{live ? "Stored only in this browser for this account. It is not published to students or synced, and nothing is sent to the email above." : "Fictional sample profile stored only in this browser. It is not published and no email is sent to the address above."}</LocalNotice>
         </aside>
       </div>
+    <OnboardingTour
+      tourId="faculty-profile"
+      steps={[{
+        selector: '[data-tour="faculty-profile-header"]',
+        title: "Your faculty profile",
+        body: "Your public identity on Labbe. Keep your department and research areas current so students recognize your lab.",
+      }]}
+    />
     </Layout>
   );
 }

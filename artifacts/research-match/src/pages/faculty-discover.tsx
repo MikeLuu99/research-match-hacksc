@@ -23,6 +23,7 @@ import { LocalNotice, ProjectSelect } from "@/components/faculty/demo-notice";
 import { CandidateRow } from "@/components/faculty/candidate-row";
 import { StudentDetailDialog } from "@/components/faculty/student-detail";
 import { InfoTip } from "@/components/info-tip";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import type { ReactNode } from "react";
 
 const toggleCls = (on: boolean) => cn("h-11 border px-4 text-sm transition-colors", on ? "border-primary bg-primary text-primary-foreground" : "border-primary/25 bg-card hover:bg-primary/5");
@@ -111,7 +112,7 @@ function LiveDiscover() {
   );
   return (
     <Layout>
-      <PageHeader eyebrow="Discover students · live" title="Interested Students">
+      <PageHeader eyebrow="Discover students · live" title="Interested Students" tour="discover-students-header">
         Students who applied to your projects, plus recommended students who opted in to faculty discovery.
       </PageHeader>
       <div className="space-y-6 px-5 pb-12 md:px-10">
@@ -145,6 +146,21 @@ function LiveDiscover() {
         )}
       </div>
       <LiveStudentDialog student={open} onClose={() => setOpenId(null)} />
+      <OnboardingTour
+        tourId="faculty-discover"
+        steps={[
+          {
+            selector: '[data-tour="discover-students-header"]',
+            title: "Interested Students",
+            body: "Applicants sent you interest directly. Recommended students opted in to faculty discovery — ranked against your selected project by the AI hybrid score.",
+          },
+          {
+            selector: '[data-testid="filter-credit"]',
+            title: "Filter candidates",
+            body: "Search by name, major, skill or interest, and filter to students seeking academic credit.",
+          },
+        ]}
+      />
     </Layout>
   );
 }
@@ -184,7 +200,7 @@ function DemoDiscover() {
 
   return (
     <Layout>
-      <PageHeader eyebrow={`Discover students · demo · ${p.department}`} title="Interested Students">
+      <PageHeader eyebrow={`Discover students · demo · ${p.department}`} title="Interested Students" tour="discover-students-header">
         Opted-in fictional students and direct applicants from any department, ranked by demo matching. Cross-department fits are the point.
       </PageHeader>
       <div className="max-w-4xl space-y-5 px-5 pb-12 md:px-10">
@@ -209,6 +225,14 @@ function DemoDiscover() {
         ))}
       </div>
       <StudentDetailDialog s={open} project={p} onClose={() => setOpen(null)} />
+      <OnboardingTour
+        tourId="faculty-discover"
+        steps={[{
+          selector: '[data-tour="discover-students-header"]',
+          title: "Interested Students",
+          body: "Opted-in demo students and direct applicants from any department, ranked by demo matching. Cross-department fits are the point.",
+        }]}
+      />
     </Layout>
   );
 }

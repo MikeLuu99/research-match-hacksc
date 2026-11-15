@@ -312,13 +312,15 @@ export function PageHeader({
   eyebrow,
   title,
   children,
+  tour,
 }: {
   eyebrow: string;
   title: ReactNode;
   children?: ReactNode;
+  tour?: string;
 }) {
   return (
-    <header className="px-5 md:px-10 pt-8 md:pt-12 pb-6 rise">
+    <header className="px-5 md:px-10 pt-8 md:pt-12 pb-6 rise" data-tour={tour}>
       <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-primary">
         <span className="h-[7px] w-[7px] bg-chart-2" />
         {eyebrow}

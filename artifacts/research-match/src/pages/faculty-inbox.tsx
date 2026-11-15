@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { LoaderCircle } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
 import { InfoTip } from "@/components/info-tip";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { useStore, STATUS_LABEL, type InterestStatus } from "@/lib/store";
 import { demoStudents } from "@/lib/faculty-access";
 import { useFacultyMode } from "@/lib/faculty-mode";
@@ -112,6 +113,7 @@ export default function FacultyInbox() {
   return (
     <Layout>
       <PageHeader
+        tour="inbox-header"
         eyebrow={live ? "Interest inbox" : "Interest inbox · demo"}
         title={
           <span>
@@ -244,6 +246,14 @@ export default function FacultyInbox() {
           </div>
         )}
       </div>
+    <OnboardingTour
+      tourId="faculty-inbox"
+      steps={[{
+        selector: '[data-tour="inbox-header"]',
+        title: "Interest Box",
+        body: "Review each request and set a status — contacted, in conversation, accepted, declined. The student sees your update in their tracker immediately.",
+      }]}
+    />
     </Layout>
   );
 }
