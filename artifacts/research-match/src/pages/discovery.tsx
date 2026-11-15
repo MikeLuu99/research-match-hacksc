@@ -155,13 +155,13 @@ export default function Discovery() {
           </select>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          <Chip size="lg" id="open" on={statuses.includes("open")} onClick={() => toggleStatus("open")}>Open recruiting</Chip>
-          <Chip size="lg" id="exploration" on={statuses.includes("exploration")} onClick={() => toggleStatus("exploration")}>Lab exploration</Chip>
-          <Chip size="lg" id="closed" on={statuses.includes("closed")} onClick={() => toggleStatus("closed")}>Show closed</Chip>
+          <Chip id="open" on={statuses.includes("open")} onClick={() => toggleStatus("open")}>Open recruiting</Chip>
+          <Chip id="exploration" on={statuses.includes("exploration")} onClick={() => toggleStatus("exploration")}>Lab exploration</Chip>
+          <Chip id="closed" on={statuses.includes("closed")} onClick={() => toggleStatus("closed")}>Show closed</Chip>
           <span className="w-px h-6 bg-border mx-1" />
-          <Chip size="lg" id="paid" on={paid} onClick={() => setPaid(!paid)}>Paid</Chip>
-          <Chip size="lg" id="credit" on={credit} onClick={() => setCredit(!credit)}>Academic credit</Chip>
-          <Chip size="lg" id="beginner" on={beginner} onClick={() => setBeginner(!beginner)}>Beginner friendly</Chip>
+          <Chip id="paid" on={paid} onClick={() => setPaid(!paid)}>Paid</Chip>
+          <Chip id="credit" on={credit} onClick={() => setCredit(!credit)}>Academic credit</Chip>
+          <Chip id="beginner" on={beginner} onClick={() => setBeginner(!beginner)}>Beginner friendly</Chip>
           <span className="ml-auto text-sm text-muted-foreground font-mono" data-testid="text-result-count">{list.length} of {projects.length}</span>
         </div>
       </section>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 // When2meet-style weekly availability grid. Tokens are "day-hour" pairs
 // (e.g. "mon-9"), hours run 9 AM through 8 PM. Students toggle cells
 // (click or click-drag); professors view them read-only.
-export const SCHEDULE_DAYS: { key: string; label: string }[] = [
+const SCHEDULE_DAYS: { key: string; label: string }[] = [
   { key: "mon", label: "Mon" },
   { key: "tue", label: "Tue" },
   { key: "wed", label: "Wed" },
@@ -14,7 +14,7 @@ export const SCHEDULE_DAYS: { key: string; label: string }[] = [
   { key: "sun", label: "Sun" },
 ];
 
-export const SCHEDULE_HOURS: { hour: number; label: string }[] = [
+const SCHEDULE_HOURS: { hour: number; label: string }[] = [
   { hour: 9, label: "9 AM" },
   { hour: 10, label: "10 AM" },
   { hour: 11, label: "11 AM" },

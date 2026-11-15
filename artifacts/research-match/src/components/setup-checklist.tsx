@@ -22,6 +22,10 @@ export function SetupChecklist() {
     },
     { label: "Write a short bio", done: Boolean((profile.bio ?? "").trim()) },
     {
+      label: "Set your weekly availability",
+      done: Boolean((profile.schedule ?? "").trim()),
+    },
+    {
       label: "Upload your resume",
       done: Boolean(profile.resumeStorageId),
     },
