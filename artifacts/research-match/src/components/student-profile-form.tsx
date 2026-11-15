@@ -200,16 +200,12 @@ export function StudentProfileForm({
     <form className="auth-form profile-form" onSubmit={submit}>
       <datalist id="usc-majors-list">
         {USC_MAJORS.map((program) => (
-          <option key={program.name} value={program.name}>
-            {program.school}
-          </option>
+          <option key={program.name} value={program.name} />
         ))}
       </datalist>
       <datalist id="usc-minors-list">
         {USC_MINORS.map((program) => (
-          <option key={program.name} value={program.name}>
-            {program.school}
-          </option>
+          <option key={program.name} value={program.name} />
         ))}
       </datalist>
       <div className="auth-field">
