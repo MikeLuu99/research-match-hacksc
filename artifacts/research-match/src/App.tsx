@@ -21,6 +21,7 @@ import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth";
 import { AccountProvider, useAccount } from "@/lib/auth";
+import { UscEmailGate } from "@/components/usc-email-gate";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,8 @@ function WorkspaceRoutes() {
 
 function PrivateWorkspace() {
   const account = useAccount();
+  if (account.isAuthenticated && account.viewer && !account.viewer.uscEmail)
+    return <UscEmailGate />;
   if (account.isLoading)
     return (
       <p role="status" className="p-12">

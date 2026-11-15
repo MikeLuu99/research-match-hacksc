@@ -34,6 +34,10 @@ export async function studentProfileForOwner(
     .unique();
 }
 
+export function isUscEmail(email: string | null | undefined) {
+  return Boolean(email && email.toLowerCase().endsWith("@usc.edu"));
+}
+
 export async function accountProfileFor(
   ctx: { db: GenericDatabaseReader<DataModel> },
   authUserId: string,
@@ -56,6 +60,8 @@ export const current = query({
     return {
       id: user._id,
       name: profile?.name ?? user.name,
+      email: user.email,
+      uscEmail: isUscEmail(user.email),
       accountType: profile?.accountType ?? null,
       hasStudentProfile: student !== null,
     };
@@ -118,6 +124,10 @@ export const completeProfile = mutation({
     const user = await authComponent.getAuthUser(ctx);
     const existing = await accountProfileFor(ctx, user._id);
     if (existing) return null;
+    if (!isUscEmail(user.email))
+      throw new ConvexError(
+        "Sign in with your USC email (ending in @usc.edu) to create an account.",
+      );
     const name = args.name.trim();
     if (name.length < 2 || name.length > 80)
       throw new ConvexError("Enter a name between 2 and 80 characters.");

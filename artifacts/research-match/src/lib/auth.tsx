@@ -18,6 +18,8 @@ interface Account {
     | {
         id: string;
         name: string | null;
+        email: string | null;
+        uscEmail: boolean;
         accountType: AccountType | null;
         hasStudentProfile: boolean;
       }

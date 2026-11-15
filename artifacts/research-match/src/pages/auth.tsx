@@ -15,6 +15,7 @@ import {
   type CredentialsMode,
 } from "@/components/auth-form";
 import { StudentProfileForm } from "@/components/student-profile-form";
+import { UscEmailGate } from "@/components/usc-email-gate";
 
 function OnboardingForm() {
   const { completeProfile, viewer } = useAccount();
@@ -163,6 +164,8 @@ export default function AuthPage({
         replace
       />
     );
+  if (account.isAuthenticated && !account.viewer?.uscEmail)
+    return <UscEmailGate />;
   if (account.isAuthenticated)
     return (
       <AuthFrame {...SETUP_COPY}>

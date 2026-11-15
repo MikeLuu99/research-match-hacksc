@@ -48,7 +48,7 @@ export function CredentialsForm() {
         </div>
       )}
       <p className="auth-intro-google">
-        Sign in with your USC Google account. No password needed.
+        Sign in with your USC Google account (email ending in @usc.edu). No password needed.
       </p>
       <button
         type="button"

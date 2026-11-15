@@ -38,6 +38,17 @@ describe("current", () => {
 });
 
 describe("completeProfile", () => {
+  it("rejects non-USC email addresses", async () => {
+    const test = makeTest();
+    const me = await signIn(test, "outsider@gmail.com");
+    await expect(
+      me.mutation(api.users.completeProfile, {
+        name: "Outsider",
+        accountType: "student",
+      }),
+    ).rejects.toThrow(/@usc\.edu/i);
+  });
+
   it("requires authentication", async () => {
     const { t } = makeTest();
     await expect(
