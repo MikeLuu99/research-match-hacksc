@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useAction } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   CornerDownLeft,
   LoaderCircle,
@@ -21,9 +21,11 @@ type ChatCard = {
   open: boolean;
 };
 
-type Message = {
-  role: "user" | "assistant";
-  content: string;
+type ChatMessage = {
+  _id: string;
+  isViewer: boolean;
+  text: string;
+  streaming?: boolean;
   sources?: { sourceId: string; title: string; sourceUrl?: string }[];
   cards?: ChatCard[];
 };
@@ -37,50 +39,43 @@ const STARTERS = [
 // Conversational assistant over the lab catalog: refined questions ranked by
 // vector search + BM25, answered with the retrieved labs as context.
 export function AskLabbe() {
-  const ask = useAction(api.chat.ask);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const messages = useQuery(api.chat.myMessages, {});
+  const sendQuestion = useMutation(api.chat.send);
+  const clearChat = useMutation(api.chat.clear);
   const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const loaded = messages ?? [];
+  const ordered = loaded.slice().sort((a, b) => a._id.localeCompare(b._id));
+  const streaming = ordered.some((message) => message.streaming);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages, busy]);
+  }, [ordered.length, streaming, ordered.at(-1)?.text]);
 
   async function send(question: string) {
     const trimmed = question.trim();
-    if (!trimmed || busy) return;
-    const history = messages.map((m) => ({ role: m.role, content: m.content }));
-    setMessages((current) => [...current, { role: "user", content: trimmed }]);
-    setDraft("");
-    setBusy(true);
+    if (!trimmed || sending) return;
+    setSending(true);
     setError("");
     try {
-      const result = await ask({
-        question: trimmed,
-        history: history.slice(-6),
-      });
-      setMessages((current) => [
-        ...current,
-        {
-          role: "assistant",
-          content: result.reply,
-          sources: result.sources.filter((s) => s.title),
-          cards: result.cards,
-        },
-      ]);
+      await sendQuestion({ question: trimmed });
+      setDraft("");
     } catch (err) {
       setError(
-        err instanceof Error && !err.message.includes("Uncaught")
-          ? err.message
-          : "The assistant couldn't respond. Try again shortly.",
+        err instanceof Error && err.message.includes("Uncaught")
+          ? "The assistant couldn't respond. Try again shortly."
+          : err instanceof Error
+            ? err.message
+            : "The assistant couldn't respond. Try again shortly.",
       );
     } finally {
-      setBusy(false);
+      setSending(false);
     }
   }
 
@@ -98,11 +93,11 @@ export function AskLabbe() {
         <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           AI over {82}+ USC labs
         </span>
-        {messages.length > 0 && (
+        {loaded.length > 0 && (
           <button
             aria-label="Clear conversation"
             onClick={() => {
-              setMessages([]);
+              void clearChat({});
               setError("");
             }}
             className="ml-auto flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:text-foreground"
@@ -113,7 +108,7 @@ export function AskLabbe() {
       </div>
 
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-        {messages.length === 0 && (
+        {ordered.length === 0 && (
           <div className="space-y-4 py-6 text-center">
             <p className="text-sm text-muted-foreground">
               Ask anything about USC research — refined queries get the best
@@ -132,22 +127,23 @@ export function AskLabbe() {
             </div>
           </div>
         )}
-        {messages.map((message, index) => (
+        {ordered.map((message) => (
           <div
-            key={index}
+            key={message._id}
             className={cn(
               "max-w-[85%] px-4 py-3 text-sm leading-relaxed",
-              message.role === "user"
+              message.isViewer
                 ? "ml-auto bg-primary text-primary-foreground"
                 : "border border-primary/15 bg-background",
             )}
           >
-            {message.content && (
-              <p className="whitespace-pre-line">{message.content}</p>
+            {message.streaming && (
+              <span className="mr-1 inline-block h-3.5 w-1.5 animate-pulse bg-primary align-middle" />
             )}
+            <p className="whitespace-pre-line">{message.text}</p>
             {message.cards && message.cards.length > 0 && (
               <div className={cn("mt-3 space-y-2", message.role === "user" && "mt-0")}>
-                {message.cards.map((card) => (
+                {(message.cards ?? []).map((card: ChatCard) => (
                   <div
                     key={card.sourceId}
                     data-testid={`chat-card-${card.sourceId}`}
@@ -183,7 +179,7 @@ export function AskLabbe() {
             )}
             {message.sources && message.sources.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5 border-t border-primary/10 pt-3">
-                {message.sources.map((source) => (
+                {(message.sources ?? []).map((source: { sourceId: string; title: string; sourceUrl?: string }) => (
                   <span
                     key={source.sourceId}
                     className="inline-flex items-center gap-1 border border-primary/20 bg-primary/5 px-2 py-0.5 text-[11px] text-primary"
@@ -206,7 +202,7 @@ export function AskLabbe() {
             )}
           </div>
         ))}
-        {busy && (
+        {(streaming || sending) && (
           <div
             className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
             role="status"
@@ -234,11 +230,11 @@ export function AskLabbe() {
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Ask about labs, skills, hours — anything research"
           className="h-11 flex-1 border border-primary/25 bg-background px-4 text-sm outline-none focus:border-primary/50"
-          disabled={busy}
+          disabled={sending}
         />
         <button
           type="submit"
-          disabled={busy || !draft.trim()}
+          disabled={sending || !draft.trim()}
           aria-label="Send question"
           className="grid h-11 w-11 place-items-center bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >

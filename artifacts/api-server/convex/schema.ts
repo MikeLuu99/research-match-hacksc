@@ -49,6 +49,33 @@ export const interestStatus = v.union(
 );
 
 export default defineSchema({
+  chatMessages: defineTable({
+    ownerSubject: v.string(),
+    isViewer: v.boolean(),
+    text: v.string(),
+    streaming: v.optional(v.boolean()),
+    sources: v.optional(
+      v.array(
+        v.object({
+          sourceId: v.string(),
+          title: v.string(),
+          sourceUrl: v.optional(v.string()),
+        }),
+      ),
+    ),
+    cards: v.optional(
+      v.array(
+        v.object({
+          sourceId: v.string(),
+          title: v.string(),
+          department: v.string(),
+          faculty: v.string(),
+          summary: v.string(),
+          open: v.boolean(),
+        }),
+      ),
+    ),
+  }).index("by_owner", ["ownerSubject"]),
   interests: defineTable({
     studentId: v.id("students"),
     sourceId: v.string(),
