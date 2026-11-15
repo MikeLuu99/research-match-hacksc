@@ -34,7 +34,12 @@ export default function Discovery() {
   const { projects, profile } = useStore();
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("all");
-  const [statuses, setStatuses] = useState<RecruitStatus[]>(["open", "exploration"]);
+  // Default state shows the full catalog; status chips exclude when toggled off.
+  const [statuses, setStatuses] = useState<RecruitStatus[]>([
+    "open",
+    "exploration",
+    "closed",
+  ]);
   const [paid, setPaid] = useState(false);
   const [credit, setCredit] = useState(false);
   const [beginner, setBeginner] = useState(false);
@@ -60,7 +65,14 @@ export default function Discovery() {
   );
   const depts = Array.from(new Set([...DEPARTMENTS, ...projects.map((p) => p.department)]));
   const toggleStatus = (s: RecruitStatus) => setStatuses((x) => (x.includes(s) ? x.filter((y) => y !== s) : [...x, s]));
-  const clear = () => { setQ(""); setDept("all"); setStatuses(["open", "exploration"]); setPaid(false); setCredit(false); setBeginner(false); };
+  const clear = () => {
+    setQ("");
+    setDept("all");
+    setStatuses(["open", "exploration", "closed"]);
+    setPaid(false);
+    setCredit(false);
+    setBeginner(false);
+  };
   const openCount = scored.filter(({ p }) => p.status === "open").length;
 
   return (
