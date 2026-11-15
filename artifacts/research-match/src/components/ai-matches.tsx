@@ -144,9 +144,12 @@ export function AiMatches() {
               {scoreLabel(match.similarity)}
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="font-display text-lg leading-snug">
-                {match.title}
-              </h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-display text-lg leading-snug">
+                  {match.title}
+                </h3>
+                <SaveButton id={match.sourceId} />
+              </div>
               <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Building2 className="h-3 w-3" />
