@@ -170,7 +170,7 @@ export function Layout({ children }: { children: ReactNode }) {
       ? 0
       : projects.reduce((n, p) => n + (shortlists[p.id] ?? []).length, 0),
     "/faculty/inbox": liveFaculty
-      ? (liveInbox ?? []).filter((i) => i.status === "interested").length
+      ? (liveInbox ?? []).length
       : interests.filter(
           (i) =>
             i.status === "interested" &&
