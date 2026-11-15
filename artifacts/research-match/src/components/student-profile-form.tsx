@@ -28,6 +28,32 @@ function splitTags(value: string) {
     .filter(Boolean);
 }
 
+function FieldLabel({
+  htmlFor,
+  children,
+  optional = false,
+}: {
+  htmlFor: string;
+  children: string;
+  optional?: boolean;
+}) {
+  return (
+    <span className="flex w-full items-baseline justify-between gap-2">
+      <label htmlFor={htmlFor}>{children}</label>
+      <span
+        aria-hidden="true"
+        className={
+          optional
+            ? "font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground"
+            : "font-mono text-[9px] uppercase tracking-[0.12em] text-primary"
+        }
+      >
+        {optional ? "Optional" : "Required"}
+      </span>
+    </span>
+  );
+}
+
 export type StudentProfileInitial = {
   major: string;
   schoolYear: string;
@@ -100,6 +126,15 @@ export function StudentProfileForm({
       "resume",
     ) as HTMLInputElement | null;
     const resumeFile = resumeInput?.files?.[0];
+    const skills = splitTags(String(data.get("skills") ?? ""));
+    const interests = splitTags(String(data.get("interests") ?? ""));
+    if (skills.length === 0 && interests.length === 0) {
+      setError("Add at least one skill or research interest to save your profile.");
+      event.currentTarget
+        .querySelector<HTMLElement>("#profile-skills")
+        ?.focus();
+      return;
+    }
     setError("");
     setPending(true);
     try {
@@ -113,8 +148,8 @@ export function StudentProfileForm({
           | "senior"
           | "masters"
           | "phd",
-        skills: splitTags(String(data.get("skills") ?? "")),
-        interests: splitTags(String(data.get("interests") ?? "")),
+        skills,
+        interests,
         experience,
         hoursPerWeek: Number(data.get("hours-per-week") ?? 0),
         workStudy: data.get("work-study") === "on",
@@ -144,7 +179,7 @@ export function StudentProfileForm({
   return (
     <form className="auth-form profile-form" onSubmit={submit}>
       <div className="auth-field">
-        <label htmlFor="profile-major">Major</label>
+        <FieldLabel htmlFor="profile-major">Major</FieldLabel>
         <input
           id="profile-major"
           name="major"
@@ -156,7 +191,7 @@ export function StudentProfileForm({
         />
       </div>
       <div className="auth-field">
-        <label htmlFor="profile-year">School year</label>
+        <FieldLabel htmlFor="profile-year">School year</FieldLabel>
         <select
           id="profile-year"
           name="school-year"
@@ -172,7 +207,7 @@ export function StudentProfileForm({
         </select>
       </div>
       <div className="auth-field">
-        <label htmlFor="profile-skills">Skills</label>
+        <FieldLabel htmlFor="profile-skills">Skills</FieldLabel>
         <input
           id="profile-skills"
           name="skills"
@@ -180,10 +215,10 @@ export function StudentProfileForm({
           disabled={pending}
           defaultValue={initial?.skills.join(", ") ?? ""}
         />
-        <p className="auth-help">Separate skills with commas.</p>
+        <p className="auth-help">Separate with commas — or list research interests below. At least one of the two is required.</p>
       </div>
       <div className="auth-field">
-        <label htmlFor="profile-interests">Research interests</label>
+        <FieldLabel htmlFor="profile-interests" optional>Research interests</FieldLabel>
         <input
           id="profile-interests"
           name="interests"
@@ -194,7 +229,7 @@ export function StudentProfileForm({
         <p className="auth-help">Separate interests with commas.</p>
       </div>
       <fieldset disabled={pending} className="experience-section">
-        <legend>Experience</legend>
+        <legend>Experience <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">Optional</span></legend>
         {experience.length === 0 && (
           <p className="auth-help">
             Add roles, campus jobs, or projects. You can also skip this and
@@ -250,7 +285,7 @@ export function StudentProfileForm({
         </button>
       </fieldset>
       <div className="auth-field">
-        <label htmlFor="profile-hours">Weekly availability (hours)</label>
+        <FieldLabel htmlFor="profile-hours">Weekly availability (hours)</FieldLabel>
         <input
           id="profile-hours"
           name="hours-per-week"
@@ -264,7 +299,7 @@ export function StudentProfileForm({
         />
       </div>
       <div className="auth-field">
-        <label htmlFor="profile-resume">Resume (PDF, up to 8 MB)</label>
+        <FieldLabel htmlFor="profile-resume" optional>Resume (PDF, up to 8 MB)</FieldLabel>
         <input
           id="profile-resume"
           name="resume"
@@ -284,6 +319,7 @@ export function StudentProfileForm({
           defaultChecked={initial?.workStudy ?? false}
           disabled={pending}
         />
+        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">Optional</span>
         I have Federal Work-Study eligibility
       </label>
       <label className="profile-check">
@@ -293,6 +329,7 @@ export function StudentProfileForm({
           defaultChecked={initial?.seekingCredit ?? false}
           disabled={pending}
         />
+        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">Optional</span>
         I’m looking to earn academic credit
       </label>
       <label className="profile-check">
@@ -302,6 +339,7 @@ export function StudentProfileForm({
           defaultChecked={initial?.recruitmentConsent ?? false}
           disabled={pending}
         />
+        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">Optional</span>
         Professors may discover my profile when recruiting. Your profile stays
         private until you opt in.
       </label>
