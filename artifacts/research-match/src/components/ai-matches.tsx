@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAction } from "convex/react";
-import { ArrowUpRight, LoaderCircle, Sparkles } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  LoaderCircle,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import { api } from "@/lib/convex-api";
 
 type MatchResult = {
@@ -21,6 +27,16 @@ type MatchesState = {
 
 function scoreLabel(similarity: number) {
   return `${Math.round(similarity * 100)}%`;
+}
+
+function cnScore(similarity: number) {
+  const pct = Math.round(similarity * 100);
+  return [
+    "grid h-12 w-14 shrink-0 place-items-center font-mono text-sm",
+    pct >= 60
+      ? "bg-primary text-primary-foreground"
+      : "bg-secondary text-secondary-foreground",
+  ].join(" ");
 }
 
 // AI matches for the signed-in student, computed against their stored profile
@@ -51,7 +67,7 @@ export function AiMatches() {
   if (loading && !state)
     return (
       <div
-        className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
+        className="flex items-center gap-2 py-8 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
         role="status"
       >
         <LoaderCircle className="animate-spin" size={14} /> Computing AI
@@ -61,31 +77,32 @@ export function AiMatches() {
 
   if (error)
     return (
-      <p className="text-xs text-muted-foreground" role="alert">
+      <p className="py-8 text-sm text-muted-foreground" role="alert">
         {error}
       </p>
     );
 
   if (!state?.ready)
     return (
-      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+      <p className="py-8 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
         Your profile embedding is being generated. Matches appear in a moment.
       </p>
     );
 
   if (!state.matches.length)
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="py-8 text-sm text-muted-foreground">
         No vector matches yet — the lab catalog is still loading. Check back
         shortly.
       </p>
     );
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-          <Sparkles className="h-3 w-3 text-chart-2" /> Embedding similarity
+          <Sparkles className="h-3 w-3 text-chart-2" /> Ranked by embedding
+          similarity
         </span>
         <button
           onClick={() => void run()}
@@ -94,56 +111,61 @@ export function AiMatches() {
           Refresh
         </button>
       </div>
-      <ol className="space-y-1.5">
-        {state.matches.map((match) => (
-          <li
+      <div className="grid gap-3 md:grid-cols-2">
+        {state.matches.map((match, index) => (
+          <article
             key={match.sourceId}
             data-testid={`row-ai-match-${match.sourceId}`}
-            className="flex items-center gap-3 border border-primary/15 bg-card px-3 py-2"
+            style={{ animationDelay: `${index * 45}ms` }}
+            className="lift rise flex gap-4 border border-primary/15 bg-card p-5"
           >
-            <span
-              className={cnScore(match.similarity)}
-              aria-label={`similarity ${scoreLabel(match.similarity)}`}
-            >
+            <span className={cnScore(match.similarity)}>
               {scoreLabel(match.similarity)}
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold leading-snug">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-display text-lg leading-snug">
                 {match.title}
-              </span>
-              <span className="block text-[11px] text-muted-foreground">
-                {match.department}
-              </span>
-            </span>
-            {!match.open && (
-              <span className="font-mono text-[10px] uppercase text-muted-foreground">
-                inquire
-              </span>
-            )}
-            {match.sourceUrl && (
-              <a
-                href={match.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary"
-                aria-label={`Open lab page for ${match.title}`}
-              >
-                <ArrowUpRight size={14} />
-              </a>
-            )}
-          </li>
+              </h3>
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Building2 className="h-3 w-3" />
+                  {match.department}
+                </span>
+                {match.faculty && (
+                  <span className="inline-flex items-center gap-1">
+                    <UserRound className="h-3 w-3" />
+                    {match.faculty}
+                  </span>
+                )}
+              </p>
+              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                {match.summary}
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <span
+                  className={
+                    match.open
+                      ? "bg-chart-2 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-accent-foreground"
+                      : "border border-primary/25 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground"
+                  }
+                >
+                  {match.open ? "recruiting" : "inquire"}
+                </span>
+                {match.sourceUrl && (
+                  <a
+                    href={match.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:opacity-80"
+                  >
+                    Lab page <ArrowUpRight size={13} />
+                  </a>
+                )}
+              </div>
+            </div>
+          </article>
         ))}
-      </ol>
+      </div>
     </div>
   );
-}
-
-function cnScore(similarity: number) {
-  const pct = Math.round(similarity * 100);
-  return [
-    "grid h-9 w-11 shrink-0 place-items-center font-mono text-[11px]",
-    pct >= 60
-      ? "bg-primary text-primary-foreground"
-      : "bg-secondary text-secondary-foreground",
-  ].join(" ");
 }

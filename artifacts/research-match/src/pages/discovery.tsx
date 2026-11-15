@@ -65,6 +65,17 @@ export default function Discovery() {
 
   return (
     <Layout>
+      {account.isAuthenticated && account.viewer?.accountType === "student" && account.viewer.hasStudentProfile ? (
+        <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
+          <h1 className="font-display text-3xl md:text-4xl leading-[1.05] mt-2 mb-6">
+            AI matches for <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">your profile</em>
+          </h1>
+          <div className="rise">
+            <AiMatches />
+          </div>
+        </section>
+      ) : (
       <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8 grid lg:grid-cols-[1.4fr_1fr] gap-8 items-end">
         <div className="rise">
           <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
@@ -75,13 +86,7 @@ export default function Discovery() {
             {openCount} labs are recruiting right now. Ranked by matching against your {profile.skills.length} skills, interests in {profile.interests.slice(0, 2).join(" and ") || "anything"}, and {profile.hours} h/week.
           </p>
         </div>
-        {account.isAuthenticated && account.viewer?.accountType === "student" && account.viewer.hasStudentProfile ? (
-          <div className="rise border border-primary/20 bg-card p-5" style={{ animationDelay: "120ms" }}>
-            <h2 className="font-display text-xl">AI matches for your profile</h2>
-            <p className="text-xs text-muted-foreground mt-1 mb-4">Vector similarity between your saved profile and the USC lab catalog.</p>
-            <AiMatches />
-          </div>
-        ) : spotlight && (
+        {spotlight && (
           <button
             data-testid="button-spotlight"
             onClick={() => setOpen(spotlight.p)}
@@ -100,6 +105,7 @@ export default function Discovery() {
           </button>
         )}
       </section>
+      )}
 
       <section className="sticky top-0 z-20 bg-background/90 backdrop-blur border-y px-5 md:px-10 py-3 space-y-3">
         <div className="flex flex-col md:flex-row gap-3">
