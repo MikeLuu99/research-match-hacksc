@@ -52,6 +52,7 @@ export default defineSchema({
   chatMessages: defineTable({
     ownerSubject: v.string(),
     isViewer: v.boolean(),
+    createdAt: v.optional(v.number()),
     text: v.string(),
     streaming: v.optional(v.boolean()),
     sources: v.optional(

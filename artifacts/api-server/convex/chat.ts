@@ -49,6 +49,7 @@ export const send = mutation({
       ownerSubject: identity.subject,
       isViewer: true,
       text: question,
+      createdAt: Date.now(),
     });
     await ctx.scheduler.runAfter(
       0,
@@ -123,6 +124,7 @@ export const addBotMessageMutation = internalMutation({
       isViewer: false,
       text: "",
       streaming: true,
+      createdAt: Date.now(),
     });
     return { id };
   },

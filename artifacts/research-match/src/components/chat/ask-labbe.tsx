@@ -48,7 +48,9 @@ export function AskLabbe() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const loaded = messages ?? [];
-  const ordered = loaded.slice().sort((a, b) => a._id.localeCompare(b._id));
+  const ordered = loaded
+    .slice()
+    .sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
   const streaming = ordered.some((message) => message.streaming);
 
   useEffect(() => {
@@ -86,7 +88,7 @@ export function AskLabbe() {
         catalog with sources.
       </PageHeader>
       <div className="px-5 pb-12 md:px-10">
-      <div className="flex h-[calc(100dvh-420px)] min-h-[420px] flex-col border border-primary/20 bg-card">
+      <div className="flex h-[calc(100dvh-330px)] min-h-[560px] flex-col border border-primary/20 bg-card">
       <div className="flex items-center gap-2 border-b border-primary/15 px-5 py-4">
         <Sparkles className="text-chart-2" size={18} />
         <h2 className="font-display text-xl">Ask LABBE</h2>
@@ -229,14 +231,14 @@ export function AskLabbe() {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Ask about labs, skills, hours — anything research"
-          className="h-11 flex-1 border border-primary/25 bg-background px-4 text-sm outline-none focus:border-primary/50"
+          className="min-h-14 flex-1 border border-primary/25 bg-background px-4 py-3 text-[15px] outline-none focus:border-primary/50"
           disabled={sending}
         />
         <button
           type="submit"
           disabled={sending || !draft.trim()}
           aria-label="Send question"
-          className="grid h-11 w-11 place-items-center bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          className="grid h-14 w-14 place-items-center bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
           <CornerDownLeft size={17} />
         </button>
