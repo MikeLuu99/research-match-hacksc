@@ -79,8 +79,8 @@ function RealProfileEditor() {
         Saved to your account — updating it also refreshes your embedding, so
         AI matches stay current.
       </PageHeader>
-      <div className="px-5 md:px-10 pb-12 max-w-2xl">
-        <div className="border border-primary/20 bg-card p-6">
+      <div className="px-5 md:px-10 pb-12">
+        <div className="mx-auto w-full max-w-3xl border border-primary/20 bg-card p-6 md:p-8">
           <ProfileEditor initial={initial} />
         </div>
       </div>
