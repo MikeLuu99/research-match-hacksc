@@ -100,7 +100,10 @@ function facultyView(project: {
     maxHours: project.maxHours ?? project.hoursPerWeek,
     paid: false,
     credit: project.offersCredit,
-    status: project.recruitmentStatus,
+    status:
+      project.recruitmentStatus === "explore"
+        ? "exploration"
+        : project.recruitmentStatus,
     level: project.level ?? "beginner",
     eligibleMajors: project.eligibleMajors ?? ["Any"],
     keywords: project.keywords ?? [],

@@ -11,12 +11,12 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 export function RecruitPill({ status }: { status: RecruitStatus }) {
-  const map = {
+  const map: Record<string, [string, string]> = {
     open: ["Open recruiting", "bg-chart-3/12 text-chart-3 border-chart-3/30"],
     exploration: ["Lab exploration", "bg-accent text-accent-foreground border-chart-2/40"],
     closed: ["Closed this term", "bg-muted text-muted-foreground border-border"],
-  } as const;
-  const [label, cls] = map[status];
+  };
+  const [label, cls] = map[status] ?? ["Reviewing", "bg-muted text-muted-foreground border-border"];
   return (
     <span data-testid={`status-recruit-${status}`} className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", cls)}>
       <span className={cn("h-1.5 w-1.5 rounded-full", status === "open" ? "bg-chart-3" : status === "exploration" ? "bg-chart-2" : "bg-muted-foreground")} />
