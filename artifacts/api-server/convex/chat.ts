@@ -238,6 +238,8 @@ export const updateBotMessage = internalMutation({
           faculty: v.string(),
           summary: v.string(),
           open: v.boolean(),
+          // Faculty candidate cards carry the student id for the UI.
+          studentId: v.optional(v.string()),
         }),
       ),
     ),
