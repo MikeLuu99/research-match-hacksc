@@ -1,6 +1,14 @@
 import { useRef, useState } from "react";
+import { useQuery } from "convex/react";
+import { LoaderCircle } from "lucide-react";
 import { FileText, Lock, Eye, X, Plus } from "lucide-react";
 import { Layout, PageHeader } from "@/components/layout";
+import {
+  StudentProfileForm,
+  type StudentProfileInitial,
+} from "@/components/student-profile-form";
+import { api } from "@/lib/convex-api";
+import { useAccount } from "@/lib/auth";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +42,61 @@ function TagEditor({ label, values, onChange, id }: { label: string; values: str
   );
 }
 
+// Signed-in students edit their real Convex profile here; saving also
+// re-ingests the profile into embeddings. Visitors get the browser-local demo.
+function RealProfileEditor() {
+  const account = useAccount();
+  const profile = useQuery(api.users.myStudentProfile, {});
+  if (profile === undefined)
+    return (
+      <Layout>
+        <div className="px-5 md:px-10 py-12 flex items-center gap-2 text-muted-foreground" role="status">
+          <LoaderCircle className="animate-spin" size={16} /> Loading your
+          profile…
+        </div>
+      </Layout>
+    );
+  const initial: StudentProfileInitial | undefined = profile
+    ? {
+        major: profile.major,
+        schoolYear: profile.schoolYear,
+        skills: profile.skills,
+        interests: profile.interests,
+        experience: profile.experience,
+        hoursPerWeek: profile.hoursPerWeek,
+        workStudy: profile.workStudy,
+        seekingCredit: profile.seekingCredit,
+        recruitmentConsent: profile.recruitmentConsent,
+        resumeFileName: profile.resumeFileName,
+      }
+    : undefined;
+  return (
+    <Layout>
+      <PageHeader eyebrow="My profile" title={account.viewer?.name ?? "Your profile"}>
+        Saved to your account — updating it also refreshes your embedding, so
+        AI matches stay current.
+      </PageHeader>
+      <div className="px-5 md:px-10 pb-12 max-w-2xl">
+        <div className="border border-primary/20 bg-card p-6">
+          <StudentProfileForm initial={initial} variant="editor" />
+        </div>
+      </div>
+    </Layout>
+  );
+}
+
 export default function Profile() {
+  const account = useAccount();
+  if (
+    account.isAuthenticated &&
+    account.viewer?.accountType === "student" &&
+    account.viewer.hasStudentProfile
+  )
+    return <RealProfileEditor />;
+  return <DemoProfile />;
+}
+
+function DemoProfile() {
   const { profile, updateProfile } = useStore();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);

@@ -28,14 +28,36 @@ function splitTags(value: string) {
     .filter(Boolean);
 }
 
-export function StudentProfileForm() {
+export type StudentProfileInitial = {
+  major: string;
+  schoolYear: string;
+  skills: string[];
+  interests: string[];
+  experience: ExperienceEntry[];
+  hoursPerWeek: number;
+  workStudy: boolean;
+  seekingCredit: boolean;
+  recruitmentConsent: boolean;
+  resumeFileName?: string;
+};
+
+export function StudentProfileForm({
+  initial,
+  variant = "onboarding",
+}: {
+  initial?: StudentProfileInitial;
+  variant?: "onboarding" | "editor";
+}) {
   const account = useAccount();
   const upsertProfile = useMutation(api.users.upsertStudentProfile);
   const requestUploadUrl = useAction(api.users.generateResumeUploadUrl);
   const [pending, setPending] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [experience, setExperience] = useState<ExperienceEntry[]>([]);
-  const [resumeName, setResumeName] = useState("");
+  const [experience, setExperience] = useState<ExperienceEntry[]>(
+    initial?.experience ?? [],
+  );
+  const [resumeName, setResumeName] = useState(initial?.resumeFileName ?? "");
 
   function updateExperience(index: number, patch: Partial<ExperienceEntry>) {
     setExperience((entries) =>
@@ -101,6 +123,11 @@ export function StudentProfileForm() {
         resumeStorageId,
         resumeFileName: resumeStorageId ? resumeName || resumeFile?.name : undefined,
       });
+      if (variant === "editor") {
+        setSaved(true);
+        setPending(false);
+        return;
+      }
       window.location.assign(
         `${window.location.origin}${import.meta.env.BASE_URL}app`,
       );
@@ -125,11 +152,18 @@ export function StudentProfileForm() {
           maxLength={120}
           required
           disabled={pending}
+          defaultValue={initial?.major ?? ""}
         />
       </div>
       <div className="auth-field">
         <label htmlFor="profile-year">School year</label>
-        <select id="profile-year" name="school-year" required disabled={pending}>
+        <select
+          id="profile-year"
+          name="school-year"
+          required
+          disabled={pending}
+          defaultValue={initial?.schoolYear ?? "freshman"}
+        >
           {SCHOOL_YEARS.map((year) => (
             <option key={year.value} value={year.value}>
               {year.label}
@@ -144,6 +178,7 @@ export function StudentProfileForm() {
           name="skills"
           placeholder="Python, React, machine learning"
           disabled={pending}
+          defaultValue={initial?.skills.join(", ") ?? ""}
         />
         <p className="auth-help">Separate skills with commas.</p>
       </div>
@@ -154,6 +189,7 @@ export function StudentProfileForm() {
           name="interests"
           placeholder="healthcare, natural language processing"
           disabled={pending}
+          defaultValue={initial?.interests.join(", ") ?? ""}
         />
         <p className="auth-help">Separate interests with commas.</p>
       </div>
@@ -222,7 +258,7 @@ export function StudentProfileForm() {
           min={0}
           max={80}
           step={1}
-          defaultValue={10}
+          defaultValue={initial?.hoursPerWeek ?? 10}
           required
           disabled={pending}
         />
@@ -245,6 +281,7 @@ export function StudentProfileForm() {
         <input
           type="checkbox"
           name="work-study"
+          defaultChecked={initial?.workStudy ?? false}
           disabled={pending}
         />
         I have Federal Work-Study eligibility
@@ -253,6 +290,7 @@ export function StudentProfileForm() {
         <input
           type="checkbox"
           name="seeking-credit"
+          defaultChecked={initial?.seekingCredit ?? false}
           disabled={pending}
         />
         I’m looking to earn academic credit
@@ -261,6 +299,7 @@ export function StudentProfileForm() {
         <input
           type="checkbox"
           name="recruitment-consent"
+          defaultChecked={initial?.recruitmentConsent ?? false}
           disabled={pending}
         />
         Professors may discover my profile when recruiting. Your profile stays
@@ -271,12 +310,22 @@ export function StudentProfileForm() {
           {error}
         </p>
       )}
+      {variant === "editor" && saved && (
+        <p className="auth-notice" role="status">
+          Profile saved. Your embedding is regenerating — AI matches refresh in
+          a few seconds.
+        </p>
+      )}
       <button
         className="public-button auth-submit"
         disabled={pending || !account.isConfigured}
       >
         {pending && <LoaderCircle className="animate-spin" size={18} />}
-        {pending ? "Saving your profile…" : "Save and continue"}
+        {pending
+          ? "Saving your profile…"
+          : variant === "editor"
+            ? "Save profile"
+            : "Save and continue"}
       </button>
     </form>
   );
