@@ -97,7 +97,7 @@ export const listLabs = query({
   },
 });
 
-const facultyCheck = internalQuery({
+export const facultyCheck = internalQuery({
   args: { subject: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -111,7 +111,7 @@ const facultyCheck = internalQuery({
   },
 });
 
-const pendingLabs = internalQuery({
+export const pendingLabs = internalQuery({
   args: {},
   returns: v.array(
     v.object({

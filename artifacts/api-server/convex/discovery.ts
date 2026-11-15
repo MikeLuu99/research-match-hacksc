@@ -15,7 +15,7 @@ const projectsByIdsRef = makeFunctionReference<"query">("discovery:projectsByIds
 const labByIdRef = makeFunctionReference<"query">("discovery:labById");
 const studentsByIdsRef = makeFunctionReference<"query">("discovery:studentsByIds");
 
-const projectsByIds = internalQuery({
+export const projectsByIds = internalQuery({
   args: { ids: v.array(v.id("projects")) },
   handler: async (ctx, args) => {
     const out = [];
@@ -37,7 +37,7 @@ const projectsByIds = internalQuery({
   },
 });
 
-const labById = internalQuery({
+export const labById = internalQuery({
   args: { labId: v.id("projects") },
   handler: async (ctx, args) => {
     const lab = await ctx.db.get(args.labId);
@@ -52,7 +52,7 @@ const labById = internalQuery({
   },
 });
 
-const studentsByIds = internalQuery({
+export const studentsByIds = internalQuery({
   args: { ids: v.array(v.id("students")) },
   handler: async (ctx, args) => {
     const out = [];

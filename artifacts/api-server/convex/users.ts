@@ -243,7 +243,7 @@ export const accountProfileBySubject = internalQuery({
   },
 });
 
-const studentProfileBySubject = internalQuery({
+export const studentProfileBySubject = internalQuery({
   args: { subject: v.string() },
   handler: async (ctx, args) => {
     const student = await studentProfileForOwner(ctx, args.subject);
@@ -256,7 +256,7 @@ const studentProfileBySubject = internalQuery({
   },
 });
 
-const studentProfileById = internalQuery({
+export const studentProfileById = internalQuery({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
     const student = await ctx.db.get(args.studentId);
