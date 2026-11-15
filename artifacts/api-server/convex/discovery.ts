@@ -215,7 +215,7 @@ export const demoMatches = action({
     const ranked = hybridRank(
       vectorHits.map((hit) => ({ id: String(hit._id), similarity: hit._score })),
       bm25,
-      10,
+      5,
     );
     if (!ranked.length) return { ready: true, demo: true, matches: [] };
     const docs: {
@@ -300,7 +300,7 @@ export const myMatches = action({
     const ranked = hybridRank(
       vectorHits.map((hit) => ({ id: String(hit._id), similarity: hit._score })),
       bm25,
-      10,
+      5,
     );
     if (!ranked.length) return { ready: true, matches: [] };
     const docs: {
@@ -389,7 +389,7 @@ export const labCandidates = action({
     const ranked = hybridRank(
       vectorHits.map((hit) => ({ id: String(hit._id), similarity: hit._score })),
       bm25,
-      10,
+      5,
     );
     if (!ranked.length) return { ready: true, matches: [] };
     const students: {

@@ -148,7 +148,7 @@ export function AiMatches() {
           Refresh
         </button>
       </div>
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3">
         {state.matches.map((match, index) => (
           <article
             key={match.sourceId}

@@ -92,7 +92,7 @@ describe("matching algorithm", () => {
       matches: { sourceId: string; similarity: number }[];
     };
     expect(result.ready).toBe(true);
-    expect(result.matches.length).toBe(10);
+    expect(result.matches.length).toBe(5);
     expect(result.matches[0].sourceId).toBe(LABS[0].sourceId);
     const scores = result.matches.map((match) => match.similarity);
     const sorted = [...scores].sort((a, b) => b - a);
@@ -168,6 +168,6 @@ describe("matching algorithm", () => {
       labId: target!.id as never,
     })) as { ready: boolean; matches: unknown[] };
     expect(result.ready).toBe(true);
-    expect(result.matches.length).toBe(10);
+    expect(result.matches.length).toBe(5);
   });
 });
