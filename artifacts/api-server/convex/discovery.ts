@@ -7,6 +7,7 @@ import {
 import { authComponent } from "./auth";
 import { action } from "./model";
 import { EMBEDDING_MODEL_ID } from "./embeddings";
+import { bm25Scores, hybridRank, tokenize } from "./ranking";
 
 const studentProfileBySubjectRef = makeFunctionReference<"query">(
   "users:studentProfileBySubject",
@@ -14,6 +15,92 @@ const studentProfileBySubjectRef = makeFunctionReference<"query">(
 const projectsByIdsRef = makeFunctionReference<"query">("discovery:projectsByIds");
 const labByIdRef = makeFunctionReference<"query">("discovery:labById");
 const studentsByIdsRef = makeFunctionReference<"query">("discovery:studentsByIds");
+const matchLexiconRef = makeFunctionReference<"query">("discovery:matchLexicon");
+const candidateLexiconRef = makeFunctionReference<"query">(
+  "discovery:candidateLexicon",
+);
+
+function scoreMap(
+  matches: { _id: unknown; _score: number }[],
+): Map<string, number> {
+  return new Map(matches.map((match) => [String(match._id), match._score]));
+}
+
+// Lexical corpus for the hybrid ranker: the student's own tokens plus every
+// project's searchable text.
+export const matchLexicon = internalQuery({
+  args: { subject: v.string() },
+  handler: async (ctx, args) => {
+    const student = await ctx.db
+      .query("students")
+      .withIndex("by_owner", (q) => q.eq("ownerSubject", args.subject))
+      .unique();
+    if (!student) return null;
+    const studentTokens = tokenize(
+      [
+        student.major,
+        ...student.skills,
+        ...student.interests,
+        ...student.experience.map(
+          (entry: { role: string; org: string; description: string }) =>
+            `${entry.role} ${entry.org} ${entry.description}`,
+        ),
+      ].join(" "),
+    );
+    const projects = await ctx.db.query("projects").collect();
+    return {
+      studentTokens,
+      projects: projects.map((project) => ({
+        id: project._id,
+        text: [
+          project.title,
+          project.department,
+          project.faculty,
+          project.description,
+          ...project.requiredSkills,
+          ...project.preferredSkills,
+        ].join(" "),
+      })),
+    };
+  },
+});
+
+// Lexical corpus for faculty ranking: the lab's tokens plus every consented
+// student's searchable text.
+export const candidateLexicon = internalQuery({
+  args: { labId: v.id("projects") },
+  handler: async (ctx, args) => {
+    const lab = await ctx.db.get(args.labId);
+    if (!lab) return null;
+    const labTokens = tokenize(
+      [
+        lab.title,
+        lab.department,
+        ...lab.requiredSkills,
+        ...lab.preferredSkills,
+      ].join(" "),
+    );
+    const students = await ctx.db.query("students").collect();
+    return {
+      labTokens,
+      students: students
+        .filter((student) => student.recruitmentConsent)
+        .map((student) => ({
+          id: student._id,
+          text: [
+            student.name,
+            student.major,
+            ...student.skills,
+            ...student.interests,
+            ...student.experience.map(
+              (entry: { role: string; org: string; description: string }) =>
+                `${entry.role} ${entry.org} ${entry.description}`,
+            ),
+          ].join(" "),
+        })),
+    };
+  },
+});
 
 export const projectsByIds = internalQuery({
   args: { ids: v.array(v.id("projects")) },
@@ -75,10 +162,9 @@ export const studentsByIds = internalQuery({
   },
 });
 
-// AI matching for the signed-in student: nearest labs to the student's stored
-// profile embedding. Runs as an action because vector search is action-side;
-// the client calls it on demand (profile saves refresh the vector shortly
-// after).
+// AI matching for the signed-in student: hybrid ranking over vector
+// similarity (semantic) and BM25 (exact keyword matches) across the lab
+// catalog. Runs as an action because vector search is action-side.
 export const myMatches = action({
   args: {},
   returns: v.object({
@@ -106,23 +192,28 @@ export const myMatches = action({
     } | null = await ctx.runQuery(studentProfileBySubjectRef, {
       subject: identity.subject,
     });
-    if (!profile) return { ready: false, matches: [] };
-    if (profile.embedding.length === 0) {
-      // Self-heal legacy profiles saved before the embedding pipeline:
-      // regenerate the vector instead of waiting forever.
-      await ctx.scheduler.runAfter(
-        0,
-        makeFunctionReference<"action">("users:embedStudent"),
-        { studentId: profile.id as never },
-      );
+    if (!profile || profile.embedding.length === 0)
       return { ready: false, matches: [] };
-    }
     if (profile.embeddingModel !== EMBEDDING_MODEL_ID)
       return { ready: false, matches: [] };
-    const matches = await ctx.vectorSearch("projects", "by_embedding", {
-      vector: profile.embedding,
-      limit: 12,
+    const lexicon: {
+      studentTokens: string[];
+      projects: { id: string; text: string }[];
+    } | null = await ctx.runQuery(matchLexiconRef, {
+      subject: identity.subject,
     });
+    if (!lexicon) return { ready: false, matches: [] };
+    const vectorHits = await ctx.vectorSearch("projects", "by_embedding", {
+      vector: profile.embedding,
+      limit: 24,
+    });
+    const bm25 = bm25Scores(lexicon.studentTokens, lexicon.projects);
+    const ranked = hybridRank(
+      vectorHits.map((hit) => ({ id: String(hit._id), similarity: hit._score })),
+      bm25,
+      10,
+    );
+    if (!ranked.length) return { ready: true, matches: [] };
     const docs: {
       id: string;
       sourceId: string;
@@ -133,29 +224,29 @@ export const myMatches = action({
       sourceUrl?: string;
       open: boolean;
     }[] = await ctx.runQuery(projectsByIdsRef, {
-      ids: matches.map((match) => match._id),
+      ids: ranked.map((entry) => entry.id as never),
     });
-    const scoreById = new Map(
-      matches.map((match) => [String(match._id), match._score]),
-    );
+    const scoreById = new Map(ranked.map((entry) => [entry.id, entry.score]));
     return {
       ready: true,
-      matches: docs.map((doc) => ({
-        sourceId: doc.sourceId,
-        title: doc.title,
-        department: doc.department,
-        summary: doc.summary,
-        faculty: doc.faculty,
-        sourceUrl: doc.sourceUrl,
-        similarity: scoreById.get(doc.id) ?? 0,
-        open: doc.open,
-      })),
+      matches: docs
+        .map((doc) => ({
+          sourceId: doc.sourceId,
+          title: doc.title,
+          department: doc.department,
+          summary: doc.summary,
+          faculty: doc.faculty,
+          sourceUrl: doc.sourceUrl,
+          similarity: scoreById.get(doc.id) ?? 0,
+          open: doc.open,
+        }))
+        .sort((a, b) => b.similarity - a.similarity),
     };
   },
 });
 
-// Faculty-side AI ranking: consented students whose embedded profiles are
-// nearest to a lab.
+// Faculty-side AI ranking: hybrid vector + BM25 ranking of consented students
+// against a lab.
 export const labCandidates = action({
   args: { labId: v.id("projects") },
   returns: v.object({
@@ -195,11 +286,23 @@ export const labCandidates = action({
     if (!lab) throw new ConvexError("Lab not found.");
     if (lab.embedding.length === 0 || lab.embeddingModel !== EMBEDDING_MODEL_ID)
       return { ready: false, matches: [] };
-    const matches = await ctx.vectorSearch("students", "by_embedding", {
+    const lexicon: {
+      labTokens: string[];
+      students: { id: string; text: string }[];
+    } | null = await ctx.runQuery(candidateLexiconRef, { labId: args.labId });
+    if (!lexicon) return { ready: false, matches: [] };
+    const vectorHits = await ctx.vectorSearch("students", "by_embedding", {
       vector: lab.embedding,
-      limit: 12,
+      limit: 24,
       filter: (q) => q.eq("recruitmentConsent", true),
     });
+    const bm25 = bm25Scores(lexicon.labTokens, lexicon.students);
+    const ranked = hybridRank(
+      vectorHits.map((hit) => ({ id: String(hit._id), similarity: hit._score })),
+      bm25,
+      10,
+    );
+    if (!ranked.length) return { ready: true, matches: [] };
     const students: {
       studentId: string;
       name: string;
@@ -209,17 +312,17 @@ export const labCandidates = action({
       interests: string[];
       hoursPerWeek: number;
     }[] = await ctx.runQuery(studentsByIdsRef, {
-      ids: matches.map((match) => match._id),
+      ids: ranked.map((entry) => entry.id as never),
     });
-    const scoreById = new Map(
-      matches.map((match) => [String(match._id), match._score]),
-    );
+    const scoreById = new Map(ranked.map((entry) => [entry.id, entry.score]));
     return {
       ready: true,
-      matches: students.map((student) => ({
-        ...student,
-        similarity: scoreById.get(student.studentId) ?? 0,
-      })),
+      matches: students
+        .map((student) => ({
+          ...student,
+          similarity: scoreById.get(student.studentId) ?? 0,
+        }))
+        .sort((a, b) => b.similarity - a.similarity),
     };
   },
 });

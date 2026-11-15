@@ -101,8 +101,8 @@ export function AiMatches() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-          <Sparkles className="h-3 w-3 text-chart-2" /> Ranked by embedding
-          similarity
+          <Sparkles className="h-3 w-3 text-chart-2" /> Ranked by AI relevance
+          (semantic + keywords)
         </span>
         <button
           onClick={() => void run()}
