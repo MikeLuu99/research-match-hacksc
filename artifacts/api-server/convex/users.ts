@@ -83,6 +83,7 @@ const studentListing = v.object({
   ...studentProfileFields,
 });
 
+
 // Faculty discovery over student profiles. Only explicit recruitment-consent
 // records are returned, and resume files/parse timestamps stay private.
 export const listStudents = query({
@@ -103,6 +104,7 @@ export const listStudents = query({
         id: student._id,
         name: student.name,
         major: student.major,
+        minors: student.minors ?? [],
         schoolYear: student.schoolYear,
         skills: student.skills,
         interests: student.interests,
@@ -176,6 +178,7 @@ export const upsertStudentProfile = mutation({
       throw new ConvexError("Enter a weekly availability in hours.");
     const hoursPerWeek = Math.max(0, Math.min(80, Math.round(args.hoursPerWeek)));
     const skills = cleanTagList(args.skills, "skills", 30);
+    const minors = cleanTagList(args.minors ?? [], "minors", 10);
     const interests = cleanTagList(args.interests, "interests", 30);
     if (skills.length === 0 && interests.length === 0)
       throw new ConvexError("Add at least one skill or research interest.");
@@ -200,6 +203,7 @@ export const upsertStudentProfile = mutation({
       name: account.name,
       major,
       schoolYear: args.schoolYear,
+      minors,
       skills,
       interests,
       experience,
@@ -274,6 +278,7 @@ export const studentProfileById = internalQuery({
     return {
       name: student.name,
       major: student.major,
+      minors: student.minors ?? [],
       schoolYear: student.schoolYear,
       skills: student.skills,
       interests: student.interests,
@@ -306,6 +311,7 @@ export const embedStudent = action({
     const student: {
       name: string;
       major: string;
+      minors: string[];
       schoolYear: string;
       skills: string[];
       interests: string[];

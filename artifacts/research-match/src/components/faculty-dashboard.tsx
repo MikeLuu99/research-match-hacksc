@@ -34,6 +34,7 @@ type Student = {
   id: string;
   name: string;
   major: string;
+  minors: string[];
   schoolYear: string;
   skills: string[];
   interests: string[];
@@ -68,8 +69,10 @@ function StudentDetail({ student }: { student: Student }) {
           {student.name}
         </DialogTitle>
         <DialogDescription className="mt-1">
-          {student.major} · {YEAR_LABEL[student.schoolYear]} ·{" "}
-          {student.hoursPerWeek} h/week available
+          {student.major}
+          {student.minors.length ? ` · Minors: ${student.minors.join(", ")}` : ""}{" "}
+          · {YEAR_LABEL[student.schoolYear]} · {student.hoursPerWeek} h/week
+          available
         </DialogDescription>
       </div>
       <div className="flex flex-wrap gap-2">

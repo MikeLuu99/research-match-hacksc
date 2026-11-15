@@ -5,7 +5,8 @@ import { api } from "./_generated/api";
 const PROFILE = {
   major: "Computer Science",
   schoolYear: "junior" as const,
-  skills: ["Python", "React"],
+  minors: [],
+    skills: ["Python", "React"],
   interests: ["healthcare", "machine learning"],
   experience: [
     { role: "Course grader", org: "USC CS", description: "CSCI 201" },

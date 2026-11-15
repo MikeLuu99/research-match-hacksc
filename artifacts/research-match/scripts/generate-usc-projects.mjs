@@ -176,4 +176,60 @@ writeFileSync(
   new URL("../../api-server/convex/labData.ts", import.meta.url),
   backendHeader,
 );
+
+// USC majors and minors catalog (from public/data/usc-majors-minors.csv).
+const csvText = readFileSync(
+  new URL("../public/data/usc-majors-minors.csv", import.meta.url),
+  "utf-8",
+);
+const csvRows = csvText
+  .split(/\r?\n/)
+  .filter((line) => line.trim())
+  .slice(1)
+  .map((line) => {
+    // Fields can contain commas inside quotes; parse conservatively.
+    const match = line.match(/^"?(.*?)"?,(.*?),(.*?),(.*?),(.*?),(.*?)$/);
+    return match
+      ? {
+          name: match[1].replace(/^"|"$/g, ""),
+          category: match[2].replace(/^"|"$/g, ""),
+          school: match[3].replace(/^"|"$/g, ""),
+        }
+      : null;
+  })
+  .filter(Boolean);
+const stripDegree = (name) => name.replace(/\s*\((BS|BA|BFA|BM)\)$/i, "").replace(/\s+Minor$/i, "");
+const isCurly = (text) => text.replace(/\u2019/g, "'");
+const majorsSeen = new Map();
+const minorsSeen = new Map();
+for (const row of csvRows) {
+  const category = isCurly(row.category);
+  const name = stripDegree(row.name);
+  if (category === "Bachelor's Degree" || category === "Combined Major") {
+    if (!majorsSeen.has(name.toLowerCase()))
+      majorsSeen.set(name.toLowerCase(), { name, school: row.school });
+  } else if (category === "Minor") {
+    if (!minorsSeen.has(name.toLowerCase()))
+      minorsSeen.set(name.toLowerCase(), { name, school: row.school });
+  }
+}
+const programsHeader = `// Generated from public/data/usc-majors-minors.csv by scripts/generate-usc-projects.mjs.
+// USC catalogue majors and minors (2026-2027) for profile autofill.
+export type UscProgram = { name: string; school: string };
+
+export const USC_MAJORS: UscProgram[] = ${JSON.stringify(
+  [...majorsSeen.values()],
+  null,
+  2,
+)};
+export const USC_MINORS: UscProgram[] = ${JSON.stringify(
+  [...minorsSeen.values()],
+  null,
+  2,
+)};
+`;
+writeFileSync(
+  new URL("../src/lib/usc-programs.ts", import.meta.url),
+  programsHeader,
+);
 console.log(`Generated ${projects.length} projects from ${raw.organizations.length} orgs`);

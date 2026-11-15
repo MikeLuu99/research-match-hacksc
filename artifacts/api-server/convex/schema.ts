@@ -16,6 +16,9 @@ export const schoolYear = v.union(
 // mutation so both stay in sync.
 export const studentProfileFields = {
   major: v.string(),
+  // Optional so profiles saved before the field exists still validate;
+  // handlers default it to [].
+  minors: v.optional(v.array(v.string())),
   schoolYear,
   skills: v.array(v.string()),
   interests: v.array(v.string()),

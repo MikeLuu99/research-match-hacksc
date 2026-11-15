@@ -47,6 +47,7 @@ async function seedWorld() {
   await student.mutation(api.users.upsertStudentProfile, {
     major: "Computer Science",
     schoolYear: "junior",
+    minors: [],
     skills: ["Python"],
     interests: ["machine learning"],
     experience: [],
@@ -137,7 +138,8 @@ describe("matching algorithm", () => {
       await extra.mutation(api.users.upsertStudentProfile, {
         major: "Computer Science",
         schoolYear: "junior",
-        skills: ["Python"],
+        minors: [],
+    skills: ["Python"],
         interests: ["machine learning"],
         experience: [],
         hoursPerWeek: 10,

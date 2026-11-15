@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import { LoaderCircle, Plus, Trash2 } from "lucide-react";
 import { useAction, useMutation } from "convex/react";
 import { api } from "@/lib/convex-api";
+import { USC_MAJORS, USC_MINORS } from "@/lib/usc-programs";
 import { useAccount } from "@/lib/auth";
 
 const SCHOOL_YEARS = [
@@ -56,6 +57,7 @@ function FieldLabel({
 
 export type StudentProfileInitial = {
   major: string;
+  minors: string[];
   schoolYear: string;
   skills: string[];
   interests: string[];
@@ -141,6 +143,7 @@ export function StudentProfileForm({
       const resumeStorageId = resumeFile ? await uploadResume(resumeFile) : undefined;
       await upsertProfile({
         major: String(data.get("major") ?? ""),
+        minors: splitTags(String(data.get("minors") ?? "")),
         schoolYear: String(data.get("school-year") ?? "freshman") as
           | "freshman"
           | "sophomore"
@@ -178,17 +181,47 @@ export function StudentProfileForm({
 
   return (
     <form className="auth-form profile-form" onSubmit={submit}>
+      <datalist id="usc-majors-list">
+        {USC_MAJORS.map((program) => (
+          <option key={program.name} value={program.name}>
+            {program.school}
+          </option>
+        ))}
+      </datalist>
+      <datalist id="usc-minors-list">
+        {USC_MINORS.map((program) => (
+          <option key={program.name} value={program.name}>
+            {program.school}
+          </option>
+        ))}
+      </datalist>
       <div className="auth-field">
         <FieldLabel htmlFor="profile-major">Major</FieldLabel>
         <input
           id="profile-major"
           name="major"
+          list="usc-majors-list"
           placeholder="Computer Science"
           maxLength={120}
           required
           disabled={pending}
           defaultValue={initial?.major ?? ""}
         />
+      </div>
+      <div className="auth-field">
+        <FieldLabel htmlFor="profile-minors" optional>
+          Minors
+        </FieldLabel>
+        <input
+          id="profile-minors"
+          name="minors"
+          placeholder="Optional — e.g. Computer Science"
+          maxLength={120}
+          disabled={pending}
+          list="usc-minors-list"
+          defaultValue={initial?.minors.join(", ") ?? ""}
+        />
+        <p className="auth-help">USC minors only, one for now.</p>
       </div>
       <div className="auth-field">
         <FieldLabel htmlFor="profile-year">School year</FieldLabel>

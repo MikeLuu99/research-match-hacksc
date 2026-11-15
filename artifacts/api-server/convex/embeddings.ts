@@ -48,6 +48,7 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
 export function studentEmbeddingText(input: {
   name: string;
   major: string;
+  minors: string[];
   schoolYear: string;
   skills: string[];
   interests: string[];
@@ -58,6 +59,7 @@ export function studentEmbeddingText(input: {
   return [
     `Student: ${input.name}`,
     `Major: ${input.major}`,
+    `Minors: ${(input.minors ?? []).join(", ")}`,
     `Year: ${input.schoolYear}`,
     `Skills: ${input.skills.join(", ")}`,
     `Research interests: ${input.interests.join(", ")}`,
