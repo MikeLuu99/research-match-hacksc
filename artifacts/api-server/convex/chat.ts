@@ -89,7 +89,32 @@ export const myHistory = internalQuery({
   },
 });
 
-export const chatProjectByIds = internalQuery({
+export const studentContext = internalQuery({
+  args: { subject: v.string() },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("students")
+      .withIndex("by_owner", (q) => q.eq("ownerSubject", args.subject))
+      .unique();
+    if (!profile) return null;
+    return {
+      name: profile.name,
+      major: profile.major,
+      minors: profile.minors ?? [],
+      schoolYear: profile.schoolYear,
+      skills: profile.skills,
+      interests: profile.interests,
+      bio: profile.bio ?? "",
+      hoursPerWeek: profile.hoursPerWeek,
+      workStudy: profile.workStudy,
+      seekingCredit: profile.seekingCredit,
+      scheduleHours: (profile.schedule ?? "").split(",").filter(Boolean).length,
+      hasResume: Boolean(profile.resumeStorageId),
+    };
+  },
+});
+
+const chatProjectByIds = internalQuery({
   args: { ids: v.array(v.id("projects")) },
   handler: async (ctx, args) => {
     const out = [];
@@ -207,6 +232,24 @@ export const answer = action({
       makeFunctionReference<"query">("users:studentProfileBySubject"),
       { subject },
     );
+
+    const student: {
+      name: string;
+      major: string;
+      minors: string[];
+      schoolYear: string;
+      skills: string[];
+      interests: string[];
+      bio: string;
+      hoursPerWeek: number;
+      workStudy: boolean;
+      seekingCredit: boolean;
+      scheduleHours: number;
+      hasResume: boolean;
+    } | null = await ctx.runQuery(
+      makeFunctionReference<"query">("chat:studentContext"),
+      { subject },
+    );
     const vectorHits = await ctx.vectorSearch("projects", "by_embedding", {
       vector:
         profile &&
@@ -265,12 +308,36 @@ export const answer = action({
       { subject },
     )) as { id: string };
 
+    const profileBlock = student
+      ? [
+          `Name: ${student.name}`,
+          `Major: ${student.major}`,
+          student.minors.length ? `Minors: ${student.minors.join(", ")}` : "",
+          `Year: ${student.schoolYear}`,
+          student.skills.length ? `Skills: ${student.skills.join(", ")}` : "",
+          student.interests.length
+            ? `Research interests: ${student.interests.join(", ")}`
+            : "",
+          student.bio ? `About: ${student.bio}` : "",
+          `Availability: ${student.hoursPerWeek} h/week${
+            student.scheduleHours > 0 ? " (weekly schedule set)" : ""
+          }`,
+          student.workStudy ? "Work-Study eligible" : "",
+          student.seekingCredit ? "Seeking academic credit" : "",
+          student.hasResume ? "Resume on file" : "No resume uploaded",
+        ]
+          .filter(Boolean)
+          .join("\n")
+      : "No saved profile yet — ask what they are looking for.";
+
     const system = [
       "You are LABBE, a friendly research-matching assistant for USC students.",
+      "Format replies with simple markdown: short paragraphs, bold for lab names, bullet lists where helpful.",
       "Answer conversationally and concisely (max ~180 words). Use ONLY the numbered lab context below for concrete lab recommendations — never invent labs, professors or links.",
       "When recommending specific labs, call the show_projects tool with their ids.",
       "Reference labs by name, mention their department, skills needed, hours and recruiting status.",
       "If the context has nothing relevant, say so honestly and suggest what the student could search for next.",
+      `Student context:\n${profileBlock}`,
       `Lab context:\n${context}`,
       historyBlock ? `Conversation so far:\n${historyBlock}` : "",
     ]

@@ -30,6 +30,51 @@ type ChatMessage = {
   cards?: ChatCard[];
 };
 
+function renderMarkdown(text: string) {
+  const blocks: { type: "text" | "li"; runs: { text: string; bold: boolean }[] }[] =
+    [];
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.trim();
+    const isBullet = /^[-*•]\s+/.test(line);
+    const content = isBullet ? line.replace(/^[-*•]\s+/, "") : line;
+    if (!content && !isBullet) continue;
+    const runs = content
+      .split(/(\*\*[^*]+\*\*)/g)
+      .filter(Boolean)
+      .map((part) => ({
+        text: part.replace(/\*\*/g, ""),
+        bold: part.startsWith("**") && part.endsWith("**"),
+      }));
+    blocks.push({ type: isBullet ? "li" : "text", runs });
+  }
+  return (
+    <>
+      {blocks.map((block, index) =>
+        block.type === "li" ? (
+          <p key={index} className="flex gap-2">
+            <span className="text-primary">•</span>
+            <span>
+              {block.runs.map((run, runIndex) => (
+                <span key={runIndex} className={run.bold ? "font-semibold" : ""}>
+                  {run.text}
+                </span>
+              ))}
+            </span>
+          </p>
+        ) : (
+          <p key={index}>
+            {block.runs.map((run, runIndex) => (
+              <span key={runIndex} className={run.bold ? "font-semibold" : ""}>
+                {run.text}
+              </span>
+            ))}
+          </p>
+        ),
+      )}
+    </>
+  );
+}
+
 const STARTERS = [
   "Which labs work on machine learning and healthcare?",
   "I know Python — what can I do with it?",
@@ -142,7 +187,7 @@ export function AskLabbe() {
             {message.streaming && (
               <span className="mr-1 inline-block h-3.5 w-1.5 animate-pulse bg-primary align-middle" />
             )}
-            <p className="whitespace-pre-line">{message.text}</p>
+            <div className="space-y-1.5">{renderMarkdown(message.text)}</div>
             {message.cards && message.cards.length > 0 && (
               <div className={cn("mt-3 space-y-2", message.role === "user" && "mt-0")}>
                 {(message.cards ?? []).map((card: ChatCard) => (
