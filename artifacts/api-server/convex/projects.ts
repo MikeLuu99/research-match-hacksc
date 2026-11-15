@@ -9,6 +9,7 @@ import { authComponent } from "./auth";
 import { accountProfileFor } from "./users";
 import { action, mutation, query } from "./model";
 import { LABS } from "./labData";
+import { isUscEmail } from "./users";
 import { EMBEDDING_MODEL_ID, embedBatch, labEmbeddingText } from "./embeddings";
 
 // Faculty-only catalog management. The public USC lab dataset lives in
@@ -35,6 +36,10 @@ export const seedLabs = mutation({
   returns: v.object({ inserted: v.number(), updated: v.number() }),
   handler: async (ctx) => {
     const user = await authComponent.getAuthUser(ctx);
+    if (!isUscEmail(user.email))
+      throw new ConvexError(
+        "Only USC accounts (email ending in @usc.edu) can load the catalog.",
+      );
     const account = await accountProfileFor(ctx, user._id);
     if (!account || account.accountType !== "faculty")
       throw new ConvexError("Only faculty accounts can load the lab catalog.");

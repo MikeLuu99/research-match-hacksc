@@ -150,6 +150,11 @@ export const generateResumeUploadUrl = action({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new ConvexError("Sign in to upload a resume.");
+    const uploader = await authComponent.safeGetAuthUser(ctx);
+    if (!uploader || !isUscEmail(uploader.email))
+      throw new ConvexError(
+        "Only USC accounts (email ending in @usc.edu) can upload resumes.",
+      );
     return { url: await ctx.storage.generateUploadUrl() };
   },
 });

@@ -23,40 +23,52 @@ const NAV = [
   { href: "/settings", label: "Data & matching", icon: Settings2, roles: ["faculty"] },
 ];
 
+function LogOutButton({ subtle = false }: { subtle?: boolean }) {
+  const account = useAccount();
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState(false);
+  if (!account.isAuthenticated) return null;
+  return (
+    <div>
+      <button
+        data-testid="button-logout"
+        disabled={signingOut}
+        onClick={async () => {
+          setSignOutError(false);
+          setSigningOut(true);
+          try {
+            await account.signOut();
+          } catch {
+            setSignOutError(true);
+          } finally {
+            setSigningOut(false);
+          }
+        }}
+        className={cn(
+          "relative flex items-center gap-3 px-3 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap transition-colors duration-200 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 disabled:opacity-50",
+          subtle && "w-full",
+        )}
+      >
+        <LogOut className="h-4 w-4 shrink-0" />
+        <span>{signingOut ? "Signing out…" : "Log out"}</span>
+      </button>
+      {signOutError && (
+        <p role="alert" className="px-3 text-[11px] text-sidebar-primary">
+          Couldn’t sign out. Please try again.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function AccountMenu() {
   const account = useAccount();
-  const [signOutError, setSignOutError] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
   return <div className="mt-3 flex flex-wrap items-center justify-between gap-3 md:block">
     <Link href="~/" className="flex items-center gap-2 md:hidden"><ArrowLeft size={14} />LABBE home</Link>
-          {account.isAuthenticated ? (
-            <button
-              className="flex md:mt-4 items-center gap-2 disabled:opacity-50"
-              disabled={signingOut}
-              onClick={async () => {
-                setSignOutError(false);
-                setSigningOut(true);
-                try {
-                  await account.signOut();
-                } catch {
-                  setSignOutError(true);
-                } finally {
-                  setSigningOut(false);
-                }
-              }}
-            >
-              <LogOut size={14} />
-              {signingOut ? "Signing out…" : "Sign out"}
-            </button>
-          ) : (
+          {!account.isAuthenticated && (
             <Link href="~/sign-up" className="block md:mt-4 text-primary md:text-sidebar-primary">
               Create your account ↗
             </Link>
-          )}
-          {signOutError && (
-            <p role="alert" className="mt-2 text-primary md:text-sidebar-primary">
-              Couldn’t sign out. Please try again.
-            </p>
           )}
   </div>;
 }
@@ -121,6 +133,7 @@ export function Layout({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          <LogOutButton />
         </nav>
         <div className="hidden md:block mt-auto p-5 text-xs text-sidebar-foreground/60 leading-relaxed">
           <Link
@@ -131,8 +144,8 @@ export function Layout({ children }: { children: ReactNode }) {
             LABBE home
           </Link>
           <p>
-            Research data is fictional. Workspace changes are stored in this
-            browser.
+            Lab listings come from public USC research pages (checked Nov
+            2026). Workspace changes are stored in this browser.
           </p>
           <AccountMenu />
         </div>
