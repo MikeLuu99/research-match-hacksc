@@ -1,6 +1,6 @@
 // Curated common research skills for profile autofill. Grouped for editors;
 // the datalist presents one flat list with the group as the option label.
-export const RESEARCH_SKILL_GROUPS: { group: string; skills: string[] }[] = [
+const RESEARCH_SKILL_GROUPS: { group: string; skills: string[] }[] = [
   {
     group: "Programming & data",
     skills: [
