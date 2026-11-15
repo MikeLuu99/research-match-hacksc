@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { ChevronLeft, ChevronRight, Search, X, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Search, X, ArrowUpRight } from "lucide-react";
 import { Layout, EmptyState } from "@/components/layout";
 import { AiMatches } from "@/components/ai-matches";
 import { SetupChecklist } from "@/components/setup-checklist";
@@ -62,10 +62,6 @@ export default function Discovery() {
       .sort((a, b) => (sort === "match" ? b.m.score - a.m.score : sort === "hours" ? a.p.minHours - b.p.minHours : a.p.title.localeCompare(b.p.title)));
   }, [scored, q, dept, statuses, paid, credit, beginner, sort]);
 
-  const spotlight = useMemo(
-    () => scored.filter(({ p }) => p.department !== profile.major && p.status !== "closed").sort((a, b) => b.m.score - a.m.score)[0],
-    [scored, profile.major],
-  );
   const depts = Array.from(new Set([...DEPARTMENTS, ...projects.map((p) => p.department)]));
   const toggleStatus = (s: RecruitStatus) => setStatuses((x) => (x.includes(s) ? x.filter((y) => y !== s) : [...x, s]));
   const clear = () => {
@@ -88,50 +84,39 @@ export default function Discovery() {
 
   return (
     <Layout>
-      {account.isAuthenticated && account.viewer?.accountType === "student" && account.viewer.hasStudentProfile ? (
-        <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8">
-          <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
-          <h1 className="font-display text-3xl md:text-4xl leading-[1.05] mt-2 mb-6">
-            AI matches for <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">your profile</em>
-          </h1>
+      <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8">
+        <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
+        <h1 className="font-display text-3xl md:text-4xl leading-[1.05] mt-2 mb-6">
+          AI matches for <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">your profile</em>
+        </h1>
+        {account.isAuthenticated && account.viewer?.accountType === "student" && account.viewer.hasStudentProfile ? (
           <div className="rise space-y-4">
             <SetupChecklist />
             <AiMatches />
           </div>
-        </section>
-      ) : (
-      <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8 grid lg:grid-cols-[1.4fr_1fr] gap-8 items-end">
-        <div className="rise">
-          <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
-          <h1 className="font-display text-4xl md:text-6xl leading-[1.02] mt-3">
-            Hi {profile.name.split(" ")[0]}. Your skills travel <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">further</em> than your department.
-          </h1>
-          <p className="mt-4 text-muted-foreground max-w-xl">
-            {openCount} labs are recruiting right now. Ranked by matching against your {profile.skills.length} skills, interests in {profile.interests.slice(0, 2).join(" and ") || "anything"}, and {profile.hours} h/week.
-          </p>
-        </div>
-        {spotlight && (
-          <button
-            data-testid="button-spotlight"
-            onClick={() => setOpen(spotlight.p)}
-            className="lift rise text-left rounded-2xl bg-sidebar text-sidebar-foreground p-6 relative overflow-hidden group"
-            style={{ animationDelay: "120ms" }}
-          >
-            <span className="absolute -right-10 -top-10 h-40 w-40 rounded-full border-[18px] border-sidebar-primary/25 transition-transform duration-500 group-hover:scale-110" />
-            <p className="text-[11px] uppercase tracking-[0.2em] text-sidebar-primary font-semibold">Outside your department</p>
-            <h2 className="font-display text-2xl mt-2 leading-tight pr-8">{spotlight.p.title}</h2>
-            <p className="text-sm text-sidebar-foreground/70 mt-1">{spotlight.p.department}</p>
-            <div className="flex items-center gap-3 mt-5">
-              <span className="font-mono text-3xl text-sidebar-primary">{Math.round(spotlight.m.score)}</span>
-              <span className="text-xs text-sidebar-foreground/70 leading-tight">demo match<br />{spotlight.m.matchedSkills.length}/{spotlight.p.requiredSkills.length} required skills</span>
-              <ArrowUpRight className="ml-auto h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+        ) : (
+          <div className="rise border border-primary/20 bg-card p-6 max-w-2xl">
+            <h2 className="font-display text-xl">Sign in to see your AI matches</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              USC students get labs ranked by their skills, interests and
+              schedule. You can still browse the full catalog below, or try
+              the sample student in the demo.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link className="public-button button-small" href="/sign-in">
+                Sign in with USC
+                <ArrowUpRight size={15} />
+              </Link>
+              <Link href="/demo" className="secondary-link">
+                Use the demo student
+                <ArrowRight size={15} />
+              </Link>
             </div>
-          </button>
+          </div>
         )}
       </section>
-      )}
 
-      <section className="sticky top-0 z-20 bg-background/90 backdrop-blur border-y px-5 md:px-10 py-3 space-y-3">
+            <section className="sticky top-0 z-20 bg-background/90 backdrop-blur border-y px-5 md:px-10 py-3 space-y-3">
         <div className="flex flex-col md:flex-row gap-3">
           <label className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -228,7 +213,7 @@ export default function Discovery() {
         <aside className="space-y-4 xl:sticky xl:top-36 self-start">
           <div className="rounded-2xl border bg-card p-5">
             <p className="text-xs uppercase tracking-[0.16em] text-primary font-semibold">How ranking works</p>
-            <p className="font-mono text-[11px] mt-1 rounded bg-accent text-accent-foreground inline-block px-1.5">Demo matching</p>
+            <p className="font-mono text-[11px] mt-1 rounded bg-accent text-accent-foreground inline-block px-1.5">Skill + interest matching</p>
             <ul className="mt-3 text-sm space-y-2 text-foreground/80">
               <li><b className="font-mono text-xs text-primary">40%</b> cosine similarity of local word-count vectors</li>
               <li><b className="font-mono text-xs text-primary">35%</b> required-skill coverage (softened for beginner labs)</li>
