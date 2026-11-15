@@ -174,7 +174,7 @@ export const chatStudentByIds = internalQuery({
   },
 });
 
-const chatProjectByIds = internalQuery({
+export const chatProjectByIds = internalQuery({
   args: { ids: v.array(v.id("projects")) },
   handler: async (ctx, args) => {
     const out = [];
