@@ -34,12 +34,9 @@ export default function Discovery() {
   const { projects, profile } = useStore();
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("all");
-  // Default state shows the full catalog; status chips exclude when toggled off.
-  const [statuses, setStatuses] = useState<RecruitStatus[]>([
-    "open",
-    "exploration",
-    "closed",
-  ]);
+  // Chips are filters: nothing toggled = the full catalog. Selecting one or
+  // more status chips shows only those statuses.
+  const [statuses, setStatuses] = useState<RecruitStatus[]>([]);
   const [paid, setPaid] = useState(false);
   const [credit, setCredit] = useState(false);
   const [beginner, setBeginner] = useState(false);
@@ -50,7 +47,10 @@ export default function Discovery() {
   const list = useMemo(() => {
     const t = q.trim().toLowerCase();
     return scored
-      .filter(({ p }) => statuses.includes(p.status))
+      .filter(
+        ({ p }) =>
+          statuses.length === 0 || statuses.includes(p.status),
+      )
       .filter(({ p }) => dept === "all" || p.department === dept)
       .filter(({ p }) => !paid || p.paid)
       .filter(({ p }) => !credit || p.credit)
@@ -68,7 +68,7 @@ export default function Discovery() {
   const clear = () => {
     setQ("");
     setDept("all");
-    setStatuses(["open", "exploration", "closed"]);
+    setStatuses([]);
     setPaid(false);
     setCredit(false);
     setBeginner(false);
