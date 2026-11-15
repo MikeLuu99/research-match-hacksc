@@ -42,6 +42,7 @@ Students explore and save projects, edit profiles, view explained matches and tr
 ## User preferences
 
 The user will provide real data later and requested vector-database matching, a GitHub source-of-truth repository and a Convex connection check.
+Do not deploy to production (Cloudflare Pages or the Convex production deployment) without the user's explicit approval. Local dev pushes (`convex dev --once` to the dev deployment) are fine.
 
 ## Gotchas
 
