@@ -471,3 +471,9 @@
 /* Editorial chrome: Newsreader headings at weight 400, DM Mono meta */
 .workspace-grid .font-display{font-weight:400}
 .workspace-grid .font-mono{letter-spacing:0.04em}
+
+/* Global type scale: everything uses rem, so bumping the root font size
+   enlarges every text-* utility on the landing page and dashboard alike. */
+html {
+  font-size: 112.5%;
+}

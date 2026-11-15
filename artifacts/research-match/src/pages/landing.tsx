@@ -450,10 +450,4 @@ export default function Landing() {
     </div>
   );
 }
-export function chooseRole(role: "student" | "faculty") {
-  try {
-    sessionStorage.setItem("labbe.role", role);
-  } catch {
-    // sessionStorage can be unavailable; onboarding falls back to student.
-  }
-}
+
