@@ -99,7 +99,7 @@ function ResearchPreview() {
         <strong>A shared direction.</strong>
       </div>
       <p className="preview-disclaimer">
-        Illustrative match · explore fictional projects in the demo
+        Illustrative match · explore real USC labs in the demo
       </p>
     </div>
   );
@@ -279,7 +279,7 @@ export default function Landing() {
         <p>
           An independent USC research-matching prototype.
           <br />
-          Demo opportunities are fictional. Not an official USC service.
+          Lab data from public USC pages (checked Nov 2026), not lab-confirmed. Not an official USC service.
         </p>
         <a href="#main-content" className="secondary-link">
           Back to top ↑

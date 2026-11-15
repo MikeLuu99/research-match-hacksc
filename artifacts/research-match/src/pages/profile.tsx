@@ -52,7 +52,7 @@ export default function Profile() {
 
   return (
     <Layout>
-      <PageHeader eyebrow="My profile · sample student" title={profile.name}>Fictional sample profile. Changes save automatically to this browser and re-rank discovery.</PageHeader>
+      <PageHeader eyebrow="My profile · sample student" title={profile.name}>Sample profile for the demo. Changes save automatically to this browser and re-rank discovery.</PageHeader>
       <div className="px-5 md:px-10 pb-12 grid lg:grid-cols-[1fr_340px] gap-6">
         <div className="space-y-6">
           <section className="rounded-2xl border bg-card p-6 grid md:grid-cols-2 gap-4">

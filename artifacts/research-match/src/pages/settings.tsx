@@ -78,7 +78,7 @@ export default function Settings() {
           )}
           <div className="rounded-2xl border bg-secondary/60 p-5 text-sm">
             <p className="font-semibold">Demo, not an official USC product</p>
-            <p className="text-muted-foreground mt-1">All labs, faculty and students are fictional. No authentication in this sample. Real data will be supplied later.</p>
+            <p className="text-muted-foreground mt-1">Lab listings come from audited public USC research pages (checked Nov 2026) and are not lab-confirmed vacancies. Sample students are fictional. No authentication in the demo workspace.</p>
           </div>
         </section>
 
@@ -106,7 +106,7 @@ export default function Settings() {
               <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="mt-3" data-testid="button-reset-data">Reset demo data</Button></AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogTitle>Reset all local data?</AlertDialogTitle>
-                <AlertDialogDescription>This clears everything stored by ResearchMatch in this browser.</AlertDialogDescription>
+                <AlertDialogDescription>This clears everything stored by LABBE in this browser.</AlertDialogDescription>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction data-testid="button-confirm-reset" onClick={() => { reset(); toast({ title: "Demo data reset" }); }}>Reset</AlertDialogAction>

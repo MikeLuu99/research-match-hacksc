@@ -64,12 +64,12 @@ export default function Discovery() {
     <Layout>
       <section className="px-5 md:px-10 pt-8 md:pt-12 pb-8 grid lg:grid-cols-[1.4fr_1fr] gap-8 items-end">
         <div className="rise">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Discover · demo data</p>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Discover · USC research</p>
           <h1 className="font-display text-4xl md:text-6xl leading-[1.02] mt-3">
             Hi {profile.name.split(" ")[0]}. Your skills travel <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">further</em> than your department.
           </h1>
           <p className="mt-4 text-muted-foreground max-w-xl">
-            {openCount} labs are recruiting right now. Ranked by demo matching against your {profile.skills.length} skills, interests in {profile.interests.slice(0, 2).join(" and ") || "anything"}, and {profile.hours} h/week.
+            {openCount} labs are recruiting right now. Ranked by matching against your {profile.skills.length} skills, interests in {profile.interests.slice(0, 2).join(" and ") || "anything"}, and {profile.hours} h/week.
           </p>
         </div>
         {spotlight && (

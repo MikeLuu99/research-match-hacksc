@@ -49,7 +49,7 @@ export function AuthFrame({
       <main className="auth-main">
         <Link href="/" className="auth-back">
           <ArrowLeft size={16} />
-          Back to ResearchMatch
+          Back to LABBE
         </Link>
         <div className="auth-content">
           <p className="section-eyebrow">{eyebrow}</p>

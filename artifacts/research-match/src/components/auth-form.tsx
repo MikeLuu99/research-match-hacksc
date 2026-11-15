@@ -9,7 +9,7 @@ export const AUTH_COPY = {
     eyebrow: "GOOD TO SEE YOU AGAIN",
     title: "Welcome back.",
     intro: "Pick up where your curiosity left off.",
-    switchPrompt: "New to ResearchMatch?",
+    switchPrompt: "New to LABBE?",
     switchLabel: "Create an account",
     switchHref: "/sign-up",
   },

@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { ALEX, SEED_PROJECTS, type Project, type StudentProfile } from "./data";
+import { USC_PROJECTS } from "./usc-projects";
 
 export type InterestStatus =
   | "interested"
@@ -34,16 +35,16 @@ interface State {
   templates: Record<string, string>;
 }
 
-const KEY = "researchmatch.demo.v1";
+const KEY = "researchmatch.demo.v2";
 
 const initial = (): State => ({
   profile: ALEX,
-  projects: SEED_PROJECTS,
-  saved: ["p-wearable"],
+  projects: USC_PROJECTS.length ? USC_PROJECTS : SEED_PROJECTS,
+  saved: ["usc-role-075"],
   interests: [
     {
       id: "i-seed-diego",
-      projectId: "p-triage",
+      projectId: "usc-role-065",
       studentId: "s-diego",
       studentName: "Diego Valcourt",
       status: "interested",

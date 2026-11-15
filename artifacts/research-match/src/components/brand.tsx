@@ -5,14 +5,12 @@ export function Brand({ light = false }: { light?: boolean }) {
     <Link
       href="/"
       className={`brand ${light ? "brand-light" : ""}`}
-      aria-label="ResearchMatch home"
+      aria-label="LABBE home"
     >
-      <span className="brand-symbol" aria-hidden="true">
-        r<span>↗</span>
-      </span>
+      <img src="/logo.svg" alt="" className="brand-logo" aria-hidden="true" />
       <span>
-        ResearchMatch
-        <span className="brand-caption">MADE FOR USC DISCOVERY</span>
+        LABBE
+        <span className="brand-caption">USC RESEARCH DISCOVERY</span>
       </span>
     </Link>
   );

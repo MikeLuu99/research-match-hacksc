@@ -4,7 +4,8 @@
     "**/convex/_generated/**",
     "**/dist/**",
     "**/*.tsbuildinfo",
-    "artifacts/mockup-sandbox/**"
+    "artifacts/mockup-sandbox/**",
+    "artifacts/research-match/scripts/**"
   ],
   "rules": {
     "complexity-cyclomatic": "warn",

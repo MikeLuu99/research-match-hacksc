@@ -28,7 +28,7 @@ function AccountMenu() {
   const [signOutError, setSignOutError] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   return <div className="mt-3 flex flex-wrap items-center justify-between gap-3 md:block">
-    <Link href="~/" className="flex items-center gap-2 md:hidden"><ArrowLeft size={14} />ResearchMatch home</Link>
+    <Link href="~/" className="flex items-center gap-2 md:hidden"><ArrowLeft size={14} />LABBE home</Link>
           {account.isAuthenticated ? (
             <button
               className="flex md:mt-4 items-center gap-2 disabled:opacity-50"
@@ -84,10 +84,8 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="hidden md:block px-6 pt-7 pb-6">
           <Link href="/" className="block group" data-testid="link-home">
             <div className="flex items-center gap-2">
-              <span className="h-8 w-8 bg-sidebar-primary text-sidebar-primary-foreground grid place-items-center font-display text-lg transition-colors group-hover:bg-sidebar-accent">
-                r
-              </span>
-              <span className="font-display text-2xl">ResearchMatch</span>
+              <img src="/logo.svg" alt="" className="h-8 w-8 object-contain transition-colors" />
+              <span className="font-display text-2xl">LABBE</span>
             </div>
             <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground/60">
               Demo · not an official USC product
@@ -130,7 +128,7 @@ export function Layout({ children }: { children: ReactNode }) {
             className="mb-4 flex items-center gap-2 text-sidebar-foreground"
           >
             <ArrowLeft size={14} />
-            ResearchMatch home
+            LABBE home
           </Link>
           <p>
             Research data is fictional. Workspace changes are stored in this
