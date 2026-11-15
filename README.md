@@ -1,4 +1,4 @@
-# ResearchMatch
+# LABBE
 
 Research discovery across USC departments, with a public landing page, student
 and faculty onboarding, and email/password accounts using **Better Auth with
