@@ -5,9 +5,12 @@ import {
   Clock,
   DollarSign,
   GraduationCap,
+  FileText,
   Hourglass,
   Mail,
   Sprout,
+  UserCheck,
+  UserPlus,
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
 import { ScheduleGrid } from "@/components/schedule-grid";
@@ -30,6 +33,8 @@ const YEAR_LABEL: Record<string, string> = {
   masters: "Master’s student",
   phd: "PhD student",
 };
+
+export type LiveStudent = Student;
 
 type Student = {
   id: string;
@@ -63,7 +68,32 @@ function SkillChips({ items }: { items: string[] }) {
   );
 }
 
-function StudentDetail({ student }: { student: Student }) {
+// The faculty API intentionally exposes no contact or resume fields. These
+// sections say so explicitly instead of fabricating or reaching for them.
+function PrivateFields() {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {[
+        { icon: Mail, label: "Email", id: "email" },
+        { icon: FileText, label: "Résumé", id: "resume" },
+      ].map(({ icon: Icon, label, id }) => (
+        <div key={id} className="border border-primary/15 p-3">
+          <p className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-primary">
+            <Icon className="h-3.5 w-3.5" /> {label}
+          </p>
+          <p
+            data-testid={`text-live-${id}`}
+            className="mt-1 text-xs text-muted-foreground"
+          >
+            Not shared. Not available from the current faculty API.
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function StudentDetail({ student }: { student: Student }) {
   return (
     <div className="space-y-5">
       <div>
@@ -143,9 +173,10 @@ function StudentDetail({ student }: { student: Student }) {
           </p>
         )}
       </section>
+      <PrivateFields />
       <p className="border-t border-primary/15 pt-4 font-mono text-[10px] leading-relaxed text-muted-foreground">
         Profiles are self-reported and shown only after the student opted in to
-        faculty discovery. Reach out directly — no resume data is exposed here.
+        faculty discovery. No contact or resume data is exposed here.
       </p>
     </div>
   );
@@ -155,19 +186,46 @@ function CandidateCard({
   student,
   onOpen,
   index,
+  shortlisted,
+  onToggleShortlist,
 }: {
   student: Student;
   onOpen: () => void;
   index: number;
+  shortlisted?: boolean;
+  onToggleShortlist?: () => void;
 }) {
   return (
-    <button
-      data-testid={`button-student-${student.id}`}
-      onClick={onOpen}
+    <div
+      data-testid={`card-live-student-${student.id}`}
       style={{ animationDelay: `${index * 45}ms` }}
-      className="lift rise flex flex-col gap-3 border bg-card p-5 text-left"
+      className="lift rise relative flex flex-col gap-3 border bg-card p-5 text-left"
     >
-      <div>
+      {onToggleShortlist && (
+        <button
+          data-testid={`button-shortlist-live-${student.id}`}
+          onClick={onToggleShortlist}
+          aria-pressed={!!shortlisted}
+          aria-label={
+            shortlisted
+              ? `Remove ${student.name} from shortlist`
+              : `Shortlist ${student.name}`
+          }
+          className={cn(
+            "absolute right-3 top-3 grid h-9 w-9 place-items-center border transition-colors",
+            shortlisted
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-primary/25 text-primary hover:bg-primary/5",
+          )}
+        >
+          {shortlisted ? (
+            <UserCheck className="h-4 w-4" />
+          ) : (
+            <UserPlus className="h-4 w-4" />
+          )}
+        </button>
+      )}
+      <div className="pr-10">
         <p className="font-semibold">{student.name}</p>
         <p className="text-xs text-muted-foreground">
           {student.major} · {YEAR_LABEL[student.schoolYear]}
@@ -196,14 +254,54 @@ function CandidateCard({
           {student.interests.length > 3 ? "…" : ""}
         </p>
       )}
-      <span className="mt-auto inline-flex items-center gap-1 text-xs font-semibold text-primary">
-        <Mail className="h-3.5 w-3.5" /> View full profile
-      </span>
-    </button>
+      <button
+        data-testid={`button-student-${student.id}`}
+        onClick={onOpen}
+        className="mt-auto inline-flex items-center gap-1 self-start text-xs font-semibold text-primary hover:underline"
+      >
+        View full profile
+      </button>
+    </div>
   );
 }
 
-export function FacultyDashboard() {
+export function LiveStudentDialog({
+  student,
+  onClose,
+}: {
+  student: Student | null;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={student !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-xl max-h-[92dvh] overflow-y-auto">
+        {student && <StudentDetail student={student} />}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const matchesQuery = (student: Student, query: string) => {
+  const t = query.trim().toLowerCase();
+  if (!t) return true;
+  return [student.name, student.major, ...student.minors, ...student.skills, ...student.interests]
+    .join(" ")
+    .toLowerCase()
+    .includes(t);
+};
+
+export function FacultyDashboard({
+  query = "",
+  creditOnly = false,
+  isShortlisted,
+  onToggleShortlist,
+}: {
+  query?: string;
+  creditOnly?: boolean;
+  /** Optional browser-local shortlist hooks; only student IDs are passed out. */
+  isShortlisted?: (studentId: string) => boolean;
+  onToggleShortlist?: (studentId: string, name: string) => void;
+} = {}) {
   const students = useQuery(api.users.listStudents, {});
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -218,17 +316,32 @@ export function FacultyDashboard() {
 
   const selected =
     students.find((student) => student.id === selectedId) ?? null;
+  const visible = students.filter(
+    (student) =>
+      matchesQuery(student, query) && (!creditOnly || student.seekingCredit),
+  );
 
   return (
-    <div className="px-5 md:px-10 pb-12">
-      {students.length ? (
+    <div className="px-5 md:px-10 pb-12 space-y-6">
+      {students.length && !visible.length ? (
+        <EmptyState
+          title="No consented students match"
+          body="Clear the search or filters to see every opted-in student."
+        />
+      ) : students.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {students.map((student, i) => (
+          {visible.map((student, i) => (
             <CandidateCard
               key={student.id}
               student={student}
               index={i}
               onOpen={() => setSelectedId(student.id)}
+              shortlisted={isShortlisted?.(student.id)}
+              onToggleShortlist={
+                onToggleShortlist
+                  ? () => onToggleShortlist(student.id, student.name)
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -239,14 +352,10 @@ export function FacultyDashboard() {
         />
       )}
       <AiRankingPanel />
-      <Dialog
-        open={selected !== null}
-        onOpenChange={(open) => !open && setSelectedId(null)}
-      >
-        <DialogContent className="max-w-xl max-h-[92dvh] overflow-y-auto">
-          {selected && <StudentDetail student={selected} />}
-        </DialogContent>
-      </Dialog>
+      <LiveStudentDialog
+        student={selected}
+        onClose={() => setSelectedId(null)}
+      />
     </div>
   );
 }

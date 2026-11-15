@@ -17,6 +17,10 @@ import Saved from "@/pages/saved";
 import Applications from "@/pages/applications";
 import Profile from "@/pages/profile";
 import Faculty from "@/pages/faculty";
+import FacultyDiscover from "@/pages/faculty-discover";
+import FacultyShortlist from "@/pages/faculty-shortlist";
+import FacultyInbox from "@/pages/faculty-inbox";
+import FacultyProfile from "@/pages/faculty-profile";
 import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth";
@@ -52,6 +56,10 @@ function WorkspaceRoutes() {
           <Route path="/applications" component={Applications} />
           <Route path="/profile" component={Profile} />
           <Route path="/faculty" component={Faculty} />
+          <Route path="/faculty/discover" component={FacultyDiscover} />
+          <Route path="/faculty/shortlist" component={FacultyShortlist} />
+          <Route path="/faculty/inbox" component={FacultyInbox} />
+          <Route path="/faculty/profile" component={FacultyProfile} />
           <Route path="/settings" component={Settings} />
           <Route component={NotFound} />
         </Switch>

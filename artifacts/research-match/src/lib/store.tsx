@@ -16,7 +16,7 @@ export type InterestStatus =
   | "declined"
   | "withdrawn";
 
-interface Interest {
+export interface Interest {
   id: string;
   projectId: string;
   studentId: string;
@@ -27,12 +27,64 @@ interface Interest {
   updatedAt: string;
 }
 
+/** Browser-local faculty profile, kept separate from the student profile. */
+export interface FacultyProfile {
+  name: string;
+  title: string;
+  department: string;
+  lab: string;
+  email: string;
+  office: string;
+  officeHours: string;
+  researchAreas: string[];
+  about: string;
+  mentoring: string;
+  accepting: boolean;
+}
+
+export const DEFAULT_FACULTY: FacultyProfile = {
+  name: "Dr. Imani Okafor (fictional)",
+  title: "Associate Professor",
+  department: "Preventive Medicine",
+  lab: "Sentinel Health Signals Lab (demo)",
+  email: "",
+  office: "",
+  officeHours: "",
+  researchAreas: ["clinical prediction", "fairness", "kidney disease"],
+  about:
+    "Fictional sample faculty profile. Studies early disease signals in routine bloodwork.",
+  mentoring: "",
+  accepting: true,
+};
+
+/**
+ * Shortlist entries are source-tagged so fictional demo students and live
+ * (consented, server-listed) students can never collide: "demo:<id>" or
+ * "live:<id>". Only IDs are stored, never student profile objects.
+ */
+export type ShortlistSource = "demo" | "live";
+export const shortlistKey = (source: ShortlistSource, id: string) =>
+  `${source}:${id}`;
+export function parseShortlistKey(key: string): {
+  source: ShortlistSource;
+  id: string;
+} {
+  const i = key.indexOf(":");
+  const source = key.slice(0, i);
+  if (i > 0 && (source === "demo" || source === "live"))
+    return { source, id: key.slice(i + 1) };
+  return { source: "demo", id: key };
+}
+
 interface State {
   profile: StudentProfile;
   projects: Project[];
   saved: string[];
   interests: Interest[];
   templates: Record<string, string>;
+  /** projectId -> source-tagged student keys (see shortlistKey). */
+  shortlists: Record<string, string[]>;
+  faculty: FacultyProfile;
 }
 
 const KEY = "researchmatch.demo.v2";
@@ -54,6 +106,8 @@ const initial = (): State => ({
     },
   ],
   templates: {},
+  shortlists: {},
+  faculty: DEFAULT_FACULTY,
 });
 
 function freshState(accountId?: string, accountName?: string): State {
@@ -73,10 +127,23 @@ function freshState(accountId?: string, accountName?: string): State {
       bio: "",
       resumeText: "",
       visible: false,
+      email: "",
+      shareContact: false,
+      shareResume: false,
     },
     saved: [],
     interests: [],
     templates: {},
+    shortlists: {},
+    // Signed-in faculty start from a blank profile, never the fictional one.
+    faculty: {
+      ...DEFAULT_FACULTY,
+      name: accountName ?? "",
+      department: "",
+      lab: "",
+      researchAreas: [],
+      about: "",
+    },
   };
 }
 
@@ -89,7 +156,23 @@ function load(key: string, accountId?: string, accountName?: string): State {
       // A stale blob can carry an empty catalog (saved before the USC seed
       // existed); refill from the generated dataset so discovery works.
       if (!stored.projects?.length) stored.projects = state.projects;
-      return { ...state, ...stored };
+      // Additive migration: older v2 blobs lack shortlists, faculty and the
+      // demo consent flags. Fill defaults without touching existing fields.
+      return {
+        ...state,
+        ...stored,
+        profile: {
+          email: "",
+          shareContact: false,
+          shareResume: false,
+          ...(stored.profile ?? state.profile),
+        },
+        shortlists:
+          stored.shortlists && typeof stored.shortlists === "object"
+            ? stored.shortlists
+            : {},
+        faculty: { ...state.faculty, ...(stored.faculty ?? {}) },
+      };
     }
   } catch {
     /* Fall back to a clean profile if storage is unavailable or invalid. */
@@ -106,6 +189,8 @@ interface Ctx extends State {
   upsertProject: (p: Project) => void;
   removeProject: (id: string) => void;
   setTemplate: (projectId: string, text: string | null) => void;
+  toggleShortlist: (projectId: string, key: string) => void;
+  updateFaculty: (p: Partial<FacultyProfile>) => void;
   reset: () => void;
 }
 
@@ -203,6 +288,9 @@ export function StoreProvider({
       setState((s) => ({
         ...s,
         projects: s.projects.filter((x) => x.id !== id),
+        shortlists: Object.fromEntries(
+          Object.entries(s.shortlists).filter(([k]) => k !== id),
+        ),
         saved: s.saved.filter((x) => x !== id),
         interests: s.interests.filter((i) => i.projectId !== id),
       })),
@@ -213,6 +301,21 @@ export function StoreProvider({
         else t[projectId] = text;
         return { ...s, templates: t };
       }),
+    toggleShortlist: (projectId, key) =>
+      setState((s) => {
+        const cur = s.shortlists[projectId] ?? [];
+        return {
+          ...s,
+          shortlists: {
+            ...s.shortlists,
+            [projectId]: cur.includes(key)
+              ? cur.filter((x) => x !== key)
+              : [...cur, key],
+          },
+        };
+      }),
+    updateFaculty: (p) =>
+      setState((s) => ({ ...s, faculty: { ...s.faculty, ...p } })),
     reset: () => {
       try { localStorage.removeItem(key); } catch { /* Storage may be disabled. */ }
       setState(freshState(accountId, accountName));

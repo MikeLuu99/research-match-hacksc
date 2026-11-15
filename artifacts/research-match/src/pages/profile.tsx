@@ -174,6 +174,15 @@ function DemoProfile() {
               <Switch data-testid="switch-visible" checked={profile.visible} onCheckedChange={(v) => updateProfile({ visible: v })} />
             </div>
           </div>
+          <div className="rounded-2xl border bg-card p-5 space-y-4">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-primary font-semibold">Share with faculty (demo)</p>
+            <label className="block text-sm font-semibold">Contact email
+              <input data-testid="input-demo-email" type="email" value={profile.email ?? ""} onChange={(e) => updateProfile({ email: e.target.value })} placeholder="you@example.com" className="mt-1.5 w-full h-10 border bg-background px-3 text-sm font-normal" />
+            </label>
+            <div className="flex items-center justify-between gap-3"><span className="text-sm">Share my email</span><Switch data-testid="switch-share-contact" checked={!!profile.shareContact} onCheckedChange={(v) => updateProfile({ shareContact: v })} /></div>
+            <div className="flex items-center justify-between gap-3"><span className="text-sm">Share my resume text</span><Switch data-testid="switch-share-resume" checked={!!profile.shareResume} onCheckedChange={(v) => updateProfile({ shareResume: v })} /></div>
+            <p className="text-xs text-muted-foreground">Each is off by default and independent. Faculty in this demo see a field only when you turn it on and your profile is visible to them. Stored in this browser; nothing is sent.</p>
+          </div>
         </aside>
       </div>
     </Layout>

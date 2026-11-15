@@ -35,6 +35,11 @@ export interface StudentProfile {
   bio: string;
   resumeText: string;
   visible: boolean;
+  /** Demo-only contact address. Shown to faculty only when shareContact is true. */
+  email?: string;
+  /** Explicit, independent consent flags. Both default to false. */
+  shareContact?: boolean;
+  shareResume?: boolean;
 }
 
 export const DEPARTMENTS = [
@@ -244,6 +249,9 @@ export const ALEX: StudentProfile = {
   bio: "Sample student (fictional). CS junior curious about how ML can help clinicians catch illness earlier.",
   resumeText: "",
   visible: false,
+  email: "",
+  shareContact: false,
+  shareResume: false,
 };
 
 // Other fictional demo students who have opted in to faculty visibility.
@@ -261,6 +269,9 @@ export const DEMO_STUDENTS: StudentProfile[] = [
     bio: "Fictional demo student.",
     resumeText: "Built a gait classifier from IMU data for a capstone.",
     visible: true,
+    email: "priya.sample@example.com",
+    shareContact: true,
+    shareResume: true,
   },
   {
     id: "s-marcus",
@@ -275,6 +286,9 @@ export const DEMO_STUDENTS: StudentProfile[] = [
     bio: "Fictional demo student.",
     resumeText: "Volunteer tutor; transcribed interviews for an oral history project.",
     visible: true,
+    email: "marcus.sample@example.com",
+    shareContact: true,
+    shareResume: false,
   },
   {
     id: "s-june",
@@ -289,6 +303,9 @@ export const DEMO_STUDENTS: StudentProfile[] = [
     bio: "Fictional demo student.",
     resumeText: "Mapped tree canopy coverage for a neighborhood council.",
     visible: true,
+    email: "june.sample@example.com",
+    shareContact: false,
+    shareResume: true,
   },
   {
     id: "s-diego",
@@ -303,6 +320,9 @@ export const DEMO_STUDENTS: StudentProfile[] = [
     bio: "Fictional demo student.",
     resumeText: "Fine-tuned text classifiers; TA for intro data science.",
     visible: true,
+    email: "diego.sample@example.com",
+    shareContact: true,
+    shareResume: true,
   },
 ];
 

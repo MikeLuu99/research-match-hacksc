@@ -147,3 +147,11 @@ for interactive visual verification in this session.
 The source repository is [MikeLuu99/research-match-hacksc](https://github.com/MikeLuu99/research-match-hacksc).
 Changes are local until explicitly committed and pushed. Never commit private
 student data, raw resumes, `.env.local`, or deployment keys.
+
+## Professor workspace: demo vs live
+
+Faculty routes: `/faculty` (lab workspace), `/faculty/discover`, `/faculty/shortlist`, `/faculty/inbox`, `/faculty/profile`, under both `/demo` and `/app`.
+
+- **Demo (`/demo`, signed out):** all students, applicants and projects are fictional and stored in this browser. Demo students' email and résumé are shown only when that student's separate `shareContact` / `shareResume` flag is on (both default to off; the sample student can toggle them on the demo profile page).
+- **Signed-in faculty (`/app`):** Discover uses the live, consented `users.listStudents` query, schedule view and AI ranking (server consent enforcement unchanged). Projects, shortlists, inbox and faculty profile are **browser-local** to the account (`researchmatch.demo.v2.account.<id>`); they are not synced, published or delivered, and students are not notified. Shortlists store only source-tagged IDs (`live:<id>` / `demo:<id>`), never student profile objects; details are re-read from the current live query, and students who opt out show as "Not currently shared".
+- **Privacy limitation:** the faculty API exposes no student email or résumé, so live profiles always show these as "Not shared. Not available from the current faculty API." Live student interest is not yet delivered to faculty inboxes.
