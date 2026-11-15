@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { Search, X, ArrowUpRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, X, ArrowUpRight } from "lucide-react";
 import { Layout, EmptyState } from "@/components/layout";
 import { AiMatches } from "@/components/ai-matches";
 import { useAccount } from "@/lib/auth";
@@ -43,7 +43,7 @@ export default function Discovery() {
   const [sort, setSort] = useState<Sort>("match");
   const [open, setOpen] = useState<Project | null>(null);
   const PAGE_SIZE = 20;
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(1);
 
   const scored = useMemo(() => projects.map((p) => ({ p, m: matchProject(profile, p) })), [projects, profile]);
   const list = useMemo(() => {
@@ -75,11 +75,14 @@ export default function Discovery() {
     setCredit(false);
     setBeginner(false);
   };
+  const pageCount = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  void currentPage;
   const openCount = scored.filter(({ p }) => p.status === "open").length;
 
-  // Reset pagination whenever any filter input changes.
+  // Reset to the first page whenever any filter input changes.
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
+    setPage(1);
   }, [q, dept, statuses, paid, credit, beginner, sort]);
 
   return (
@@ -166,18 +169,50 @@ export default function Discovery() {
           {list.length ? (
             <>
               <ProjectGrid
-                list={list.slice(0, visibleCount)}
+                list={list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)}
                 onOpen={setOpen}
                 className="md:grid-cols-2"
               />
-              {list.length > visibleCount && (
-                <button
-                  data-testid="button-show-more"
-                  onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
-                  className="mt-5 border border-primary/40 px-5 py-3 text-sm font-semibold text-primary hover:bg-primary/5"
+              {pageCount > 1 && (
+                <nav
+                  aria-label="Catalog pages"
+                  className="mt-6 flex items-center justify-center gap-2"
                 >
-                  Show more ({list.length - visibleCount} remaining)
-                </button>
+                  <button
+                    data-testid="button-prev-page"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    aria-label="Previous page"
+                    className="border border-primary/25 px-3 py-2 text-primary hover:bg-primary/5 disabled:opacity-40"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  {Array.from({ length: pageCount }, (_, index) => index + 1).map(
+                    (number) => (
+                      <button
+                        key={number}
+                        data-testid={`button-page-${number}`}
+                        onClick={() => setPage(number)}
+                        className={
+                          number === page
+                            ? "h-9 w-9 bg-primary font-mono text-sm text-primary-foreground"
+                            : "h-9 w-9 border border-primary/25 font-mono text-sm text-primary hover:bg-primary/5"
+                        }
+                      >
+                        {number}
+                      </button>
+                    ),
+                  )}
+                  <button
+                    data-testid="button-next-page"
+                    disabled={page === pageCount}
+                    onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                    aria-label="Next page"
+                    className="border border-primary/25 px-3 py-2 text-primary hover:bg-primary/5 disabled:opacity-40"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </nav>
               )}
             </>
           ) : (
