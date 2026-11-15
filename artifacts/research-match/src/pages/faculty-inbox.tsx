@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
 import { LoaderCircle } from "lucide-react";
@@ -12,10 +12,19 @@ import { api } from "@/lib/convex-api";
 import { cn } from "@/lib/utils";
 import { LocalNotice } from "@/components/faculty/demo-notice";
 import { StudentDetailBody } from "@/components/faculty/student-detail";
+import { ScoreDial } from "@/components/bits";
+import { matchProject } from "@/lib/matching";
 
 const FAC_STAGES: InterestStatus[] = ["interested", "conversation", "accepted", "declined"];
 const sel = "mt-1 h-10 w-full border border-primary/25 bg-card px-3 text-sm font-normal";
 const lbl = "mb-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-primary";
+
+const compatCls = (n: number) =>
+  n >= 70
+    ? "border-primary/40 bg-primary/10 text-primary"
+    : n >= 50
+      ? "border-chart-2/40 bg-chart-2/10 text-foreground"
+      : "border-muted-foreground/30 text-muted-foreground";
 
 export default function FacultyInbox() {
   const live = useFacultyMode() === "live";
@@ -26,6 +35,7 @@ export default function FacultyInbox() {
   const [pf, setPf] = useState("all");
   const [sf, setSf] = useState<"all" | InterestStatus>("all");
   const [openId, setOpenId] = useState<string | null>(null);
+  const detailRef = useRef<HTMLElement>(null);
   type Row = {
     id: string;
     projectId: string;
@@ -39,10 +49,24 @@ export default function FacultyInbox() {
     studentSkills?: string[];
     studentSchedule?: string;
     studentBio?: string;
+    studentMinors?: string[];
+    studentInterests?: string[];
+    studentExperience?: { role: string; org: string; description: string }[];
+    studentHoursPerWeek?: number;
+    studentSeekingCredit?: boolean;
+    studentWorkStudy?: boolean;
+    compatibility?: number;
     message?: string;
     demo: boolean;
   };
   const owned = interests.filter((i) => projects.some((p) => p.id === i.projectId));
+  const pool = demoStudents(DEMO_STUDENTS, profile);
+  // Demo compatibility uses the same local matcher as Discover students.
+  const demoScore = (studentId: string, projectId: string) => {
+    const s = pool.find((x) => x.id === studentId);
+    const p = projects.find((x) => x.id === projectId);
+    return s && p ? Math.round(matchProject(s, p).score) : undefined;
+  };
   const demoRows: Row[] = owned.map((i) => ({
     id: i.id,
     projectId: i.projectId,
@@ -52,6 +76,7 @@ export default function FacultyInbox() {
     status: i.status,
     updatedAt: Date.parse(i.updatedAt),
     message: i.message,
+    compatibility: demoScore(i.studentId, i.projectId),
     demo: true,
   }));
   const liveRows: Row[] = (liveInbox ?? []).map((r) => ({
@@ -66,6 +91,13 @@ export default function FacultyInbox() {
     studentSkills: r.studentSkills,
     studentSchedule: r.studentSchedule,
     studentBio: r.studentBio,
+    studentMinors: r.studentMinors,
+    studentInterests: r.studentInterests,
+    studentExperience: r.studentExperience,
+    studentHoursPerWeek: r.studentHoursPerWeek,
+    studentSeekingCredit: r.studentSeekingCredit,
+    studentWorkStudy: r.studentWorkStudy,
+    compatibility: r.compatibility,
     demo: false,
   }));
   const all = live ? liveRows : demoRows;
@@ -113,9 +145,14 @@ export default function FacultyInbox() {
                 const proj = projects.find((p) => p.id === r.projectId);
                 return (
                   <li key={r.id}>
-                    <button data-testid={`row-request-${r.id}`} onClick={() => setOpenId(r.id)} aria-pressed={openId === r.id}
+                    <button data-testid={`row-request-${r.id}`} onClick={() => {
+                        setOpenId(r.id);
+                        // Below lg the detail panel sits under the list; bring it into view.
+                        if (window.matchMedia("(max-width: 1023px)").matches)
+                          requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+                      }} aria-pressed={openId === r.id}
                       className={cn("w-full border bg-card p-4 text-left transition-colors hover:border-primary/40", openId === r.id && "border-primary")}>
-                      <div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{r.studentName}</p><span className="ml-auto bg-accent px-2 py-0.5 text-xs text-accent-foreground">{STATUS_LABEL[r.status]}</span></div>
+                      <div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{r.studentName}</p>{r.compatibility !== undefined && <span data-testid={`text-compat-${r.id}`} title="Compatibility with this listing" className={cn("border px-1.5 py-0.5 font-mono text-[11px]", compatCls(r.compatibility))}>{r.compatibility}% match</span>}<span className="ml-auto bg-accent px-2 py-0.5 text-xs text-accent-foreground">{STATUS_LABEL[r.status]}</span></div>
                       <p className="mt-1 text-xs text-muted-foreground">{r.projectTitle} · {format(new Date(r.updatedAt), "MMM d, h:mm a")}</p>
                       <p className="mt-0.5 text-xs text-primary">{proj?.title}</p>
                       {r.message && <p className="mt-2 line-clamp-2 whitespace-pre-line text-xs text-muted-foreground">{r.message}</p>}
@@ -125,7 +162,7 @@ export default function FacultyInbox() {
                 );
               })}
             </ul>
-            <aside className="border border-primary/20 bg-card p-5 lg:sticky lg:top-6">
+            <aside ref={detailRef} className="scroll-mt-4 border border-primary/20 bg-card p-5 lg:sticky lg:top-6">
               {cur ? (
                 <div className="rise space-y-4" key={cur.id}>
                   <div>
@@ -155,13 +192,37 @@ export default function FacultyInbox() {
                       })()
                     : (
                       <div className="space-y-3 text-sm" data-testid="text-live-student">
-                        <p className="font-display text-2xl leading-tight">{cur.studentName}</p>
-                        <p className="text-xs text-muted-foreground">{cur.studentMajor} · {cur.studentSchoolYear}</p>
+                        <div className="flex items-center gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-display text-2xl leading-tight">{cur.studentName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {[cur.studentMajor, cur.studentMinors?.length ? `minor in ${cur.studentMinors.join(", ")}` : null, cur.studentSchoolYear, cur.studentHoursPerWeek !== undefined ? `${cur.studentHoursPerWeek} h/wk` : null].filter(Boolean).join(" · ")}
+                            </p>
+                          </div>
+                          {cur.compatibility !== undefined && <ScoreDial score={cur.compatibility} size={50} />}
+                        </div>
                         {cur.studentBio && <p className="text-foreground/80">{cur.studentBio}</p>}
                         <div>
                           <p className={lbl}>Skills</p>
-                          <div className="mt-1.5 flex flex-wrap gap-1.5">{(cur.studentSkills ?? []).map((k) => <span key={k} className="border border-primary/25 bg-primary/8 px-2 py-0.5 text-xs text-primary">{k}</span>)}</div>
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">{(cur.studentSkills ?? []).length ? (cur.studentSkills ?? []).map((k) => <span key={k} className="border border-primary/25 bg-primary/8 px-2 py-0.5 text-xs text-primary">{k}</span>) : <span className="text-xs text-muted-foreground">None listed.</span>}</div>
                         </div>
+                        {(cur.studentInterests ?? []).length > 0 && <p className="text-xs"><span className="font-semibold">Interests:</span> {cur.studentInterests!.join(", ")}</p>}
+                        {(cur.studentExperience ?? []).length > 0 && (
+                          <div>
+                            <p className={lbl}>Experience</p>
+                            <ul className="mt-1.5 space-y-2">
+                              {cur.studentExperience!.map((e, i) => (
+                                <li key={i} className="text-xs">
+                                  <p className="font-semibold">{e.role}{e.org ? ` · ${e.org}` : ""}</p>
+                                  {e.description && <p className="text-muted-foreground">{e.description}</p>}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {cur.studentSeekingCredit ? "Seeking academic credit" : "Not seeking credit"}{cur.studentWorkStudy ? " · Federal work-study" : ""}
+                        </p>
                       </div>
                     )}
                 </div>

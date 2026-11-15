@@ -3,6 +3,7 @@ import { ConvexError } from "convex/values";
 import { authComponent } from "./auth";
 import { accountProfileFor, studentProfileForOwner } from "./users";
 import { mutation, query } from "./model";
+import { compatibilityScore } from "./compatibility";
 
 const statusValidator = v.union(
   v.literal("interested"),
@@ -142,6 +143,13 @@ export const labInbox = query({
         studentSkills: student.skills,
         studentSchedule: student.schedule ?? "",
         studentBio: student.bio ?? "",
+        studentMinors: student.minors ?? [],
+        studentInterests: student.interests,
+        studentExperience: student.experience,
+        studentHoursPerWeek: student.hoursPerWeek,
+        studentSeekingCredit: student.seekingCredit,
+        studentWorkStudy: student.workStudy,
+        compatibility: compatibilityScore(student, project),
       });
     }
     return out.sort((a, b) => b.updatedAt - a.updatedAt);
