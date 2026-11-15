@@ -39,8 +39,9 @@
     "wouter": "^3.3.5"
   },
   "dependencies": {
-    "convex": "^1.50.0",
     "@convex-dev/better-auth": "0.13.0",
-    "better-auth": "1.7.23"
+    "better-auth": "1.7.23",
+    "convex": "^1.50.0",
+    "driver.js": "^1.14.0"
   }
 }

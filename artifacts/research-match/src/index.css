@@ -472,3 +472,55 @@
 html {
   font-size: 112.5%;
 }
+
+/* Onboarding tour (driver.js), themed to the Cardinal Grid design system. */
+.driver-popover.driverjs-theme {
+  background: #fff;
+  color: #1f1f1f;
+  border: 1px solid #e8e0d3;
+  border-radius: 1rem;
+  max-width: 340px;
+}
+.driver-popover.driverjs-theme .driver-popover-title {
+  font-family: "Instrument Sans", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-size: 1.05rem;
+}
+.driver-popover.driverjs-theme .driver-popover-description {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: #6b645a;
+}
+.driver-popover.driverjs-theme .driver-popover-progress-text {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #6b645a;
+}
+.driver-popover.driverjs-theme .driver-popover-next-btn,
+.driver-popover.driverjs-theme .driver-popover-prev-btn {
+  background: #990000;
+  color: #fff;
+  text-shadow: none;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0.45rem 0.9rem;
+}
+.driver-popover.driverjs-theme .driver-popover-prev-btn {
+  background: transparent;
+  color: #6b645a;
+  border: 1px solid #e8e0d3;
+}
+.driver-popover.driverjs-theme .driver-popover-close-btn {
+  color: #9a9286;
+}
+.driver-popover.driverjs-theme .driver-popover-close-btn:hover {
+  color: #1f1f1f;
+}
+.driver-popover.driverjs-theme .driver-popover-arrow {
+  display: none;
+}

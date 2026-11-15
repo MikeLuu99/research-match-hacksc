@@ -79,6 +79,21 @@ const connectedFixtures: Plugin = {
   },
 };
 
+// driver.js only runs tours in the browser; stub it for the Node bundles.
+const driverStub: Plugin = {
+  name: "driverjs-stub",
+  setup(builder) {
+    builder.onLoad({ filter: /[\\/]driver\.js[\\/]dist[\\/]driver\.js$/ }, () => ({
+      loader: "ts",
+      contents: `export function driver() { return { drive: () => {}, destroy: () => {}, highlight: () => {} }; }`,
+    }));
+    builder.onLoad({ filter: /[\\/]driver\.js[\\/]dist[\\/]driver\.css$/ }, () => ({
+      loader: "css",
+      contents: "",
+    }));
+  },
+};
+
 type WebBundle = {
   renderRoute: (route: string) => { html: string; redirect?: string };
   normalizeSavedProjectIds: (
@@ -131,7 +146,7 @@ async function bundle(
         VITE_CONVEX_SITE_URL: "",
       }),
     },
-    plugins,
+    plugins: [driverStub, ...plugins],
     logLevel: "silent",
   });
   return import(/* @vite-ignore */ pathToFileURL(outfile).href);
