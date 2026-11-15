@@ -5,10 +5,12 @@ import {
   internalMutationGeneric as internalMutation,
   internalQueryGeneric as internalQuery,
   makeFunctionReference,
+  type DocumentByName,
 } from "convex/server";
 import { authComponent } from "./auth";
-import { accountProfileFor } from "./users";
-import { mutation, query } from "./model";
+import { accountProfileFor, photoUrlFor } from "./users";
+import { compatibilityScore } from "./compatibility";
+import { mutation, query, type DataModel } from "./model";
 import { EMBEDDING_MODEL_ID, embedBatch, labEmbeddingText } from "./embeddings";
 
 async function requireFaculty(ctx: unknown) {
@@ -288,5 +290,70 @@ export const embedProject = action({
       { projectId: args.projectId, embedding },
     );
     return null;
+  },
+});
+
+const MAX_RECOMMENDATIONS = 12;
+
+// Discover students for one of the faculty member's own projects: students who
+// sent interest (any status but withdrawn), then opted-in students who have
+// not applied, ranked by compatibility with the project.
+export const projectStudents = query({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, args) => {
+    const { user } = await requireFaculty(ctx);
+    const project = await ctx.db.get(args.projectId);
+    if (!project || project.ownerId !== user._id)
+      throw new ConvexError("You can only view students for your own projects.");
+
+    const listing = async (student: DocumentByName<DataModel, "students">) => ({
+      id: student._id as string,
+      name: student.name,
+      photoUrl: await photoUrlFor(ctx, student.photoStorageId),
+      major: student.major,
+      minors: student.minors ?? [],
+      schoolYear: student.schoolYear,
+      bio: student.bio ?? "",
+      schedule: student.schedule ?? "",
+      skills: student.skills,
+      interests: student.interests,
+      experience: student.experience,
+      hoursPerWeek: student.hoursPerWeek,
+      workStudy: student.workStudy,
+      seekingCredit: student.seekingCredit,
+      compatibility: compatibilityScore(student, project),
+    });
+
+    const interests = await ctx.db
+      .query("interests")
+      .withIndex("by_source", (q) => q.eq("sourceId", project.sourceId))
+      .collect();
+    const applicants = [];
+    const appliedIds = new Set<string>();
+    for (const interest of interests) {
+      if (interest.status === "withdrawn") continue;
+      const student = await ctx.db.get(interest.studentId);
+      if (!student) continue;
+      appliedIds.add(student._id);
+      applicants.push({
+        ...(await listing(student)),
+        status: interest.status,
+        appliedAt: interest.createdAt,
+      });
+    }
+    applicants.sort((a, b) => b.compatibility - a.compatibility);
+
+    const consenting = (await ctx.db.query("students").collect()).filter(
+      (student) => student.recruitmentConsent && !appliedIds.has(student._id),
+    );
+    const top = consenting
+      .map((student) => ({ student, score: compatibilityScore(student, project) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, MAX_RECOMMENDATIONS);
+    const recommendations = await Promise.all(
+      top.map(({ student }) => listing(student)),
+    );
+
+    return { applicants, recommendations };
   },
 });
