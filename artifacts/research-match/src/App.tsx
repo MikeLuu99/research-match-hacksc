@@ -23,6 +23,7 @@ import FacultyInbox from "@/pages/faculty-inbox";
 import FacultyProfile from "@/pages/faculty-profile";
 import { AskLabbe } from "@/components/chat/ask-labbe";
 import Settings from "@/pages/settings";
+import Notifications from "@/pages/notifications";
 import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth";
 import { AccountProvider, useAccount } from "@/lib/auth";
@@ -64,6 +65,7 @@ function WorkspaceRoutes() {
           <Route path="/faculty/inbox" component={FacultyInbox} />
           <Route path="/faculty/profile" component={FacultyProfile} />
           <Route path="/settings" component={Settings} />
+          <Route path="/notifications" component={Notifications} />
           <Route component={NotFound} />
         </Switch>
       </StudentRouteGate>
