@@ -8,22 +8,65 @@ import {
   Send,
   UserRound,
   FlaskConical,
-  Settings2,
   LogOut,
   ArrowLeft,
+  Users,
+  ListChecks,
+  Inbox,
+  GraduationCap,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useAccount } from "@/lib/auth";
 
-const NAV = [
-  { href: "/student", label: "Discover", icon: Compass, roles: ["student"] },
-  { href: "/saved", label: "Saved", icon: Bookmark, roles: ["student"] },
-  { href: "/applications", label: "Interest tracker", icon: Send, roles: ["student"] },
-  { href: "/profile", label: "My profile", icon: UserRound, roles: ["student"] },
-  { href: "/faculty", label: "Faculty workspace", icon: FlaskConical, roles: ["faculty"] },
-  { href: "/settings", label: "Data & matching", icon: Settings2, roles: ["faculty"] },
+type NavItem = { href: string; label: string; icon: typeof Compass };
+
+const STUDENT_NAV: NavItem[] = [
+  { href: "/student", label: "Discover", icon: Compass },
+  { href: "/saved", label: "Saved", icon: Bookmark },
+  { href: "/applications", label: "Interest tracker", icon: Send },
+  { href: "/profile", label: "My profile", icon: UserRound },
 ];
+
+const FACULTY_NAV: NavItem[] = [
+  { href: "/faculty", label: "Lab workspace", icon: FlaskConical },
+  { href: "/faculty/discover", label: "Discover students", icon: Users },
+  { href: "/faculty/shortlist", label: "Student shortlist", icon: ListChecks },
+  { href: "/faculty/inbox", label: "Interest inbox", icon: Inbox },
+];
+
+const FAC_PROFILE: NavItem = {
+  href: "/faculty/profile",
+  label: "Faculty profile",
+  icon: GraduationCap,
+};
+
+// Demo-only view switch. Signed-in accounts keep their single role.
+function DemoViewSwitch({ view, collapsed }: { view: "student" | "faculty"; collapsed: boolean }) {
+  if (collapsed) return null;
+  const item = (href: string, label: string, on: boolean) => (
+    <Link
+      href={href}
+      data-testid={`link-view-${label.toLowerCase()}`}
+      aria-current={on ? "page" : undefined}
+      className={cn(
+        "flex-1 px-3 py-1.5 text-center font-mono text-[10px] uppercase tracking-[0.14em] transition-colors",
+        on
+          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+          : "text-sidebar-foreground/70 hover:text-sidebar-foreground",
+      )}
+    >
+      {label}
+    </Link>
+  );
+  return (
+    <div className="mx-2 md:mx-3 mb-2 flex border border-sidebar-border shrink-0" role="group" aria-label="Demo view">
+      {item("/student", "Student", view === "student")}
+      {item("/faculty", "Faculty", view === "faculty")}
+    </div>
+  );
+}
+
 
 function LogOutButton({ subtle = false }: { subtle?: boolean }) {
   const account = useAccount();
@@ -95,7 +138,7 @@ export function Layout({ children }: { children: ReactNode }) {
     });
   }
   const [loc] = useLocation();
-  const { saved, interests, profile } = useStore();
+  const { saved, interests, profile, projects, shortlists } = useStore();
   const account = useAccount();
   // Signed-in accounts see only their side's tools. The unauthenticated demo
   // shows both sides so visitors can explore each workflow.
@@ -106,10 +149,54 @@ export function Layout({ children }: { children: ReactNode }) {
   const counts: Record<string, number> = {
     "/saved": saved.length,
     "/applications": mine,
+    "/faculty/shortlist": projects.reduce(
+      (n, p) => n + (shortlists[p.id] ?? []).length,
+      0,
+    ),
+    "/faculty/inbox": interests.filter(
+      (i) =>
+        i.status === "interested" &&
+        projects.some((p) => p.id === i.projectId),
+    ).length,
   };
-  const nav = NAV.filter(
-    (n) => role === "demo" || n.roles.includes(role),
-  );
+  const view: "student" | "faculty" =
+    role === "demo"
+      ? loc.startsWith("/faculty") || loc.startsWith("/settings")
+        ? "faculty"
+        : "student"
+      : role === "faculty"
+        ? "faculty"
+        : "student";
+  const nav = view === "faculty" ? FACULTY_NAV : STUDENT_NAV;
+  const navLink = (n: NavItem) => {
+    const active =
+      n.href === "/faculty" ? loc === "/faculty" : loc.startsWith(n.href);
+    return (
+      <Link
+        key={n.href}
+        href={n.href}
+        title={collapsed ? n.label : undefined}
+        data-testid={`link-nav-${n.href.slice(1).replace("/", "-") || "discover"}`}
+        className={cn(
+          "relative flex items-center gap-3 px-3 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap transition-colors duration-200",
+          active
+            ? "bg-sidebar-accent text-sidebar-foreground"
+            : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
+        )}
+      >
+        {active && (
+          <span className="absolute left-0 top-2 bottom-2 w-[3px] bg-sidebar-primary hidden md:block" />
+        )}
+        <n.icon className="h-4 w-4 shrink-0" />
+        {!collapsed && <span>{n.label}</span>}
+        {counts[n.href] ? (
+          <span className="ml-auto font-mono text-[11px] bg-sidebar-primary text-sidebar-primary-foreground px-1.5">
+            {counts[n.href]}
+          </span>
+        ) : null}
+      </Link>
+    );
+  };
   return (
     <div className="workspace-grid min-h-[100dvh] md:flex">
       <aside
@@ -140,38 +227,29 @@ export function Layout({ children }: { children: ReactNode }) {
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
         </div>
-        <nav className="flex md:flex-col gap-0 px-2 md:px-3 py-2 overflow-x-auto w-full">
-          {nav.map((n) => {
-            const active =
-              n.href === "/" ? loc === "/" : loc.startsWith(n.href);
-            return (
-              <Link
-                key={n.href}
-                href={n.href}
-                data-testid={`link-nav-${n.href.replace("/", "") || "discover"}`}
-                className={cn(
-                  "relative flex items-center gap-3 px-3 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap transition-colors duration-200",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-foreground"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
-                )}
-              >
-                {active && (
-                  <span className="absolute left-0 top-2 bottom-2 w-[3px] bg-sidebar-primary hidden md:block" />
-                )}
-                <n.icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{n.label}</span>}
-                {counts[n.href] ? (
-                  <span className="ml-auto font-mono text-[11px] bg-sidebar-primary text-sidebar-primary-foreground px-1.5">
-                    {counts[n.href]}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
+        {role === "demo" && (
+          <div className="hidden md:block">
+            <DemoViewSwitch view={view} collapsed={collapsed} />
+          </div>
+        )}
+        <nav
+          aria-label={view === "faculty" ? "Faculty" : "Student"}
+          className="flex md:flex-col gap-0 px-2 md:px-3 py-2 overflow-x-auto w-full md:flex-1"
+        >
+          {role === "demo" && (
+            <div className="md:hidden flex shrink-0">
+              <DemoViewSwitch view={view} collapsed={false} />
+            </div>
+          )}
+          {nav.map(navLink)}
+          {view === "faculty" && (
+            <div className="md:mt-auto md:border-t md:border-sidebar-border md:pt-2">
+              {navLink(FAC_PROFILE)}
+            </div>
+          )}
           <LogOutButton />
         </nav>
-        <div className="hidden md:block mt-auto p-5 text-xs text-sidebar-foreground/60 leading-relaxed">
+        <div className="hidden md:block p-5 text-xs text-sidebar-foreground/60 leading-relaxed">
           <Link
             href="~/"
             className={cn(
@@ -185,7 +263,7 @@ export function Layout({ children }: { children: ReactNode }) {
           {!collapsed && (
             <p>
               Lab listings come from public USC research pages (checked Nov
-              2026). Workspace changes are stored in this browser.
+              2026). Workspace changes are stored in this browser and are not synced.
             </p>
           )}
           {!collapsed && <AccountMenu />}
