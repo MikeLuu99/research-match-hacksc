@@ -58,6 +58,8 @@ function RealProfileEditor() {
     );
   const initial: StudentProfileInitial | undefined = profile
     ? {
+        schedule: profile.schedule ?? "",
+        bio: profile.bio ?? "",
         major: profile.major,
         minors: profile.minors ?? [],
         schoolYear: profile.schoolYear,

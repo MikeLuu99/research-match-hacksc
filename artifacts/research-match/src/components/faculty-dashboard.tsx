@@ -10,7 +10,8 @@ import {
   Sprout,
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
-import { Sparkles } from "lucide-react";
+import { ScheduleGrid } from "@/components/schedule-grid";
+import { Sparkles, CalendarDays } from "lucide-react";
 import { EmptyState } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ type Student = {
   id: string;
   name: string;
   major: string;
+  schedule?: string;
   minors: string[];
   schoolYear: string;
   skills: string[];
@@ -103,6 +105,17 @@ function StudentDetail({ student }: { student: Student }) {
           <SkillChips items={student.interests} />
         </div>
       </section>
+      {student.schedule && (
+        <section>
+          <h4 className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-primary">
+            <CalendarDays className="h-3.5 w-3.5" /> Weekly availability (
+            {(student.schedule.split(",").filter(Boolean)).length} h/week)
+          </h4>
+          <div className="mt-2">
+            <ScheduleGrid value={student.schedule} readOnly />
+          </div>
+        </section>
+      )}
       <section>
         <h4 className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-primary">
           <BookOpen className="h-3.5 w-3.5" /> Experience

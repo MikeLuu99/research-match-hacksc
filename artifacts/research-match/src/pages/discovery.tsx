@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { ChevronLeft, ChevronRight, Search, X, ArrowUpRight } from "lucide-react";
 import { Layout, EmptyState } from "@/components/layout";
 import { AiMatches } from "@/components/ai-matches";
+import { SetupChecklist } from "@/components/setup-checklist";
 import { useAccount } from "@/lib/auth";
 import { RecruitPill, ProjectGrid } from "@/components/bits";
 import { ProjectDialog } from "@/components/project-dialog";
@@ -93,7 +94,8 @@ export default function Discovery() {
           <h1 className="font-display text-3xl md:text-4xl leading-[1.05] mt-2 mb-6">
             AI matches for <em className="text-primary not-italic underline decoration-chart-2 decoration-4 underline-offset-[6px]">your profile</em>
           </h1>
-          <div className="rise">
+          <div className="rise space-y-4">
+            <SetupChecklist />
             <AiMatches />
           </div>
         </section>

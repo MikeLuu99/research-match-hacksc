@@ -32,6 +32,10 @@ export const studentProfileFields = {
   hoursPerWeek: v.number(),
   workStudy: v.boolean(),
   seekingCredit: v.boolean(),
+  // Optional so legacy profiles validate; handlers default it to "".
+  bio: v.optional(v.string()),
+  // Weekly availability as comma-separated day-hour tokens ("mon-9,tue-14").
+  schedule: v.optional(v.string()),
 };
 
 export default defineSchema({

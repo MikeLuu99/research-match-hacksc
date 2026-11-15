@@ -106,6 +106,8 @@ export const listStudents = query({
         major: student.major,
         minors: student.minors ?? [],
         schoolYear: student.schoolYear,
+        bio: student.bio ?? "",
+        schedule: student.schedule ?? "",
         skills: student.skills,
         interests: student.interests,
         experience: student.experience,
@@ -166,6 +168,8 @@ export const upsertStudentProfile = mutation({
   args: {
     ...studentProfileFields,
     recruitmentConsent: v.boolean(),
+    bio: v.optional(v.string()),
+    schedule: v.optional(v.string()),
     resumeStorageId: v.optional(v.string()),
     resumeFileName: v.optional(v.string()),
   },
@@ -184,6 +188,8 @@ export const upsertStudentProfile = mutation({
     const hoursPerWeek = Math.max(0, Math.min(80, Math.round(args.hoursPerWeek)));
     const skills = cleanTagList(args.skills, "skills", 30);
     const minors = cleanTagList(args.minors ?? [], "minors", 10);
+    const bio = (args.bio ?? "").trim().slice(0, 1000);
+    const schedule = (args.schedule ?? "").trim().slice(0, 800);
     const interests = cleanTagList(args.interests, "interests", 30);
     if (skills.length === 0 && interests.length === 0)
       throw new ConvexError("Add at least one skill or research interest.");
@@ -208,6 +214,8 @@ export const upsertStudentProfile = mutation({
       name: account.name,
       major,
       schoolYear: args.schoolYear,
+      bio,
+      schedule,
       minors,
       skills,
       interests,
@@ -284,6 +292,8 @@ export const studentProfileById = internalQuery({
       name: student.name,
       major: student.major,
       minors: student.minors ?? [],
+      bio: student.bio ?? "",
+      schedule: student.schedule ?? "",
       schoolYear: student.schoolYear,
       skills: student.skills,
       interests: student.interests,

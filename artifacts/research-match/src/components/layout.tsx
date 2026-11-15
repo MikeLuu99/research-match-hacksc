@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import {
+  PanelLeftClose,
+  PanelLeftOpen,
   Compass,
   Bookmark,
   Send,
@@ -74,6 +76,24 @@ function AccountMenu() {
 }
 
 export function Layout({ children }: { children: ReactNode }) {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("labbe.sidebarCollapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  function toggleCollapsed() {
+    setCollapsed((value) => {
+      try {
+        localStorage.setItem("labbe.sidebarCollapsed", value ? "0" : "1");
+      } catch {
+        /* ignore */
+      }
+      return !value;
+    });
+  }
   const [loc] = useLocation();
   const { saved, interests, profile } = useStore();
   const account = useAccount();
@@ -92,17 +112,33 @@ export function Layout({ children }: { children: ReactNode }) {
   );
   return (
     <div className="workspace-grid min-h-[100dvh] md:flex">
-      <aside className="md:w-64 md:min-h-[100dvh] bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:h-[100dvh] flex md:flex-col border-r border-sidebar-border">
-        <div className="hidden md:block px-6 pt-7 pb-6">
+      <aside
+        className={cn(
+          "md:min-h-[100dvh] bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:h-[100dvh] flex md:flex-col border-r border-sidebar-border transition-all duration-200",
+          collapsed ? "md:w-16" : "md:w-64",
+        )}
+      >
+        <div className="hidden md:flex items-start justify-between px-4 pt-7 pb-6">
           <Link href="/" className="block group" data-testid="link-home">
             <div className="flex items-center gap-2">
               <img src="/logo.svg" alt="" className="h-8 w-8 object-contain transition-colors" />
-              <span className="font-display text-2xl">LABBE</span>
+              {!collapsed && (
+                <span className="font-display text-2xl">LABBE</span>
+              )}
             </div>
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground/60">
-              Demo · not an official USC product
-            </p>
+            {!collapsed && (
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground/60">
+                Demo · not an official USC product
+              </p>
+            )}
           </Link>
+          <button
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={toggleCollapsed}
+            className="text-sidebar-foreground/70 hover:text-sidebar-foreground"
+          >
+            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
         </div>
         <nav className="flex md:flex-col gap-0 px-2 md:px-3 py-2 overflow-x-auto w-full">
           {nav.map((n) => {
@@ -124,7 +160,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   <span className="absolute left-0 top-2 bottom-2 w-[3px] bg-sidebar-primary hidden md:block" />
                 )}
                 <n.icon className="h-4 w-4 shrink-0" />
-                <span>{n.label}</span>
+                {!collapsed && <span>{n.label}</span>}
                 {counts[n.href] ? (
                   <span className="ml-auto font-mono text-[11px] bg-sidebar-primary text-sidebar-primary-foreground px-1.5">
                     {counts[n.href]}
@@ -138,16 +174,22 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="hidden md:block mt-auto p-5 text-xs text-sidebar-foreground/60 leading-relaxed">
           <Link
             href="~/"
-            className="mb-4 flex items-center gap-2 text-sidebar-foreground"
+            className={cn(
+              "flex items-center gap-2 text-sidebar-foreground",
+              !collapsed && "mb-4",
+            )}
           >
             <ArrowLeft size={14} />
-            LABBE home
+            {!collapsed && "LABBE home"}
           </Link>
-          <p>
-            Lab listings come from public USC research pages (checked Nov
-            2026). Workspace changes are stored in this browser.
-          </p>
-          <AccountMenu />
+          {!collapsed && (
+            <p>
+              Lab listings come from public USC research pages (checked Nov
+              2026). Workspace changes are stored in this browser.
+            </p>
+          )}
+          {!collapsed && <AccountMenu />}
+          {collapsed && <LogOutButton />}
         </div>
       </aside>
       <main className="flex-1 min-w-0"><div className="px-5 pb-3 text-xs border-b md:hidden"><AccountMenu /></div>{children}</main>

@@ -4,6 +4,10 @@ import { useAction, useMutation } from "convex/react";
 import { api } from "@/lib/convex-api";
 import { USC_MAJORS, USC_MINORS } from "@/lib/usc-programs";
 import { RESEARCH_SKILLS } from "@/lib/research-skills";
+import {
+  ScheduleGrid,
+  scheduleHourCount,
+} from "@/components/schedule-grid";
 import { useAccount } from "@/lib/auth";
 
 const SCHOOL_YEARS = [
@@ -57,6 +61,8 @@ function FieldLabel({
 }
 
 export type StudentProfileInitial = {
+  schedule?: string;
+  bio?: string;
   major: string;
   minors: string[];
   schoolYear: string;
@@ -112,6 +118,8 @@ function ProfileFields({
   setSkillDraft,
   addSkill,
   removeSkill,
+  schedule,
+  setSchedule,
 }: {
   initial?: StudentProfileInitial;
   pending: boolean;
@@ -120,6 +128,8 @@ function ProfileFields({
   setSkillDraft: (value: string) => void;
   addSkill: (value: string) => void;
   removeSkill: (value: string) => void;
+  schedule: string;
+  setSchedule: (value: string) => void;
 }) {
   return (
     <>
@@ -227,6 +237,20 @@ function ProfileFields({
         </p>
       </div>
       <div className="auth-field">
+        <FieldLabel htmlFor="profile-bio" optional>
+          About you
+        </FieldLabel>
+        <textarea
+          id="profile-bio"
+          name="bio"
+          placeholder="A sentence or two about your curiosity and goals — helps labs understand you."
+          maxLength={1000}
+          disabled={pending}
+          defaultValue={initial?.bio ?? ""}
+        />
+        <p className="auth-help">Shown with your profile; also feeds your AI matches.</p>
+      </div>
+      <div className="auth-field">
         <FieldLabel htmlFor="profile-interests" optional>
           Research interests
         </FieldLabel>
@@ -244,19 +268,26 @@ function ProfileFields({
         <ExperienceEditor pending={pending} initial={initial} />
       </fieldset>
       <div className="auth-field">
-        <FieldLabel htmlFor="profile-hours">
-          Weekly availability (hours)
+        <FieldLabel htmlFor="profile-schedule">
+          Weekly availability
         </FieldLabel>
+        <p className="auth-help">
+          Click or drag across the grid to mark when you're free. Professors
+          see this schedule — currently{" "}
+          <strong className="text-primary">
+            {scheduleHourCount(schedule)} h/week
+          </strong>
+          .
+        </p>
+        <ScheduleGrid
+          value={schedule}
+          onChange={(next) => setSchedule(next)}
+        />
+        <input type="hidden" name="schedule" value={schedule} />
         <input
-          id="profile-hours"
+          type="hidden"
           name="hours-per-week"
-          type="number"
-          min={0}
-          max={80}
-          step={1}
-          defaultValue={initial?.hoursPerWeek ?? 10}
-          required
-          disabled={pending}
+          value={scheduleHourCount(schedule)}
         />
       </div>
       <div className="auth-field">
@@ -449,6 +480,8 @@ async function submitProfile(
     }
     await upsertProfile({
       major: String(data.get("major") ?? ""),
+      schedule: String(data.get("schedule") ?? "").trim(),
+      bio: String(data.get("bio") ?? "").trim().slice(0, 1000),
       minors: splitTags(String(data.get("minors") ?? "")),
       schoolYear: String(data.get("school-year") ?? "freshman") as
         | "freshman"
@@ -493,6 +526,7 @@ export function StudentProfileForm({
   const [error, setError] = useState("");
   const [skills, setSkills] = useState<string[]>(initial?.skills ?? []);
   const [skillDraft, setSkillDraft] = useState("");
+  const [schedule, setSchedule] = useState(initial?.schedule ?? "");
   const formRef = useRef<HTMLFormElement>(null);
   const experienceRef = useRef<ExperienceEntry[]>(initial?.experience ?? []);
 
@@ -541,6 +575,8 @@ export function StudentProfileForm({
         setSkillDraft={setSkillDraft}
         addSkill={addSkill}
         removeSkill={removeSkill}
+        schedule={schedule}
+        setSchedule={setSchedule}
       />
       {error && (
         <p className="auth-error" role="alert">
@@ -573,6 +609,7 @@ export function ProfileEditor({
   const [error, setError] = useState("");
   const [skills, setSkills] = useState<string[]>(initial?.skills ?? []);
   const [skillDraft, setSkillDraft] = useState("");
+  const [schedule, setSchedule] = useState(initial?.schedule ?? "");
   const formRef = useRef<HTMLFormElement>(null);
   const experienceRef = useRef<ExperienceEntry[]>(initial?.experience ?? []);
 
@@ -621,6 +658,8 @@ export function ProfileEditor({
         setSkillDraft={setSkillDraft}
         addSkill={addSkill}
         removeSkill={removeSkill}
+        schedule={schedule}
+        setSchedule={setSchedule}
       />
       {error && (
         <p className="auth-error" role="alert">
