@@ -15,6 +15,7 @@ import {
   ListChecks,
   Inbox,
   GraduationCap,
+  Briefcase,
   Bell,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
@@ -250,6 +251,35 @@ export function Layout({ children }: { children: ReactNode }) {
                 Demo · not an official USC product
               </p>
             )}
+            <div className="mt-3">
+              {collapsed ? (
+                <span
+                  data-testid="badge-workspace-role"
+                  title={view === "faculty" ? "Faculty workspace" : "Student workspace"}
+                  className={cn(
+                    "grid h-7 w-7 place-items-center rounded-full border",
+                    view === "faculty"
+                      ? "border-chart-2/40 bg-chart-2/10 text-chart-2"
+                      : "border-primary/30 bg-primary/10 text-primary",
+                  )}
+                >
+                  {view === "faculty" ? <Briefcase className="h-3.5 w-3.5" /> : <GraduationCap className="h-3.5 w-3.5" />}
+                </span>
+              ) : (
+                <span
+                  data-testid="badge-workspace-role"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em]",
+                    view === "faculty"
+                      ? "border-chart-2/40 bg-chart-2/10 text-chart-2"
+                      : "border-primary/30 bg-primary/10 text-primary",
+                  )}
+                >
+                  {view === "faculty" ? <Briefcase className="h-3 w-3" /> : <GraduationCap className="h-3 w-3" />}
+                  {view === "faculty" ? "Faculty workspace" : "Student workspace"}
+                </span>
+              )}
+            </div>
           </div>
           <button
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
