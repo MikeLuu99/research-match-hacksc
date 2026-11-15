@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useQuery } from "convex/react";
+import { useQuery } from "@/lib/backend";
 import { LoaderCircle } from "lucide-react";
 import { FileText, Lock, Eye, X, Plus } from "lucide-react";
 import { Layout, PageHeader } from "@/components/layout";

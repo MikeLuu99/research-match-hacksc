@@ -10,8 +10,7 @@
   "rules": {
     "complexity-cyclomatic": "warn",
     "complexity-cognitive": "warn",
-    "complexity-crap": "warn",
-    "high-complexity": "warn"
+    "complexity-crap": "warn"
   },
   "duplicates": {
     "ignore": [

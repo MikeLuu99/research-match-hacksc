@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import {
-  actionGeneric as action,
+  internalActionGeneric as internalAction,
   internalMutationGeneric as internalMutation,
   internalQueryGeneric as internalQuery,
   makeFunctionReference,
@@ -244,7 +244,7 @@ export const removeProject = mutation({
   },
 });
 
-const projectById = internalQuery({
+export const projectById = internalQuery({
   args: { projectId: v.id("projects") },
   handler: async (ctx, args) => {
     const project = await ctx.db.get(args.projectId);
@@ -274,7 +274,7 @@ export const storeProjectEmbeddingById = internalMutation({
 
 // Scheduled after create/update: regenerates the project embedding so the
 // listing stays discoverable in student AI matches.
-export const embedProject = action({
+export const embedProject = internalAction({
   args: { projectId: v.id("projects") },
   returns: v.null(),
   handler: async (ctx, args) => {

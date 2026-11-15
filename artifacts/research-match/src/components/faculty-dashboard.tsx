@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "@/lib/backend";
 import {
   BookOpen,
   Clock,

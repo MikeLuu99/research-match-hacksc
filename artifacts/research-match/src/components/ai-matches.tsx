@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { useAction, useMutation } from "convex/react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAction, useMutation } from "@/lib/backend";
 import {
   ArrowUpRight,
   Building2,
@@ -48,6 +48,13 @@ function cnScore(similarity: number) {
 // be refreshed after a profile edit.
 export function AiMatches() {
   const account = useAccount();
+  if (!account.isConfigured)
+    return <p className="py-8 text-sm text-muted-foreground">Explore the catalog below. AI recommendations become available when the backend is connected.</p>;
+  return <ConnectedAiMatches />;
+}
+
+function useAiMatchResults() {
+  const account = useAccount();
   const realUser =
     account.isAuthenticated &&
     account.viewer?.accountType === "student" &&
@@ -60,6 +67,7 @@ export function AiMatches() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const attemptedSeed = useRef(false);
 
   const run = useCallback(async () => {
     setLoading(true);
@@ -70,7 +78,8 @@ export function AiMatches() {
         : await demoMatches({})) as MatchesState;
       // Empty catalog: seed + embed once, then re-rank. The USC-email gate
       // on seeding keeps this off for unauthenticated visitors.
-      if (result.ready && result.matches.length === 0 && !seeding) {
+      if (realUser && result.ready && result.matches.length === 0 && !attemptedSeed.current) {
+        attemptedSeed.current = true;
         setSeeding(true);
         try {
           await seedLabs({});
@@ -90,11 +99,17 @@ export function AiMatches() {
       setSeeding(false);
       setLoading(false);
     }
-  }, [realUser, myMatches, demoMatches, seedLabs, embedPending, seeding]);
+  }, [realUser, myMatches, demoMatches, seedLabs, embedPending]);
 
   useEffect(() => {
     void run();
   }, [run]);
+
+  return { state, error, loading, seeding, run };
+}
+
+function ConnectedAiMatches() {
+  const { state, error, loading, seeding, run } = useAiMatchResults();
 
   if ((loading && !state) || seeding)
     return (

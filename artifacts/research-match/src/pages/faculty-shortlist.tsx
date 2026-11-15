@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useQuery } from "convex/react";
+import { useQuery } from "@/lib/backend";
 import { Lock, UserMinus, UserRound } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
 import { ScoreDial } from "@/components/bits";

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Search } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
-import { useQuery } from "convex/react";
+import { useQuery } from "@/lib/backend";
 import {
   CandidateCard,
   LiveStudentDialog,

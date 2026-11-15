@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import {
+  internalActionGeneric as internalAction,
   internalMutationGeneric as internalMutation,
   internalQueryGeneric as internalQuery,
   makeFunctionReference,
@@ -314,7 +315,7 @@ export const upsertStudentProfile = mutation({
     }
     await ctx.scheduler.runAfter(
       0,
-      makeFunctionReference<"mutation">("users:embedStudent"),
+      makeFunctionReference<"action">("users:embedStudent"),
       { studentId: studentId as never },
     );
     return null;
@@ -387,7 +388,7 @@ export const storeStudentEmbedding = internalMutation({
 
 // Generates and stores the profile embedding. Scheduled right after a profile
 // save; the AI-match action treats a missing vector as "not ready yet".
-export const embedStudent = action({
+export const embedStudent = internalAction({
   args: { studentId: v.id("students") },
   returns: v.null(),
   handler: async (ctx, args) => {

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "@/lib/backend";
 import { api } from "@/lib/convex-api";
 import { useStore } from "@/lib/store";
 import type { Project } from "@/lib/data";

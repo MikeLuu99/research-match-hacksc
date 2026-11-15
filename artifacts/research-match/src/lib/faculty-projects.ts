@@ -1,4 +1,4 @@
-import { useQuery } from "convex/react";
+import { useQuery } from "@/lib/backend";
 import { api } from "./convex-api";
 import { useStore } from "./store";
 import { useFacultyMode } from "./faculty-mode";

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import {
+  internalActionGeneric as internalAction,
   internalMutationGeneric as internalMutation,
   internalQueryGeneric as internalQuery,
   makeFunctionReference,
@@ -8,7 +9,6 @@ import {
   queryGeneric as query,
 } from "convex/server";
 import { authComponent } from "./auth";
-import { action } from "./model";
 import { EMBEDDING_MODEL_ID, embedBatch } from "./embeddings";
 import { bm25Scores, hybridRank, tokenize } from "./ranking";
 
@@ -256,7 +256,7 @@ export const updateBotMessage = internalMutation({
 });
 
 // The scheduled brain: retrieve, stream the completion, persist cards.
-export const answer = action({
+export const answer = internalAction({
   args: { subject: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {

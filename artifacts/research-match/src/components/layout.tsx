@@ -18,7 +18,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { useQuery } from "convex/react";
+import { useQuery } from "@/lib/backend";
 import { api } from "@/lib/convex-api";
 import { cn } from "@/lib/utils";
 import { useAccount } from "@/lib/auth";

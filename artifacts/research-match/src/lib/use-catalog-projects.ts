@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery } from "convex/react";
+import { useQuery } from "@/lib/backend";
 import { USC_PROJECTS } from "./usc-projects";
 import { api } from "./convex-api";
 import type { Project } from "./data";

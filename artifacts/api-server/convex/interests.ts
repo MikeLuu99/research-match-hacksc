@@ -44,17 +44,18 @@ export const expressInterest = mutation({
       .collect();
     const mine = existing.find((i) => i.sourceId === args.sourceId);
     if (mine) {
+      // Only withdrawn requests can be reopened by the student. Repeated
+      // requests must preserve a faculty decision and avoid duplicate notices.
+      if (mine.status !== "withdrawn") return { interestId: mine._id };
       await ctx.db.patch(mine._id, {
         status: "interested",
         updatedAt: Date.now(),
       });
-      // Re-sending interest that is already active is a no-op for faculty.
-      if (mine.status !== "interested")
-        await notify(
-          ctx,
-          project.ownerId,
-          newInterestNotice(profile.name, project.title),
-        );
+      await notify(
+        ctx,
+        project.ownerId,
+        newInterestNotice(profile.name, project.title),
+      );
       return { interestId: mine._id };
     }
     const now = Date.now();

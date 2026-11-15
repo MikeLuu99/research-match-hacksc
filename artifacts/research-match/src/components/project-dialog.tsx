@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, CircleDashed, Copy, RotateCcw, Send } from "lucide-react";
+import { Check, CircleDashed, Copy, RotateCcw } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,10 +7,16 @@ import { useToast } from "@/hooks/use-toast";
 import type { Project } from "@/lib/data";
 import { defaultTemplate, matchProject } from "@/lib/matching";
 import { STATUS_LABEL, useStore } from "@/lib/store";
-import { RecruitPill, SaveButton, ScoreDial } from "./bits";
+import { InterestButton, RecruitPill, SaveButton, ScoreDial } from "./bits";
+import { useAccount } from "@/lib/auth";
+import { useQuery } from "@/lib/backend";
+import { api } from "@/lib/convex-api";
 
 export function ProjectDialog({ project, onClose }: { project: Project | null; onClose: () => void }) {
-  const { profile, templates, setTemplate, expressInterest, interests } = useStore();
+  const { profile, templates, setTemplate, interests } = useStore();
+  const account = useAccount();
+  const live = account.isAuthenticated && account.viewer?.accountType === "student" && account.viewer.hasStudentProfile;
+  const liveInterests = useQuery(api.interests.myInterests, live ? {} : "skip");
   const { toast } = useToast();
   const [text, setText] = useState("");
   const m = project ? matchProject(profile, project) : null;
@@ -22,7 +28,9 @@ export function ProjectDialog({ project, onClose }: { project: Project | null; o
   }, [pid]);
 
   if (!project || !m) return <Dialog open={false} />;
-  const mine = interests.find((i) => i.projectId === project.id && i.studentId === profile.id);
+  const mine = live
+    ? liveInterests?.find((i) => i.sourceId === (project.sourceId ?? project.id))
+    : interests.find((i) => i.projectId === project.id && i.studentId === profile.id);
   const hoursLabel = { fits: "Fits your availability", under: "Needs more hours than you have", over: "You have spare hours" }[m.hoursFit];
 
   return (
@@ -101,21 +109,9 @@ export function ProjectDialog({ project, onClose }: { project: Project | null; o
 
         <div className="sticky bottom-0 border-t bg-card/95 backdrop-blur px-6 md:px-8 py-4 flex flex-wrap items-center gap-3 justify-between">
           <p className="text-xs text-muted-foreground">
-            {mine ? `Status: ${STATUS_LABEL[mine.status]}` : project.status === "closed" ? "Recruiting is closed; save it to revisit next term." : project.status === "exploration" ? "Lab information only; no verified opening. Save it for future exploration." : "Shares your profile summary with this demo lab."}
+            {mine ? `Status: ${STATUS_LABEL[mine.status]}` : project.status === "closed" ? "Recruiting is closed; save it to revisit next term." : project.status === "exploration" ? "Lab information only; no verified opening. You can express interest for future opportunities." : "Track your request and faculty updates in your Interest tracker."}
           </p>
-          <Button
-            data-testid="button-express-interest"
-            disabled={!m.canApply || mine?.status === "interested"}
-            onClick={() => {
-              setTemplate(project.id, text);
-              expressInterest(project.id, text);
-              toast({ title: "Interest recorded", description: "Visible in your tracker and the faculty workspace." });
-            }}
-            className="transition-transform hover:-translate-y-0.5"
-          >
-            <Send className="h-4 w-4 mr-1.5" />
-            {project.status !== "open" ? "Not accepting interest" : mine ? (mine.status === "interested" ? "Interest sent" : "Re-send interest") : "Express interest"}
-          </Button>
+          <InterestButton projectId={project.sourceId ?? project.id} open={project.status !== "closed"} />
         </div>
       </DialogContent>
     </Dialog>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "@/lib/backend";
 import { format } from "date-fns";
 import { Trash2, LoaderCircle } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";

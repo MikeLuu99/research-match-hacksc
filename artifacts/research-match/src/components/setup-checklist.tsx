@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { Check, Circle, ListChecks, X } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useQuery } from "@/lib/backend";
 import { api } from "@/lib/convex-api";
 
 // Setup checklist for students: shows which profile steps are still missing

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Check, ImagePlus, LoaderCircle, Plus, Trash2, UserRound } from "lucide-react";
-import { useAction, useMutation } from "convex/react";
+import { useAction, useMutation } from "@/lib/backend";
 import { api } from "@/lib/convex-api";
 import { USC_MAJORS, USC_MINORS } from "@/lib/usc-programs";
 import { RESEARCH_SKILLS } from "@/lib/research-skills";

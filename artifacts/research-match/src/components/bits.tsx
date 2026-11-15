@@ -5,7 +5,7 @@ import type { Project, RecruitStatus } from "@/lib/data";
 import type { MatchResult } from "@/lib/matching";
 import { useStore } from "@/lib/store";
 import { useAccount } from "@/lib/auth";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "@/lib/backend";
 import { api } from "@/lib/convex-api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";

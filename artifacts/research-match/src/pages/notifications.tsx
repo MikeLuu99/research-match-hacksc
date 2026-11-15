@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "@/lib/backend";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { CheckCheck, Inbox, LoaderCircle, Send, UserMinus } from "lucide-react";
