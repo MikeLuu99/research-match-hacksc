@@ -16,7 +16,7 @@ const projectsByIdsRef = makeFunctionReference<"query">("discovery:projectsByIds
 const labByIdRef = makeFunctionReference<"query">("discovery:labById");
 const studentsByIdsRef = makeFunctionReference<"query">("discovery:studentsByIds");
 const matchLexiconRef = makeFunctionReference<"query">("discovery:matchLexicon");
-const demoLexiconRef = makeFunctionReference<"query">("discovery:demoLexicon");
+import { DEMO_STUDENT_EMBEDDING, DEMO_STUDENT_NAME, DEMO_STUDENT_TOKENS } from "./demoStudent";
 const candidateLexiconRef = makeFunctionReference<"query">(
   "discovery:candidateLexicon",
 );
@@ -165,43 +165,21 @@ export const studentsByIds = internalQuery({
 
 // The demo sample student's profile: powers the public demo experience so
 // visitors see the same AI ranking as signed-in students.
-export const demoLexicon = internalQuery({
+export const projectLexicon = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const student = await ctx.db
-      .query("students")
-      .withIndex("by_owner", (q) => q.eq("ownerSubject", "demo"))
-      .unique();
-    if (!student || !student.demoSample) return null;
-    if (student.embedding.length === 0) return null;
-    if (student.embeddingModel !== EMBEDDING_MODEL_ID) return null;
-    const studentTokens = tokenize(
-      [
-        student.major,
-        ...student.skills,
-        ...student.interests,
-        ...student.experience.map(
-          (entry: { role: string; org: string; description: string }) =>
-            `${entry.role} ${entry.org} ${entry.description}`,
-        ),
-      ].join(" "),
-    );
     const projects = await ctx.db.query("projects").collect();
-    return {
-      embedding: student.embedding,
-      studentTokens,
-      projects: projects.map((project) => ({
-        id: project._id,
-        text: [
-          project.title,
-          project.department,
-          project.faculty,
-          project.description,
-          ...project.requiredSkills,
-          ...project.preferredSkills,
-        ].join(" "),
-      })),
-    };
+    return projects.map((project) => ({
+      id: project._id,
+      text: [
+        project.title,
+        project.department,
+        project.faculty,
+        project.description,
+        ...project.requiredSkills,
+        ...project.preferredSkills,
+      ].join(" "),
+    }));
   },
 });
 
@@ -225,24 +203,21 @@ export const demoMatches = action({
     ),
   }),
   handler: async (ctx) => {
-    const lexicon: {
-      embedding: number[];
-      studentTokens: string[];
-      projects: { id: string; text: string }[];
-    } | null = await ctx.runQuery(demoLexiconRef, {});
-    if (!lexicon) return { ready: false, demo: true, matches: [] };
+    const projectLexicon: { id: string; text: string }[] = await ctx.runQuery(
+      makeFunctionReference<"query">("discovery:projectLexicon"),
+      {},
+    );
     const vectorHits = await ctx.vectorSearch("projects", "by_embedding", {
-      vector: lexicon.embedding,
+      vector: DEMO_STUDENT_EMBEDDING,
       limit: 24,
     });
-    const bm25 = bm25Scores(lexicon.studentTokens, lexicon.projects);
+    const bm25 = bm25Scores(DEMO_STUDENT_TOKENS, projectLexicon);
     const ranked = hybridRank(
       vectorHits.map((hit) => ({ id: String(hit._id), similarity: hit._score })),
       bm25,
       10,
     );
-    if (!ranked.length)
-      return { ready: true, demo: true, matches: [] };
+    if (!ranked.length) return { ready: true, demo: true, matches: [] };
     const docs: {
       id: string;
       sourceId: string;
@@ -259,7 +234,7 @@ export const demoMatches = action({
     return {
       ready: true,
       demo: true,
-      studentName: "Jane Doe",
+      studentName: DEMO_STUDENT_NAME,
       matches: docs
         .map((doc) => ({
           sourceId: doc.sourceId,
