@@ -5,8 +5,6 @@ import { chooseRole } from "@/pages/landing";
 import { useAccount } from "@/lib/auth";
 import type { AccountType } from "@/lib/auth-validation";
 import { AuthFrame } from "@/components/auth-frame";
-import { InfoTip } from "@/components/info-tip";
-import { OnboardingTour } from "@/components/onboarding-tour";
 import {
   AUTH_COPY,
   CredentialsForm,
@@ -61,7 +59,7 @@ function OnboardingForm() {
           disabled={pending}
         />
       </div>
-      <p className="auth-help" data-tour="account-type">
+      <p className="auth-help">
         You’re joining as a{" "}
         <strong>{accountType === "faculty" ? "faculty member" : "student"}</strong>{" "}
         — picked on the home page.{" "}
@@ -76,29 +74,17 @@ function OnboardingForm() {
         >
           Switch to {accountType === "student" ? "faculty" : "student"}
         </button>
-        <InfoTip
-          testId="tip-account-type"
-          label={`What a ${accountType === "faculty" ? "faculty" : "student"} account includes`}
-        >
-          {accountType === "faculty"
-            ? "Post research projects, browse AI-ranked student candidates who opted in, and manage interest requests in one faculty workspace."
-            : "Get AI project matches across every USC department, save labs to your shortlist, send interest requests, and track replies — all in one student workspace."}
-        </InfoTip>
       </p>
-      <p className="auth-help" data-tour="privacy">
+      <p className="auth-help">
         Your profile starts private. You decide when to share it with research
         teams.
-        <InfoTip testId="tip-privacy" label="Who can see your profile">
-          Your profile stays private by default. Others only see it after you
-          express interest in a lab or turn on recruitment visibility yourself.
-        </InfoTip>
       </p>
       {error && (
         <p className="auth-error" role="alert">
           {error}
         </p>
       )}
-      <button className="public-button auth-submit" disabled={pending} data-tour="submit">
+      <button className="public-button auth-submit" disabled={pending}>
         {pending ? (
           <LoaderCircle className="animate-spin" size={18} />
         ) : (
@@ -108,34 +94,6 @@ function OnboardingForm() {
           </>
         )}
       </button>
-      <OnboardingTour
-        tourId="onboarding"
-        steps={[
-          {
-            selector: '[data-tour="account-type"]',
-            title:
-              accountType === "faculty"
-                ? "You're on the faculty track"
-                : "You're on the student track",
-            body:
-              accountType === "faculty"
-                ? "Your workspace is built for recruiting: post research projects, review AI-ranked candidates who opted in, and manage interest requests. Use the switch link to change tracks."
-                : "Your workspace is built for discovery: AI-ranked labs across every USC department, a bookmarked shortlist, and interest requests you can track. Use the switch link to change tracks.",
-          },
-          {
-            selector: '[data-tour="privacy"]',
-            title: "Private by default",
-            body: "Your profile is only visible to you. Others see it when you show interest in a lab, or if you turn on recruitment visibility yourself.",
-          },
-          {
-            selector: '[data-tour="submit"]',
-            title: "That's everything",
-            body: accountType === "faculty"
-              ? "Open your lab workspace to post your first project."
-              : "Open your workspace to get your first AI lab matches.",
-          },
-        ]}
-      />
     </form>
   );
 }
