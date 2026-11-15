@@ -113,6 +113,12 @@ CI uploads the static frontend build as `researchmatch-web` and Fallow reports
 as `fallow-analysis`. Deployment of the frontend needs a hosting destination with
 SPA fallback to `index.html`; no frontend host is configured in this repository.
 
+Convex's `artifacts/api-server/convex/_generated/` files are checked into Git so
+CI can typecheck and run tests without deployment credentials. After changing
+Convex functions or the schema, regenerate them with
+`pnpm --filter @workspace/api-server exec convex codegen` and include any generated
+changes in the same commit. Running `convex dev` also updates these files.
+
 For backend CD, `.github/workflows/deploy-convex.yml` is manually dispatched on
 `main`, reruns CI, then deploys Convex through the `production` GitHub environment.
 Before running it:
