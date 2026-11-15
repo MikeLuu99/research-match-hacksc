@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
+import { useAccount } from "@/lib/auth";
 import { Layout, PageHeader } from "@/components/layout";
 import { InterestButton, SaveButton } from "@/components/bits";
 import { cn } from "@/lib/utils";
@@ -75,15 +76,24 @@ function renderMarkdown(text: string) {
   );
 }
 
-const STARTERS = [
+const STUDENT_STARTERS = [
   "Which labs work on machine learning and healthcare?",
   "I know Python — what can I do with it?",
   "Anything accepting interest this term with flexible hours?",
 ];
 
+const FACULTY_STARTERS = [
+  "Which students know Python and are interested in machine learning?",
+  "Show me seniors with Work-Study eligibility.",
+  "Who would fit a data science project on campus sustainability?",
+];
+
 // Conversational assistant over the lab catalog: refined questions ranked by
 // vector search + BM25, answered with the retrieved labs as context.
 export function AskLabbe() {
+  const account = useAccount();
+  const isFaculty = account.viewer?.accountType === "faculty";
+  const starters = isFaculty ? FACULTY_STARTERS : STUDENT_STARTERS;
   const messages = useQuery(api.chat.myMessages, {});
   const sendQuestion = useMutation(api.chat.send);
   const clearChat = useMutation(api.chat.clear);
@@ -128,9 +138,13 @@ export function AskLabbe() {
 
   return (
     <Layout>
-      <PageHeader eyebrow="Ask LABBE" title="Your research assistant">
-        Ask anything about USC research — answers are grounded in the live
-        catalog with sources.
+      <PageHeader
+        eyebrow={isFaculty ? "Ask LABBE AI · candidates" : "Ask LABBE"}
+        title="Your research assistant"
+      >
+        {isFaculty
+          ? "Ask about consented students — skills, interests, availability. Answers rank real candidates with sources."
+          : "Ask anything about USC research — answers are grounded in the live catalog with sources."}
       </PageHeader>
       <div className="px-5 pb-12 md:px-10">
       <div className="flex h-[calc(100dvh-330px)] min-h-[560px] flex-col border border-primary/20 bg-card">
@@ -162,7 +176,7 @@ export function AskLabbe() {
               matches.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
-              {STARTERS.map((starter) => (
+              {starters.map((starter) => (
                 <button
                   key={starter}
                   onClick={() => void send(starter)}
