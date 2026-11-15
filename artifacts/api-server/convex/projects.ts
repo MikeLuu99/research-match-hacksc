@@ -101,19 +101,6 @@ export const listLabs = query({
   },
 });
 
-export const facultyCheck = internalQuery({
-  args: { subject: v.string() },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user || user._id !== args.subject)
-      throw new ConvexError("Sign in as faculty to manage the lab catalog.");
-    const account = await accountProfileFor(ctx, user._id);
-    if (!account || account.accountType !== "faculty")
-      throw new ConvexError("Only faculty accounts can manage the lab catalog.");
-    return null;
-  },
-});
 
 export const pendingLabs = internalQuery({
   args: {},
@@ -149,10 +136,11 @@ export const embedPendingProjects = action({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new ConvexError("Sign in to manage the lab catalog.");
-    await ctx.runQuery(
-      makeFunctionReference<"query">("projects:facultyCheck"),
-      { subject: identity.subject },
-    );
+    const caller = await authComponent.safeGetAuthUser(ctx);
+    if (!caller || !isUscEmail(caller.email))
+      throw new ConvexError(
+        "Only USC accounts (email ending in @usc.edu) can embed the catalog.",
+      );
     const labs: { sourceId: string; text: string }[] = await ctx.runQuery(
       makeFunctionReference<"query">("projects:pendingLabs"),
       {},
