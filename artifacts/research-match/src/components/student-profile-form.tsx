@@ -3,6 +3,7 @@ import { LoaderCircle, Plus, Trash2 } from "lucide-react";
 import { useAction, useMutation } from "convex/react";
 import { api } from "@/lib/convex-api";
 import { USC_MAJORS, USC_MINORS } from "@/lib/usc-programs";
+import { RESEARCH_SKILLS } from "@/lib/research-skills";
 import { useAccount } from "@/lib/auth";
 
 const SCHOOL_YEARS = [
@@ -85,7 +86,24 @@ export function StudentProfileForm({
   const [experience, setExperience] = useState<ExperienceEntry[]>(
     initial?.experience ?? [],
   );
+  const [skills, setSkills] = useState<string[]>(initial?.skills ?? []);
+  const [skillDraft, setSkillDraft] = useState("");
   const [resumeName, setResumeName] = useState(initial?.resumeFileName ?? "");
+
+  function addSkill(raw: string) {
+    const value = raw.trim();
+    if (!value) return;
+    setSkills((current) => {
+      if (current.some((skill) => skill.toLowerCase() === value.toLowerCase()))
+        return current;
+      return [...current, value].slice(0, 30);
+    });
+    setSkillDraft("");
+  }
+
+  function removeSkill(value: string) {
+    setSkills((current) => current.filter((skill) => skill !== value));
+  }
 
   function updateExperience(index: number, patch: Partial<ExperienceEntry>) {
     setExperience((entries) =>
@@ -128,7 +146,6 @@ export function StudentProfileForm({
       "resume",
     ) as HTMLInputElement | null;
     const resumeFile = resumeInput?.files?.[0];
-    const skills = splitTags(String(data.get("skills") ?? ""));
     const interests = splitTags(String(data.get("interests") ?? ""));
     if (skills.length === 0 && interests.length === 0) {
       setError("Add at least one skill or research interest to save your profile.");
@@ -241,14 +258,52 @@ export function StudentProfileForm({
       </div>
       <div className="auth-field">
         <FieldLabel htmlFor="profile-skills">Skills</FieldLabel>
+        <datalist id="research-skills-list">
+          {RESEARCH_SKILLS.map((skill) => (
+            <option key={skill} value={skill} />
+          ))}
+        </datalist>
         <input
           id="profile-skills"
           name="skills"
-          placeholder="Python, React, machine learning"
+          list="research-skills-list"
+          placeholder="Start typing — pick a suggestion or add your own"
           disabled={pending}
-          defaultValue={initial?.skills.join(", ") ?? ""}
+          value={skillDraft}
+          onChange={(event) => setSkillDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === ",") {
+              event.preventDefault();
+              addSkill(skillDraft);
+            }
+          }}
+          onBlur={() => addSkill(skillDraft)}
         />
-        <p className="auth-help">Separate with commas — or list research interests below. At least one of the two is required.</p>
+        {skills.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {skills.map((skill) => (
+              <span
+                key={skill}
+                className="inline-flex items-center gap-1 border border-primary/25 bg-primary/8 px-2 py-0.5 text-xs text-primary"
+              >
+                {skill}
+                <button
+                  type="button"
+                  aria-label={`Remove ${skill}`}
+                  disabled={pending}
+                  onClick={() => removeSkill(skill)}
+                  className="hover:text-destructive"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <p className="auth-help">
+          Press Enter or comma to add. Suggestions include common research
+          skills. At least one skill or research interest is required.
+        </p>
       </div>
       <div className="auth-field">
         <FieldLabel htmlFor="profile-interests" optional>Research interests</FieldLabel>
