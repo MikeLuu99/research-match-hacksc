@@ -206,15 +206,14 @@ export function StudentProfileForm({
     <form className="auth-form profile-form" onSubmit={submit}>
       <div className="auth-field">
         <FieldLabel htmlFor="profile-major">Major</FieldLabel>
-        <input
+        <AutocompleteInput
           id="profile-major"
-          name="major"
-          list="usc-majors-list"
+          value={major}
+          onChange={setMajor}
+          suggestions={USC_MAJORS.map((program) => program.name)}
           placeholder="Computer Science"
-          maxLength={120}
-          required
           disabled={pending}
-          defaultValue={initial?.major ?? ""}
+          required
         />
       </div>
       <div className="auth-field">
