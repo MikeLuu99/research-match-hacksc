@@ -246,9 +246,9 @@ export default function Landing() {
               <br />
               <em className="text-primary not-italic">Fight on.</em>
             </h1>
-          <p className="mt-5 text-muted-foreground max-w-xl text-[15px] leading-relaxed">
-            The lab you're looking for may not know you're looking. Labbe uses
-            AI to match USC students with research teams by skills, interests,
+          <p className="mt-5 text-muted-foreground max-w-xl text-[17px] leading-relaxed font-display tracking-[-0.02em]">
+            The lab you're looking for may not know you're looking. Labbe
+            matches USC students with research teams by skills, interests,
             and needs.
           </p>
           <div className="role-grid">
