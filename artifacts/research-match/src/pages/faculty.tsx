@@ -17,9 +17,18 @@ import { LocalNotice } from "@/components/faculty/demo-notice";
 
 const chip = "border border-primary/25 bg-primary/8 px-2 py-0.5 text-primary";
 
-function ProjectDetails({ p, onEdit, onDelete }: { p: Project; onEdit: () => void; onDelete: () => void }) {
-  const { interests, shortlists } = useStore();
-  const reqs = interests.filter((i) => i.projectId === p.id && i.status !== "withdrawn").length;
+function ProjectDetails({
+  p,
+  requests,
+  onEdit,
+  onDelete,
+}: {
+  p: Project;
+  requests: number;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { shortlists } = useStore();
   return (
     <div id={`details-${p.id}`} data-testid={`panel-project-${p.id}`} className="rise space-y-4 border-t border-primary/15 px-4 py-5 md:px-5">
       <p className="text-sm text-foreground/80">{p.description}</p>
@@ -44,6 +53,7 @@ export default function Faculty() {
   const live = mode === "live";
   const { projects: demoProjects, interests, upsertProject, removeProject } = useStore();
   const liveProjects = useQuery(api.faculty.myProjects, live ? {} : "skip");
+  const liveInbox = useQuery(api.interests.labInbox, live ? {} : "skip");
   const createProject = useMutation(api.faculty.createProject);
   const updateProject = useMutation(api.faculty.updateProject);
   const removeProjectMutation = useMutation(api.faculty.removeProject);
@@ -55,6 +65,15 @@ export default function Faculty() {
   const projects: Project[] = live
     ? ((liveProjects ?? []) as unknown as Project[])
     : demoProjects;
+  // Real request counts in live mode; local store counts in the demo.
+  const requestCount = (projectId: string) =>
+    live
+      ? (liveInbox ?? []).filter(
+          (row) => row.sourceId === projectId && row.status === "interested",
+        ).length
+      : interests.filter(
+          (i) => i.projectId === projectId && i.status === "interested",
+        ).length;
 
   async function saveProject(project: Project) {
     if (!live) {
@@ -141,19 +160,25 @@ export default function Faculty() {
           <ul className="space-y-2">
             {projects.map((p) => {
               const open = openId === p.id;
-              const n = interests.filter((i) => i.projectId === p.id && i.status === "interested").length;
               return (
                 <li key={p.id} className={cn("overflow-hidden border bg-card transition-colors", open && "border-primary/50")}>
                   <button data-testid={`button-select-${p.id}`} aria-expanded={open} aria-controls={`details-${p.id}`} onClick={() => setOpenId(open ? null : p.id)}
                     className="flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:p-5">
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2"><RecruitPill status={p.status} />{n > 0 && <span className="bg-chart-2 px-1.5 font-mono text-[11px] text-accent-foreground">{n} new</span>}</div>
+                      <div className="flex flex-wrap items-center gap-2"><RecruitPill status={p.status} />{requestCount(p.sourceId ?? p.id) > 0 && <span className="bg-chart-2 px-1.5 font-mono text-[11px] text-accent-foreground">{requestCount(p.sourceId ?? p.id)} new</span>}</div>
                       <p className="mt-1.5 font-display text-lg leading-snug">{p.title}</p>
                       <p className="text-xs text-muted-foreground">{p.lab} · {p.department} · {p.minHours}-{p.maxHours} h/wk</p>
                     </div>
                     <ChevronDown className={cn("mt-1 h-5 w-5 shrink-0 transition-transform duration-300", open && "rotate-180 text-primary")} />
                   </button>
-                  {open && <ProjectDetails p={p} onEdit={() => setEditing(p)} onDelete={() => setDeleting(p)} />}
+                  {open && (
+                    <ProjectDetails
+                      p={p}
+                      requests={requestCount(p.sourceId ?? p.id)}
+                      onEdit={() => setEditing(p)}
+                      onDelete={() => setDeleting(p)}
+                    />
+                  )}
                 </li>
               );
             })}
