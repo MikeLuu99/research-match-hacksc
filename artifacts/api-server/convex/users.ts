@@ -17,7 +17,7 @@ import { photoProblem } from "./photos";
 import type { GenericId } from "convex/values";
 import type { StorageReader } from "convex/server";
 
-async function photoUrlFor(
+export async function photoUrlFor(
   ctx: { storage: StorageReader },
   storageId: GenericId<"_storage"> | undefined,
 ) {

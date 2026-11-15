@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
   BookOpen,
@@ -14,9 +14,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
 import { ScheduleGrid } from "@/components/schedule-grid";
-import { Sparkles, CalendarDays } from "lucide-react";
-import { EmptyState } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { CalendarDays } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -214,18 +212,24 @@ function StudentDetail({ student }: { student: Student }) {
   );
 }
 
-function CandidateCard({
+export function CandidateCard({
   student,
   onOpen,
   index,
   shortlisted,
   onToggleShortlist,
+  score,
+  tag,
 }: {
   student: Student;
   onOpen: () => void;
   index: number;
   shortlisted?: boolean;
   onToggleShortlist?: () => void;
+  /** Compatibility with the selected project, 0-100. */
+  score?: number;
+  /** Short label such as the applicant's interest status. */
+  tag?: string;
 }) {
   return (
     <div
@@ -266,6 +270,31 @@ function CandidateCard({
           </p>
         </div>
       </div>
+      {(score !== undefined || tag) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {score !== undefined && (
+            <span
+              data-testid={`text-match-${student.id}`}
+              title="Compatibility with this project"
+              className={cn(
+                "border px-1.5 py-0.5 font-mono text-[11px]",
+                score >= 70
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : score >= 50
+                    ? "border-chart-2/40 bg-chart-2/10 text-foreground"
+                    : "border-muted-foreground/30 text-muted-foreground",
+              )}
+            >
+              {score}% match
+            </span>
+          )}
+          {tag && (
+            <span className="bg-accent px-2 py-0.5 text-xs text-accent-foreground">
+              {tag}
+            </span>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <Clock className="h-3.5 w-3.5" />
@@ -316,7 +345,7 @@ export function LiveStudentDialog({
   );
 }
 
-const matchesQuery = (student: Student, query: string) => {
+export const matchesQuery = (student: Student, query: string) => {
   const t = query.trim().toLowerCase();
   if (!t) return true;
   return [student.name, student.major, ...student.minors, ...student.skills, ...student.interests]
@@ -325,229 +354,18 @@ const matchesQuery = (student: Student, query: string) => {
     .includes(t);
 };
 
-export function FacultyDashboard({
-  query = "",
-  creditOnly = false,
-  isShortlisted,
-  onToggleShortlist,
-}: {
-  query?: string;
-  creditOnly?: boolean;
-  /** Optional browser-local shortlist hooks; only student IDs are passed out. */
-  isShortlisted?: (studentId: string) => boolean;
-  onToggleShortlist?: (studentId: string, name: string) => void;
-} = {}) {
-  const students = useQuery(api.users.listStudents, {});
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  if (students === undefined)
-    return (
-      <div className="px-5 md:px-10 py-8" role="status">
-        <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
-          Loading candidates…
-        </p>
-      </div>
-    );
-
-  const selected =
-    students.find((student) => student.id === selectedId) ?? null;
-  const visible = students.filter(
-    (student) =>
-      matchesQuery(student, query) && (!creditOnly || student.seekingCredit),
-  );
-
-  return (
-    <div className="px-5 md:px-10 pb-12 space-y-6">
-      {students.length && !visible.length ? (
-        <EmptyState
-          title="No consented students match"
-          body="Clear the search or filters to see every opted-in student."
-        />
-      ) : students.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visible.map((student, i) => (
-            <CandidateCard
-              key={student.id}
-              student={student}
-              index={i}
-              onOpen={() => setSelectedId(student.id)}
-              shortlisted={isShortlisted?.(student.id)}
-              onToggleShortlist={
-                onToggleShortlist
-                  ? () => onToggleShortlist(student.id, student.name)
-                  : undefined
-              }
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          title="No students have opted in yet"
-          body="Students appear here once they complete a profile and opt in to faculty discovery. Matching becomes AI-assisted once the embedding pipeline is connected."
-        />
-      )}
-      <AiRankingPanel />
-      <LiveStudentDialog
-        student={selected}
-        onClose={() => setSelectedId(null)}
-      />
-    </div>
-  );
-}
-
-type LabOption = {
-  id: string;
-  sourceId: string;
-  title: string;
-  department: string;
-  recruitmentStatus: string;
-  hasEmbedding: boolean;
-};
-
-type CandidateMatch = {
-  studentId: string;
-  name: string;
-  major: string;
-  schoolYear: string;
-  skills: string[];
-  interests: string[];
-  hoursPerWeek: number;
-  similarity: number;
-};
-
-// Faculty AI ranking: pick a lab, get consented students ranked by embedding
-// similarity. Seeds the lab catalog on first load (faculty action).
-function AiRankingPanel() {
+// Seeds the public USC lab catalog the first time a faculty member opens
+// Discover students on a fresh deployment (the old AI ranking panel did this).
+export function useEnsureLabCatalog() {
   const catalog = useQuery(api.projects.labCatalogStatus, {});
-  const labs = useQuery(api.projects.listLabs, {});
   const seedLabs = useMutation(api.projects.seedLabs);
   const embedPending = useAction(api.projects.embedPendingProjects);
-  const labCandidates = useAction(api.discovery.labCandidates);
-  const [labId, setLabId] = useState<string | null>(null);
-  const [ranking, setRanking] = useState<{
-    ready: boolean;
-    matches: CandidateMatch[];
-  } | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState("");
-
-  const seed = useCallback(async () => {
-    setBusy(true);
-    setNotice("");
-    try {
-      const result = await seedLabs({});
-      await embedPending({});
-      setNotice(
-        `Catalog loaded: ${result.inserted} labs added, ${result.updated} updated.`,
-      );
-    } catch {
-      setNotice("Couldn't load the lab catalog. Try again shortly.");
-    } finally {
-      setBusy(false);
-    }
-  }, [seedLabs, embedPending]);
-
+  const started = useRef(false);
   useEffect(() => {
-    if (catalog && catalog.total === 0 && !busy) void seed();
-  }, [catalog, busy, seed]);
-
-  useEffect(() => {
-    if (labs && labs.length && !labId) {
-      const firstEmbedded = labs.find((lab) => lab.hasEmbedding);
-      if (firstEmbedded) setLabId(firstEmbedded.id);
-    }
-  }, [labs, labId]);
-
-  useEffect(() => {
-    if (!labId) return;
-    setRanking(null);
-    labCandidates({ labId: labId as never })
-      .then((result) => setRanking(result as { ready: boolean; matches: CandidateMatch[] }))
-      .catch(() => setNotice("AI ranking is unavailable right now."));
-  }, [labId, labCandidates]);
-
-  if (catalog === undefined || labs === undefined) return null;
-
-  return (
-    <section className="border border-primary/20 bg-card p-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <h3 className="font-display text-xl flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-chart-2" /> AI candidate ranking
-        </h3>
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-          {catalog.total
-            ? `${catalog.embedded}/${catalog.total} labs embedded`
-            : "catalog empty"}
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <select
-            aria-label="Choose a lab to rank candidates"
-            value={labId ?? ""}
-            onChange={(event) => setLabId(event.target.value)}
-            className="h-10 border border-primary/25 bg-background px-3 text-sm max-w-[380px]"
-          >
-            <option value="">Choose a lab…</option>
-            {labs.map((lab) => (
-              <option key={lab.id} value={lab.id}>
-                {lab.title} · {lab.department}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => void seed()}
-            disabled={busy}
-            className="border border-primary/40 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-primary hover:bg-primary/5 disabled:opacity-50"
-          >
-            {busy ? "Working…" : "Reload catalog"}
-          </button>
-        </div>
-      </div>
-      {notice && (
-        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground" role="status">
-          {notice}
-        </p>
-      )}
-      {labId && !ranking && (
-        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground" role="status">
-          Ranking candidates…
-        </p>
-      )}
-      {ranking && !ranking.ready && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          This lab's embedding is still being generated. Reload the catalog and
-          try again in a moment.
-        </p>
-      )}
-      {ranking?.ready && ranking.matches.length === 0 && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          No opted-in students have profile embeddings yet — matches appear as
-          students complete profiles.
-        </p>
-      )}
-      {ranking?.ready && ranking.matches.length > 0 && (
-        <ol className="mt-4 space-y-1.5">
-          {ranking.matches.map((match) => (
-            <li
-              key={match.studentId}
-              data-testid={`row-ai-candidate-${match.studentId}`}
-              className="flex items-center gap-3 border border-primary/15 bg-background px-3 py-2"
-            >
-              <span className="grid h-9 w-11 shrink-0 place-items-center bg-primary font-mono text-[11px] text-primary-foreground">
-                {Math.round(match.similarity * 100)}%
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">{match.name}</span>
-                <span className="block text-[11px] text-muted-foreground">
-                  {match.major} · {match.hoursPerWeek} h/week
-                </span>
-              </span>
-              <span className="hidden md:block text-[11px] text-muted-foreground max-w-[40%] truncate">
-                {match.interests.slice(0, 3).join(", ")}
-              </span>
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
-  );
+    if (!catalog || catalog.total > 0 || started.current) return;
+    started.current = true;
+    void seedLabs({})
+      .then(() => embedPending({}))
+      .catch(() => {});
+  }, [catalog, seedLabs, embedPending]);
 }

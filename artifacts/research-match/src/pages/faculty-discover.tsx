@@ -2,7 +2,16 @@ import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Search } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
-import { FacultyDashboard } from "@/components/faculty-dashboard";
+import { useQuery } from "convex/react";
+import {
+  CandidateCard,
+  LiveStudentDialog,
+  matchesQuery,
+  useEnsureLabCatalog,
+} from "@/components/faculty-dashboard";
+import { api } from "@/lib/convex-api";
+import { useFacultyProjects } from "@/lib/faculty-projects";
+import { STATUS_LABEL } from "@/lib/store";
 import { useStore, shortlistKey } from "@/lib/store";
 import { matchProject } from "@/lib/matching";
 import { canSeeProfile, demoStudents, isApplicant } from "@/lib/faculty-access";
@@ -30,42 +39,102 @@ export default function FacultyDiscover() {
   return useFacultyMode() === "live" ? <LiveDiscover /> : <DemoDiscover />;
 }
 
-/** Signed-in faculty: the real, consented candidate list and AI ranking. */
+/**
+ * Signed-in faculty: pick one of your projects, then see the students who
+ * applied to it and recommended opted-in students ranked by compatibility.
+ */
 function LiveDiscover() {
-  const { projects, shortlists, toggleShortlist } = useStore();
+  useEnsureLabCatalog();
+  const projects = useFacultyProjects();
+  const { shortlists, toggleShortlist } = useStore();
   const { toast } = useToast();
-  const [pid, setPid] = useState(projects[0]?.id ?? "");
+  const [pid, setPid] = useState("");
   const [q, setQ] = useState("");
   const [credit, setCredit] = useState(false);
-  const p = projects.find((x) => x.id === pid) ?? projects[0] ?? null;
+  const [openId, setOpenId] = useState<string | null>(null);
+  const p = projects?.find((x) => x.id === pid) ?? projects?.[0] ?? null;
+  const data = useQuery(
+    api.faculty.projectStudents,
+    p ? { projectId: p.id as never } : "skip",
+  );
   const list = shortlists[p?.id ?? ""] ?? [];
+  const keep = (s: Parameters<typeof matchesQuery>[0]) =>
+    matchesQuery(s, q) && (!credit || s.seekingCredit);
+  const applicants = (data?.applicants ?? []).filter(keep);
+  const recommended = (data?.recommendations ?? []).filter(keep);
+  const open =
+    [...(data?.applicants ?? []), ...(data?.recommendations ?? [])].find(
+      (s) => s.id === openId,
+    ) ?? null;
+  const toggle = (id: string, name: string) => {
+    if (!p) return;
+    const on = list.includes(shortlistKey("live", id));
+    toggleShortlist(p.id, shortlistKey("live", id));
+    toast({ title: on ? "Removed from shortlist" : `${name} shortlisted for ${p.title}` });
+  };
+  const section = (
+    title: string,
+    items: (typeof recommended[number] & { status?: string })[],
+    empty: string,
+    applied: boolean,
+  ) => (
+    <section>
+      <div className="mb-3 flex items-baseline justify-between">
+        <h2 className="font-display text-xl">{title}</h2>
+        <span className="font-mono text-xs text-muted-foreground">{items.length}</span>
+      </div>
+      {items.length ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {items.map((s, i) => (
+            <CandidateCard
+              key={s.id}
+              student={s}
+              index={i}
+              score={s.compatibility}
+              tag={applied && s.status ? STATUS_LABEL[s.status as keyof typeof STATUS_LABEL] : undefined}
+              onOpen={() => setOpenId(s.id)}
+              shortlisted={list.includes(shortlistKey("live", s.id))}
+              onToggleShortlist={() => toggle(s.id, s.name)}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="border border-dashed border-primary/30 px-4 py-6 text-center text-sm text-muted-foreground">{empty}</p>
+      )}
+    </section>
+  );
   return (
     <Layout>
       <PageHeader eyebrow="Discover students · live" title="Students who opted in to faculty discovery.">
         Real student profiles from your account's faculty view, plus AI ranking against the USC lab catalog.
       </PageHeader>
-      <div className="max-w-5xl space-y-4 px-5 pb-5 md:px-10">
-        {p ? (
-          <div className="border border-primary/20 bg-card p-4">
-            <ProjectSelect projects={projects} value={p.id} onChange={setPid} label="Shortlist into project (browser-local)" />
-          </div>
-        ) : null}
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <SearchBox q={q} setQ={setQ} />
-          <button data-testid="filter-credit" aria-pressed={credit} onClick={() => setCredit(!credit)} className={toggleCls(credit)}>Seeking credit</button>
-        </div>
-        <LocalNotice>Profiles come only from the current consented live query and are never stored. Shortlists keep student IDs in this browser only; they are not synced and students are not notified. Email and résumé are not available from the current faculty API.</LocalNotice>
+      <div className="space-y-6 px-5 pb-12 md:px-10">
+        {projects === undefined ? (
+          <p role="status" className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">Loading your projects…</p>
+        ) : !p ? (
+          <EmptyState title="Create a project first" body="Applicants and recommended students are shown for one of your project listings." action={<Link href="/faculty" className="inline-block bg-primary px-4 py-2 text-sm text-primary-foreground">Open lab workspace</Link>} />
+        ) : (
+          <>
+            <div className="max-w-3xl border border-primary/20 bg-card p-4">
+              <ProjectSelect projects={projects} value={p.id} onChange={setPid} label="Project" />
+            </div>
+            <div className="flex max-w-3xl flex-col gap-3 sm:flex-row">
+              <SearchBox q={q} setQ={setQ} />
+              <button data-testid="filter-credit" aria-pressed={credit} onClick={() => setCredit(!credit)} className={toggleCls(credit)}>Seeking credit</button>
+            </div>
+            {data === undefined ? (
+              <p role="status" className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">Loading students…</p>
+            ) : (
+              <>
+                {section("Applicants", applicants, q || credit ? "No applicants match your filters." : "No one has sent interest in this project yet.", true)}
+                {section("Recommended students", recommended, q || credit ? "No recommended students match your filters." : "No opted-in students to recommend yet. Students appear here once they complete a profile and opt in to faculty discovery.", false)}
+              </>
+            )}
+            <LocalNotice>Applicants are students who sent interest in this project. Recommendations are opted-in students ranked by compatibility with it. Shortlists keep student IDs in this browser only; students are not notified. Email and résumé are not available from the current faculty API.</LocalNotice>
+          </>
+        )}
       </div>
-      <FacultyDashboard
-        query={q}
-        creditOnly={credit}
-        isShortlisted={p ? (id) => list.includes(shortlistKey("live", id)) : undefined}
-        onToggleShortlist={p ? (id, name) => {
-          const on = list.includes(shortlistKey("live", id));
-          toggleShortlist(p.id, shortlistKey("live", id));
-          toast({ title: on ? "Removed from shortlist" : `${name} shortlisted in this browser` });
-        } : undefined}
-      />
+      <LiveStudentDialog student={open} onClose={() => setOpenId(null)} />
     </Layout>
   );
 }
