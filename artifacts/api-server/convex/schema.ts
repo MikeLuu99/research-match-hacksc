@@ -40,7 +40,24 @@ export const studentProfileFields = {
   demoSample: v.optional(v.boolean()),
 };
 
+export const interestStatus = v.union(
+  v.literal("interested"),
+  v.literal("conversation"),
+  v.literal("accepted"),
+  v.literal("declined"),
+  v.literal("withdrawn"),
+);
+
 export default defineSchema({
+  interests: defineTable({
+    studentId: v.id("students"),
+    sourceId: v.string(),
+    status: interestStatus,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_student", ["studentId"])
+    .index("by_source", ["sourceId"]),
   accountProfiles: defineTable({
     authUserId: v.string(),
     name: v.string(),
@@ -66,8 +83,25 @@ export default defineSchema({
     verifiedAt: v.optional(v.number()),
     embeddingModel: v.string(),
     embedding: v.array(v.float64()),
+    // Owning faculty for platform-created listings; catalog rows are ownerless
+    // public USC data.
+    ownerId: v.optional(v.string()),
+    labName: v.optional(v.string()),
+    summary: v.optional(v.string()),
+    minHours: v.optional(v.number()),
+    maxHours: v.optional(v.number()),
+    eligibleMajors: v.optional(v.array(v.string())),
+    keywords: v.optional(v.array(v.string())),
+    level: v.optional(
+      v.union(
+        v.literal("beginner"),
+        v.literal("intermediate"),
+        v.literal("advanced"),
+      ),
+    ),
   })
     .index("by_source", ["sourceId"])
+    .index("by_owner", ["ownerId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
       dimensions: 1536,

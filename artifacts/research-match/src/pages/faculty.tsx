@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/lib/convex-api";
 import { useStore } from "@/lib/store";
 import type { Project } from "@/lib/data";
 import { useFacultyMode } from "@/lib/faculty-mode";
@@ -38,24 +40,97 @@ function ProjectDetails({ p, onEdit, onDelete }: { p: Project; onEdit: () => voi
 }
 
 export default function Faculty() {
-  const { projects, interests, upsertProject, removeProject } = useStore();
   const mode = useFacultyMode();
+  const live = mode === "live";
+  const { projects: demoProjects, interests, upsertProject, removeProject } = useStore();
+  const liveProjects = useQuery(api.faculty.myProjects, live ? {} : "skip");
+  const createProject = useMutation(api.faculty.createProject);
+  const updateProject = useMutation(api.faculty.updateProject);
+  const removeProjectMutation = useMutation(api.faculty.removeProject);
   const { toast } = useToast();
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Project | null | "new">(null);
   const [deleting, setDeleting] = useState<Project | null>(null);
 
+  const projects: Project[] = live
+    ? ((liveProjects ?? []) as unknown as Project[])
+    : demoProjects;
+
+  async function saveProject(project: Project) {
+    if (!live) {
+      upsertProject(project);
+      toast({ title: "Project saved in this browser" });
+      setOpenId(project.id);
+      setEditing(null);
+      return;
+    }
+    const status: "open" | "closed" | "explore" =
+      project.status === "exploration"
+        ? "explore"
+        : project.status === "closed"
+          ? "closed"
+          : "open";
+    const args = {
+      title: project.title,
+      labName: project.lab,
+      department: project.department,
+      summary: project.summary,
+      description: project.description,
+      requiredSkills: project.requiredSkills,
+      niceSkills: project.niceSkills,
+      eligibleMajors: project.eligibleMajors,
+      keywords: project.keywords,
+      minHours: project.minHours,
+      maxHours: project.maxHours,
+      paid: project.paid,
+      credit: project.credit,
+      status,
+      level: project.level,
+    };
+    try {
+      if (editing === "new") {
+        const created = (await createProject(args)) as { id: string };
+        setOpenId(created.id);
+      } else if (editing) {
+        await updateProject({ projectId: editing.id as never, ...args });
+        setOpenId(editing.id);
+      }
+      toast({ title: "Project saved — your embedding is regenerating" });
+      setEditing(null);
+    } catch {
+      toast({ title: "Couldn't save the project", variant: "destructive" });
+    }
+  }
+
+  async function deleteProject(project: Project) {
+    if (!live) {
+      removeProject(project.id);
+      toast({ title: "Project removed" });
+      setDeleting(null);
+      setOpenId(null);
+      return;
+    }
+    try {
+      await removeProjectMutation({ projectId: project.id as never });
+      toast({ title: "Project removed" });
+    } catch {
+      toast({ title: "Couldn't remove the project", variant: "destructive" });
+    }
+    setDeleting(null);
+    setOpenId(null);
+  }
+
   return (
     <Layout>
-      <PageHeader eyebrow={mode === "live" ? "Lab workspace · browser-local" : "Lab workspace · demo"} title="Your lab's listings">
-        Create, edit and review project listings. Click a project to open its details in place.
+      <PageHeader eyebrow={mode === "live" ? "Lab workspace" : "Lab workspace · demo"} title="Your lab's listings">
+        Create, edit and review your own project listings. Only you see and manage the projects you create.
       </PageHeader>
       <div className="max-w-4xl space-y-4 px-5 pb-12 md:px-10">
-        <LocalNotice>
-          {mode === "live"
-            ? "Browser-local to this account. Listings here are not published, synced to your account or shown to students, and nobody is emailed."
-            : "Local demo only. Listings live in this browser's storage; nothing is published, recruited for, or emailed."}
-        </LocalNotice>
+        {!live && (
+          <LocalNotice>
+            Local demo only. Listings live in this browser's storage; nothing is published, recruited for, or emailed.
+          </LocalNotice>
+        )}
         <div className="flex items-baseline justify-between">
           <h2 className="font-display text-xl">Projects <span className="font-mono text-xs text-muted-foreground">{projects.length}</span></h2>
           <Button data-testid="button-new-project" onClick={() => setEditing("new")}><Plus className="mr-1 h-4 w-4" />New project</Button>
@@ -92,7 +167,7 @@ export default function Faculty() {
           <DialogDescription>Stored only in this browser.</DialogDescription>
           {editing !== null && (
             <ProjectForm initial={editing === "new" ? null : editing} onCancel={() => setEditing(null)}
-              onSave={(p) => { upsertProject(p); setOpenId(p.id); setEditing(null); toast({ title: "Project saved in this browser" }); }} />
+              onSave={saveProject} />
           )}
         </DialogContent>
       </Dialog>
@@ -100,10 +175,10 @@ export default function Faculty() {
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogTitle>Remove this project?</AlertDialogTitle>
-          <AlertDialogDescription>"{deleting?.title}", its interest requests and its shortlist will be removed from this browser.</AlertDialogDescription>
+          <AlertDialogDescription>"{deleting?.title}" and its interest requests will be removed{live ? " from your account" : " from this browser"}.</AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
-            <AlertDialogAction data-testid="button-confirm-delete" onClick={() => { if (deleting) { removeProject(deleting.id); setOpenId(null); toast({ title: "Project removed" }); } setDeleting(null); }}>Remove</AlertDialogAction>
+            <AlertDialogAction data-testid="button-confirm-delete" onClick={() => { if (deleting) void deleteProject(deleting); }}>Remove</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

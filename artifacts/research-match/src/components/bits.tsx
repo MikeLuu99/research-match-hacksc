@@ -1,8 +1,12 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { Bookmark, BookmarkCheck, Check, Clock, GraduationCap, DollarSign, Sprout, Send } from "lucide-react";
 import type { Project, RecruitStatus } from "@/lib/data";
 import type { MatchResult } from "@/lib/matching";
 import { useStore } from "@/lib/store";
+import { useAccount } from "@/lib/auth";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/lib/convex-api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -75,12 +79,23 @@ export function InterestButton({
   projectId: string;
   open: boolean;
 }) {
-  const { interests, profile, expressInterest } = useStore();
-  const { toast } = useToast();
-  const mine = interests.find(
-    (i) => i.projectId === projectId && i.studentId === profile.id,
+  const account = useAccount();
+  const realStudent =
+    account.isAuthenticated &&
+    account.viewer?.accountType === "student" &&
+    account.viewer.hasStudentProfile;
+  const mine = useQuery(
+    api.interests.myInterests,
+    realStudent ? {} : "skip",
   );
-  if (mine)
+  const express = useMutation(api.interests.expressInterest);
+  const { interests, profile, expressInterest: localExpress } = useStore();
+  const { toast } = useToast();
+  const [sending, setSending] = useState(false);
+
+  const record = mine?.find((i) => i.sourceId === projectId && i.status !== "withdrawn");
+
+  if (record)
     return (
       <span className="inline-flex items-center gap-1.5 border border-primary/25 bg-primary/8 px-3 py-1.5 text-xs font-semibold text-primary">
         <Check size={14} /> Interest sent
@@ -92,21 +107,34 @@ export function InterestButton({
         Not accepting interest
       </span>
     );
+  if (!account.isAuthenticated)
+    return (
+      <Link href="/sign-in" className="inline-flex items-center gap-1.5 border border-primary/40 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5">
+        Sign in to show interest
+      </Link>
+    );
   return (
     <button
       data-testid={`button-interest-${projectId}`}
-      onClick={(e) => {
+      disabled={sending}
+      onClick={async (e) => {
         e.stopPropagation();
-        expressInterest(
-          projectId,
-          "Hi! I'm interested in this opportunity — my profile matches the topics and skills involved.",
-        );
-        toast({
-          title: "Interest sent",
-          description: "Track it in your Interest tracker.",
-        });
+        setSending(true);
+        try {
+          if (realStudent) {
+            await express({ sourceId: projectId });
+            toast({ title: "Interest sent", description: "Track it in your Interest tracker." });
+          } else {
+            localExpress(projectId, "Hi! I'm interested in this opportunity.");
+            toast({ title: "Interest recorded locally", description: "Sign in with your USC account to send it for real." });
+          }
+        } catch {
+          toast({ title: "Couldn't send interest", variant: "destructive" });
+        } finally {
+          setSending(false);
+        }
       }}
-      className="inline-flex items-center gap-1.5 bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+      className="inline-flex items-center gap-1.5 bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
     >
       <Send size={14} /> Show Interest
     </button>
