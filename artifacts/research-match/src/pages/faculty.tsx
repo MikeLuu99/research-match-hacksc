@@ -38,7 +38,7 @@ function ProjectDetails({
         <p><span className="font-semibold">Eligible majors:</span> {p.eligibleMajors.join(", ")}</p>
         <p><span className="font-semibold">Level:</span> {p.level} · {p.paid ? "paid" : "unpaid"} · {p.credit ? "credit" : "no credit"}</p>
         <p><span className="font-semibold">Keywords:</span> {p.keywords.join(", ") || "none"}</p>
-        <p className="font-mono"><span className="font-sans font-semibold">Activity:</span> {reqs} requests · {(shortlists[p.id] ?? []).length} shortlisted</p>
+        <p className="font-mono"><span className="font-sans font-semibold">Activity:</span> {requests} requests · {(shortlists[p.id] ?? []).length} shortlisted</p>
       </div>
       <div className="flex gap-2">
         <Button variant="outline" size="sm" data-testid={`button-edit-${p.id}`} onClick={onEdit}><Pencil className="mr-1 h-3.5 w-3.5" />Edit</Button>
