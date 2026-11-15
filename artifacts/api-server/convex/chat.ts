@@ -16,7 +16,7 @@ const CHAT_MODEL =
     "nvidia/nemotron-3-ultra-550b-a55b";
 const MAX_HISTORY = 6;
 
-const chatProjectByIds = internalQuery({
+export const chatProjectByIds = internalQuery({
   args: { ids: v.array(v.id("projects")) },
   handler: async (ctx, args) => {
     const out = [];
