@@ -27,7 +27,6 @@ type NavItem = { href: string; label: string; icon: typeof Compass };
 const STUDENT_NAV: NavItem[] = [
   { href: "/student", label: "Discover", icon: Compass },
   { href: "/ask", label: "Ask LABBE AI", icon: MessageCircleQuestion },
-  { href: "/ask", label: "Ask LABBE", icon: MessageCircleQuestion },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/applications", label: "Interest tracker", icon: Send },
 ];
