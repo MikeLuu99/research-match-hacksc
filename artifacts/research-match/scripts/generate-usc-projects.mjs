@@ -61,11 +61,13 @@ function cleanSkills(items) {
 
 const projects = [];
 const seen = new Set();
+const urlByRole = new Map();
 
 for (const role of raw.student_roles_and_discovery_records) {
   const org = orgById.get(role.organization_id);
   if (!org || seen.has(role.id)) continue;
   seen.add(role.id);
+  urlByRole.set(role.id, org.url ?? "");
   const [minHours, maxHours] = hours(role);
   const { paid, credit } = compensationFlags(role.compensation);
   const summary =
@@ -130,5 +132,48 @@ export const USC_PROJECTS: Project[] = ${JSON.stringify(projects, null, 2)};
 writeFileSync(
   new URL("../src/lib/usc-projects.ts", import.meta.url),
   header,
+);
+
+// Backend module for the Convex projects table (schema shape).
+const backendProjects = projects.map((p) => ({
+  sourceId: p.id,
+  title: p.title,
+  department: p.department,
+  description: p.description,
+  faculty: p.pi,
+  requiredSkills: p.requiredSkills,
+  preferredSkills: p.niceSkills,
+  hoursPerWeek: Math.round(((p.minHours + p.maxHours) / 2) * 10) / 10,
+  offersCredit: p.credit,
+  beginnerFriendly: p.level === "beginner",
+  recruitmentStatus:
+    p.status === "open" ? "open" : p.status === "closed" ? "closed" : "explore",
+  sourceUrl: urlByRole.get(p.id) ?? "",
+}));
+
+const backendHeader = `// Generated from public/data/usc-research.json by scripts/generate-usc-projects.mjs.
+// Public USC lab catalog for the Convex projects table; embeddings are added
+// at seed time. Statuses reflect public pages, not lab-confirmed vacancies.
+export type LabRecord = {
+  sourceId: string;
+  title: string;
+  department: string;
+  description: string;
+  faculty: string;
+  requiredSkills: string[];
+  preferredSkills: string[];
+  hoursPerWeek: number;
+  offersCredit: boolean;
+  beginnerFriendly: boolean;
+  recruitmentStatus: "open" | "closed" | "explore";
+  sourceUrl: string;
+};
+
+export const LABS: LabRecord[] = ${JSON.stringify(backendProjects, null, 2)};
+`;
+
+writeFileSync(
+  new URL("../../api-server/convex/labData.ts", import.meta.url),
+  backendHeader,
 );
 console.log(`Generated ${projects.length} projects from ${raw.organizations.length} orgs`);

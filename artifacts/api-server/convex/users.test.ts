@@ -1,65 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { convexTest } from "convex-test";
-import type { BetterAuthOptions } from "better-auth";
-import { register as registerBetterAuth } from "@convex-dev/better-auth/test";
-import { createClient } from "@convex-dev/better-auth";
-import type { DataModel } from "./model";
-import schema from "./schema";
+import { makeTest, signIn, type TestContext } from "../test/helpers";
 import { api } from "./_generated/api";
-
-const modules = import.meta.glob("./**/*.ts", { query: "?fullPath" });
-
-type TestConvex = ReturnType<typeof convexTest>;
-
-// Register the Better Auth component exactly once per test instance; repeated
-// registration resets the in-memory id counter and collides fixture identities.
-type TestContext = {
-  t: TestConvex;
-  componentApi: Parameters<typeof createClient<DataModel>>[0];
-};
-
-function makeTest(): TestContext {
-  const t = convexTest(schema, modules);
-  const componentApi = registerBetterAuth(t, "betterAuth");
-  return { t, componentApi: componentApi as TestContext["componentApi"] };
-}
-
-// Drives the real auth-component code path: each fixture user gets a Better
-// Auth user + session row, so functions calling safeGetAuthUser behave as they
-// do in production.
-async function signIn({ t, componentApi }: TestContext, email: string) {
-  const ctx = {
-    runMutation: t.mutation.bind(t),
-    runQuery: t.query.bind(t),
-  } as never;
-  const adapter = createClient<DataModel>(componentApi, {
-    verbose: false,
-  }).adapter(ctx)({} as BetterAuthOptions);
-  const user = await adapter.create({
-    model: "user",
-    data: {
-      name: email.split("@")[0],
-      email,
-      emailVerified: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  });
-  const session = await adapter.create({
-    model: "session",
-    data: {
-      token: `token-${email}`,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: (user as { id: string }).id,
-    },
-  });
-  return t.withIdentity({
-    subject: (user as { id: string }).id,
-    sessionId: (session as { id: string }).id,
-  });
-}
 
 const PROFILE = {
   major: "Computer Science",
@@ -77,7 +18,7 @@ const PROFILE = {
 
 describe("current", () => {
   it("returns null without a session", async () => {
-    const t = makeTest().t;
+    const { t } = makeTest();
     expect(await t.query(api.users.current, {})).toBeNull();
   });
 
@@ -98,7 +39,7 @@ describe("current", () => {
 
 describe("completeProfile", () => {
   it("requires authentication", async () => {
-    const t = makeTest().t;
+    const { t } = makeTest();
     await expect(
       t.mutation(api.users.completeProfile, {
         name: "Anon",
@@ -127,7 +68,7 @@ describe("completeProfile", () => {
 
 describe("upsertStudentProfile", () => {
   it("refuses unauthenticated callers", async () => {
-    const t = makeTest().t;
+    const { t } = makeTest();
     await expect(t.mutation(api.users.upsertStudentProfile, PROFILE)).rejects
       .toThrow();
   });

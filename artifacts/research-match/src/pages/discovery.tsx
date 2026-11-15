@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Search, X, ArrowUpRight } from "lucide-react";
 import { Layout, EmptyState } from "@/components/layout";
+import { AiMatches } from "@/components/ai-matches";
+import { useAccount } from "@/lib/auth";
 import { RecruitPill, ProjectGrid } from "@/components/bits";
 import { ProjectDialog } from "@/components/project-dialog";
 import { useStore } from "@/lib/store";
@@ -28,6 +30,7 @@ function Chip({ on, onClick, children, id }: { on: boolean; onClick: () => void;
 }
 
 export default function Discovery() {
+  const account = useAccount();
   const { projects, profile } = useStore();
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("all");
@@ -72,7 +75,13 @@ export default function Discovery() {
             {openCount} labs are recruiting right now. Ranked by matching against your {profile.skills.length} skills, interests in {profile.interests.slice(0, 2).join(" and ") || "anything"}, and {profile.hours} h/week.
           </p>
         </div>
-        {spotlight && (
+        {account.isAuthenticated && account.viewer?.accountType === "student" && account.viewer.hasStudentProfile ? (
+          <div className="rise border border-primary/20 bg-card p-5" style={{ animationDelay: "120ms" }}>
+            <h2 className="font-display text-xl">AI matches for your profile</h2>
+            <p className="text-xs text-muted-foreground mt-1 mb-4">Vector similarity between your saved profile and the USC lab catalog.</p>
+            <AiMatches />
+          </div>
+        ) : spotlight && (
           <button
             data-testid="button-spotlight"
             onClick={() => setOpen(spotlight.p)}

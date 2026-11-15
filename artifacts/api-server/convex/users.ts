@@ -1,7 +1,17 @@
 import { ConvexError, v } from "convex/values";
+import {
+  internalMutationGeneric as internalMutation,
+  internalQueryGeneric as internalQuery,
+  makeFunctionReference,
+} from "convex/server";
 import type { GenericDatabaseReader } from "convex/server";
 import { authComponent } from "./auth";
 import { schoolYear, studentProfileFields } from "./schema";
+import {
+  EMBEDDING_MODEL_ID,
+  embedBatch,
+  studentEmbeddingText,
+} from "./embeddings";
 import { action, mutation, query, type DataModel } from "./model";
 
 function cleanTagList(raw: string[], label: string, maxItems: number) {
@@ -14,7 +24,7 @@ function cleanTagList(raw: string[], label: string, maxItems: number) {
   return unique;
 }
 
-async function studentProfileForOwner(
+export async function studentProfileForOwner(
   ctx: { db: GenericDatabaseReader<DataModel> },
   ownerSubject: string,
 ) {
@@ -24,7 +34,7 @@ async function studentProfileForOwner(
     .unique();
 }
 
-async function accountProfileFor(
+export async function accountProfileFor(
   ctx: { db: GenericDatabaseReader<DataModel> },
   authUserId: string,
 ) {
@@ -64,20 +74,7 @@ export const myStudentProfile = query({
 const studentListing = v.object({
   id: v.string(),
   name: v.string(),
-  major: v.string(),
-  schoolYear,
-  skills: v.array(v.string()),
-  interests: v.array(v.string()),
-  experience: v.array(
-    v.object({
-      role: v.string(),
-      org: v.string(),
-      description: v.string(),
-    }),
-  ),
-  hoursPerWeek: v.number(),
-  workStudy: v.boolean(),
-  seekingCredit: v.boolean(),
+  ...studentProfileFields,
 });
 
 // Faculty discovery over student profiles. Only explicit recruitment-consent
@@ -151,6 +148,7 @@ export const generateResumeUploadUrl = action({
 export const upsertStudentProfile = mutation({
   args: {
     ...studentProfileFields,
+    recruitmentConsent: v.boolean(),
     resumeStorageId: v.optional(v.string()),
     resumeFileName: v.optional(v.string()),
   },
@@ -207,16 +205,113 @@ export const upsertStudentProfile = mutation({
           }
         : {}),
     };
+    let studentId: string;
     if (profile) {
       await ctx.db.patch(profile._id, patch);
+      studentId = profile._id;
     } else {
-      await ctx.db.insert("students", {
+      studentId = await ctx.db.insert("students", {
         ownerSubject: user._id,
         embeddingModel: "",
         embedding: [],
         ...patch,
       });
     }
+    await ctx.scheduler.runAfter(
+      0,
+      makeFunctionReference<"mutation">("users:embedStudent"),
+      { studentId: studentId as never },
+    );
+    return null;
+  },
+});
+
+
+export const accountProfileBySubject = internalQuery({
+  args: { subject: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      accountType: v.union(v.literal("student"), v.literal("faculty")),
+      name: v.string(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const account = await accountProfileFor(ctx, args.subject);
+    if (!account) return null;
+    return { accountType: account.accountType, name: account.name };
+  },
+});
+
+const studentProfileBySubject = internalQuery({
+  args: { subject: v.string() },
+  handler: async (ctx, args) => {
+    const student = await studentProfileForOwner(ctx, args.subject);
+    if (!student) return null;
+    return {
+      id: student._id,
+      embedding: student.embedding,
+      embeddingModel: student.embeddingModel,
+    };
+  },
+});
+
+const studentProfileById = internalQuery({
+  args: { studentId: v.id("students") },
+  handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student) return null;
+    return {
+      name: student.name,
+      major: student.major,
+      schoolYear: student.schoolYear,
+      skills: student.skills,
+      interests: student.interests,
+      experience: student.experience,
+      workStudy: student.workStudy,
+      seekingCredit: student.seekingCredit,
+    };
+  },
+});
+
+
+export const storeStudentEmbedding = internalMutation({
+  args: { studentId: v.id("students"), embedding: v.array(v.float64()) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.studentId, {
+      embedding: args.embedding,
+      embeddingModel: EMBEDDING_MODEL_ID,
+    });
+    return null;
+  },
+});
+
+// Generates and stores the profile embedding. Scheduled right after a profile
+// save; the AI-match action treats a missing vector as "not ready yet".
+export const embedStudent = action({
+  args: { studentId: v.id("students") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const student: {
+      name: string;
+      major: string;
+      schoolYear: string;
+      skills: string[];
+      interests: string[];
+      experience: { role: string; org: string; description: string }[];
+      workStudy: boolean;
+      seekingCredit: boolean;
+    } | null = await ctx.runQuery(
+      makeFunctionReference<"query">("users:studentProfileById"),
+      { studentId: args.studentId },
+    );
+    if (!student) return null;
+    const [embedding] = await embedBatch([studentEmbeddingText(student)]);
+    await ctx.runMutation(
+      makeFunctionReference<"mutation">("users:storeStudentEmbedding"),
+      { studentId: args.studentId, embedding },
+    );
     return null;
   },
 });

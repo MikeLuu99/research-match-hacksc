@@ -29,8 +29,6 @@ export const studentProfileFields = {
   hoursPerWeek: v.number(),
   workStudy: v.boolean(),
   seekingCredit: v.boolean(),
-  // Only explicit opt-in records may appear in reverse matching.
-  recruitmentConsent: v.boolean(),
 };
 
 export default defineSchema({
@@ -70,6 +68,8 @@ export default defineSchema({
     ownerSubject: v.string(),
     name: v.string(),
     ...studentProfileFields,
+    // Only explicit opt-in records may appear in reverse matching.
+    recruitmentConsent: v.boolean(),
     // Resume is stored as a file; parsed structured data lands in
     // experience/skills. Embeddings are generated once a provider is configured.
     resumeStorageId: v.optional(v.string()),
