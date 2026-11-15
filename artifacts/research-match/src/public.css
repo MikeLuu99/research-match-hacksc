@@ -14,9 +14,9 @@
   --gold: #ffcc00;
   --gold-text: #c99700;
   --gold-soft: #ffcc00;
-  --app-font-serif: "Newsreader", Georgia, serif;
-  --app-font-sans: "Hanken Grotesk", "Inter", sans-serif;
-  --app-font-mono: "DM Mono", ui-monospace, monospace;
+  --app-font-serif: "Instrument Sans", sans-serif;
+  --app-font-sans: "Geist", sans-serif;
+  --app-font-mono: "Geist Mono", ui-monospace, monospace;
   color: var(--ink);
   background-color: var(--paper);
   background-image:
