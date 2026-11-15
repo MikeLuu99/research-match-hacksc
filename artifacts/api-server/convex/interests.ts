@@ -4,6 +4,12 @@ import { authComponent } from "./auth";
 import { accountProfileFor, studentProfileForOwner } from "./users";
 import { mutation, query } from "./model";
 import { compatibilityScore } from "./compatibility";
+import { notify } from "./notifications";
+import {
+  newInterestNotice,
+  statusChangedNotice,
+  withdrawnNotice,
+} from "./notificationText";
 
 const statusValidator = v.union(
   v.literal("interested"),
@@ -42,6 +48,13 @@ export const expressInterest = mutation({
         status: "interested",
         updatedAt: Date.now(),
       });
+      // Re-sending interest that is already active is a no-op for faculty.
+      if (mine.status !== "interested")
+        await notify(
+          ctx,
+          project.ownerId,
+          newInterestNotice(profile.name, project.title),
+        );
       return { interestId: mine._id };
     }
     const now = Date.now();
@@ -52,6 +65,11 @@ export const expressInterest = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await notify(
+      ctx,
+      project.ownerId,
+      newInterestNotice(profile.name, project.title),
+    );
     return { interestId };
   },
 });
@@ -103,6 +121,18 @@ export const withdrawInterest = mutation({
       status: "withdrawn",
       updatedAt: Date.now(),
     });
+    if (interest.status !== "withdrawn") {
+      const project = await ctx.db
+        .query("projects")
+        .withIndex("by_source", (q) => q.eq("sourceId", interest.sourceId))
+        .unique();
+      if (project)
+        await notify(
+          ctx,
+          project.ownerId,
+          withdrawnNotice(profile.name, project.title),
+        );
+    }
     return null;
   },
 });
@@ -177,6 +207,14 @@ export const setInterestStatus = mutation({
       status: args.status,
       updatedAt: Date.now(),
     });
+    if (interest.status !== args.status) {
+      const student = await ctx.db.get(interest.studentId);
+      await notify(
+        ctx,
+        student?.ownerSubject,
+        statusChangedNotice(project.title, args.status),
+      );
+    }
     return null;
   },
 });

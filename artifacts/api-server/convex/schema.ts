@@ -87,6 +87,23 @@ export default defineSchema({
   })
     .index("by_student", ["studentId"])
     .index("by_source", ["sourceId"]),
+  // In-app notifications about interest activity. recipientId is the auth
+  // user id; href is a workspace-relative path (e.g. "/faculty/inbox").
+  notifications: defineTable({
+    recipientId: v.string(),
+    kind: v.union(
+      v.literal("new_interest"),
+      v.literal("interest_withdrawn"),
+      v.literal("status_changed"),
+    ),
+    title: v.string(),
+    body: v.string(),
+    href: v.optional(v.string()),
+    read: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_recipient", ["recipientId", "createdAt"])
+    .index("by_recipient_read", ["recipientId", "read"]),
   accountProfiles: defineTable({
     authUserId: v.string(),
     name: v.string(),

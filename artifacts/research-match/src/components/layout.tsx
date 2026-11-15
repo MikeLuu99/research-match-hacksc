@@ -15,6 +15,7 @@ import {
   ListChecks,
   Inbox,
   GraduationCap,
+  Bell,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { useQuery } from "convex/react";
@@ -38,6 +39,12 @@ const FACULTY_NAV: NavItem[] = [
   { href: "/faculty/shortlist", label: "Student shortlist", icon: ListChecks },
   { href: "/faculty/inbox", label: "Interest inbox", icon: Inbox },
 ];
+
+const NOTIFICATIONS_NAV: NavItem = {
+  href: "/notifications",
+  label: "Notifications",
+  icon: Bell,
+};
 
 const BOTTOM_PROFILE: Record<"student" | "faculty", NavItem> = {
   student: { href: "/profile", label: "Student profile", icon: UserRound },
@@ -161,10 +168,16 @@ export function Layout({ children }: { children: ReactNode }) {
     liveStudent ? {} : "skip",
   );
   const liveInbox = useQuery(api.interests.labInbox, liveFaculty ? {} : "skip");
+  // Notifications are account-backed, so the public demo has none.
+  const notifications = useQuery(
+    api.notifications.mine,
+    account.isAuthenticated ? {} : "skip",
+  );
   const mine = liveStudent
     ? (liveInterests ?? []).filter((i) => i.status !== "withdrawn").length
     : interests.filter((i) => i.studentId === profile.id).length;
   const counts: Record<string, number> = {
+    "/notifications": notifications?.unread ?? 0,
     "/saved": saved.length,
     "/applications": mine,
     "/faculty/shortlist": liveFaculty
@@ -264,6 +277,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div
             className="md:mt-auto md:border-t md:border-sidebar-border md:pt-2"
           >
+            {account.isAuthenticated && navLink(NOTIFICATIONS_NAV)}
             {navLink(BOTTOM_PROFILE[view])}
           </div>
           <LogOutButton />

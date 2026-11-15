@@ -10,9 +10,10 @@ import type * as projects from "../../../api-server/convex/projects";
 import type * as faculty from "../../../api-server/convex/faculty";
 import type * as interests from "../../../api-server/convex/interests";
 import type * as chat from "../../../api-server/convex/chat";
+import type * as notifications from "../../../api-server/convex/notifications";
 
 // Type-only backend imports keep server code and credentials out of the bundle.
 export const api = anyApi as unknown as FilterApi<
-  ApiFromModules<{ users: typeof users; discovery: typeof discovery; projects: typeof projects; faculty: typeof faculty; interests: typeof interests; chat: typeof chat }>,
+  ApiFromModules<{ users: typeof users; discovery: typeof discovery; projects: typeof projects; faculty: typeof faculty; interests: typeof interests; chat: typeof chat; notifications: typeof notifications }>,
   FunctionReference<"query" | "mutation" | "action", "public">
 >;
