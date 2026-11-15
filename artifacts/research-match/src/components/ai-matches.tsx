@@ -10,6 +10,7 @@ import {
 import { MascotLoading } from "@/components/mascot";
 import { api } from "@/lib/convex-api";
 import { InterestButton, SaveButton } from "@/components/bits";
+import { InfoTip } from "@/components/info-tip";
 import { useAccount } from "@/lib/auth";
 
 type MatchResult = {
@@ -163,6 +164,14 @@ function ConnectedAiMatches() {
         <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
           <Sparkles className="h-3 w-3 text-chart-2" /> Ranked by AI relevance
           (semantic + keywords)
+          <InfoTip
+            testId="tip-ai-ranking"
+            label="How the AI match score is computed"
+          >
+            Each percentage blends 65% semantic similarity between your profile
+            embedding and the lab with 35% keyword precision (BM25). Catalog
+            cards, Saved, and project details use this same hybrid score.
+          </InfoTip>
           {state.demo && (
             <span className="ml-2 bg-chart-2 px-2 py-0.5 text-accent-foreground">
               demo student · {state.studentName ?? "Jane Doe"}

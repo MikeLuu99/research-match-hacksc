@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { useQuery } from "@/lib/backend";
 import { Lock, UserMinus, UserRound } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
+import { InfoTip } from "@/components/info-tip";
 import { ScoreDial } from "@/components/bits";
 import { LiveStudentDialog, type LiveStudent } from "@/components/faculty-dashboard";
 import { api } from "@/lib/convex-api";
@@ -42,7 +43,19 @@ export default function FacultyShortlist() {
 
   return (
     <Layout>
-      <PageHeader eyebrow={live ? "Student shortlist · browser-local" : "Student shortlist · demo"} title="Student Shortlist">
+      <PageHeader
+        eyebrow={live ? "Student shortlist · browser-local" : "Student shortlist · demo"}
+        title={
+          <span>
+            Student Shortlist{" "}
+            <InfoTip testId="tip-shortlist" label="About your shortlist">
+              A per-project shortlist stored in this browser only. Shortlisting
+              never notifies the student — express interest or reach out to
+              start a conversation.
+            </InfoTip>
+          </span>
+        }
+      >
         A per-project list saved in this browser. Switch projects at the top; remove anyone at any time.
       </PageHeader>
       <div className="max-w-4xl space-y-4 px-5 pb-12 md:px-10">

@@ -22,6 +22,8 @@ import { cn } from "@/lib/utils";
 import { LocalNotice, ProjectSelect } from "@/components/faculty/demo-notice";
 import { CandidateRow } from "@/components/faculty/candidate-row";
 import { StudentDetailDialog } from "@/components/faculty/student-detail";
+import { InfoTip } from "@/components/info-tip";
+import type { ReactNode } from "react";
 
 const toggleCls = (on: boolean) => cn("h-11 border px-4 text-sm transition-colors", on ? "border-primary bg-primary text-primary-foreground" : "border-primary/25 bg-card hover:bg-primary/5");
 
@@ -77,10 +79,14 @@ function LiveDiscover() {
     items: (typeof recommended[number] & { status?: string })[],
     empty: string,
     applied: boolean,
+    tip?: ReactNode,
   ) => (
     <section>
       <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="font-display text-xl">{title}</h2>
+        <h2 className="font-display text-xl">
+          {title}
+          {tip}
+        </h2>
         <span className="font-mono text-xs text-muted-foreground">{items.length}</span>
       </div>
       {items.length ? (
@@ -127,7 +133,11 @@ function LiveDiscover() {
             ) : (
               <>
                 {section("Applicants", applicants, q || credit ? "No applicants match your filters." : "No one has sent interest in this project yet.", true)}
-                {section("Recommended students", recommended, q || credit ? "No recommended students match your filters." : "No opted-in students to recommend yet. Students appear here once they complete a profile and opt in to faculty discovery.", false)}
+                {section("Recommended students", recommended, q || credit ? "No recommended students match your filters." : "No opted-in students to recommend yet. Students appear here once they complete a profile and opt in to faculty discovery.", false, (
+                  <InfoTip testId="tip-recommended-students" label="About recommended students">
+                    These students opted in to faculty discovery. Compatibility is the same AI hybrid ranking (65% semantic + 35% keyword) used in student Discover; only consented profiles are ever shown.
+                  </InfoTip>
+                ))}
               </>
             )}
             <LocalNotice>Applicants are students who sent interest in this project. Recommendations are opted-in students ranked by compatibility with it. Shortlists keep student IDs in this browser only; students are not notified. Email and résumé are not available from the current faculty API.</LocalNotice>
@@ -163,9 +173,9 @@ function DemoDiscover() {
 
   if (!p) return <Layout><PageHeader eyebrow="Discover students" title="No Project To Rank Against" /><div className="px-5 md:px-10"><EmptyState title="Create a project first" body="Students are ranked against one of your listings." action={<Link href="/faculty" className="inline-block bg-primary px-4 py-2 text-sm text-primary-foreground">Open lab workspace</Link>} /></div></Layout>;
 
-  const section = (title: string, items: typeof rows, empty: string, offset: number, tag?: string) => (
+  const section = (title: string, items: typeof rows, empty: string, offset: number, tag?: string, tip?: ReactNode) => (
     <section>
-      <div className="mb-3 flex items-baseline justify-between"><h2 className="font-display text-xl">{title}</h2><span className="font-mono text-xs text-muted-foreground">{items.length}</span></div>
+      <div className="mb-3 flex items-baseline justify-between"><h2 className="font-display text-xl">{title}{tip}</h2><span className="font-mono text-xs text-muted-foreground">{items.length}</span></div>
       {items.length ? (
         <ul className="space-y-2">{items.map(({ s, m }, i) => { const k = shortlistKey("demo", s.id); return <CandidateRow key={s.id} s={s} m={m} rank={offset + i} tag={tag} shortlisted={list.includes(k)} onToggle={() => toggleShortlist(p.id, k)} onOpen={() => setOpen(s)} />; })}</ul>
       ) : <p className="border border-dashed border-primary/30 px-4 py-6 text-center text-sm text-muted-foreground">{empty}</p>}
@@ -192,7 +202,11 @@ function DemoDiscover() {
         </div>
         <LocalNotice>Fictional demo data, local to this browser. Only opted-in students and students who sent this project interest appear; private profiles are not shown or counted.</LocalNotice>
         {section("Applicants", applicants, "No one has sent interest in this project yet.", 0, "applied")}
-        {section("Potential candidates", others, meets ? "No other students meet every requirement. Turn off the filter to see partial matches." : "No other opted-in students match your search.", applicants.length)}
+        {section("Potential candidates", others, meets ? "No other students meet every requirement. Turn off the filter to see partial matches." : "No other opted-in students match your search.", applicants.length, undefined, (
+          <InfoTip testId="tip-potential-candidates" label="About potential candidates">
+            Ranked by the browser-local demo matcher against your selected project. Signed-in faculty see the AI hybrid ranking (65% semantic + 35% keyword) instead.
+          </InfoTip>
+        ))}
       </div>
       <StudentDetailDialog s={open} project={p} onClose={() => setOpen(null)} />
     </Layout>

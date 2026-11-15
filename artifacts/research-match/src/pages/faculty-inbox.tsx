@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@/lib/backend";
 import { format } from "date-fns";
 import { LoaderCircle } from "lucide-react";
 import { Layout, PageHeader, EmptyState } from "@/components/layout";
+import { InfoTip } from "@/components/info-tip";
 import { useStore, STATUS_LABEL, type InterestStatus } from "@/lib/store";
 import { demoStudents } from "@/lib/faculty-access";
 import { useFacultyMode } from "@/lib/faculty-mode";
@@ -110,7 +111,19 @@ export default function FacultyInbox() {
 
   return (
     <Layout>
-      <PageHeader eyebrow={live ? "Interest inbox" : "Interest inbox · demo"} title="Interest Box">
+      <PageHeader
+        eyebrow={live ? "Interest inbox" : "Interest inbox · demo"}
+        title={
+          <span>
+            Interest Box{" "}
+            <InfoTip testId="tip-interest-box" label="About the interest flow">
+              Students can withdraw and re-send interest; your status decisions
+              are preserved when they re-send. Status updates appear in the
+              student's Interest tracker right away.
+            </InfoTip>
+          </span>
+        }
+      >
         {live
           ? "Real student interest in your own project listings. Update a status and the student sees it in their tracker."
           : "Requests across your listings. Review the message and set a status."}
