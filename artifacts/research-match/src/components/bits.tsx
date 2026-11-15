@@ -1,7 +1,9 @@
-import { Bookmark, BookmarkCheck, Clock, GraduationCap, DollarSign, Sprout } from "lucide-react";
+import { useState } from "react";
+import { Bookmark, BookmarkCheck, Check, Clock, GraduationCap, DollarSign, Sprout, Send } from "lucide-react";
 import type { Project, RecruitStatus } from "@/lib/data";
 import type { MatchResult } from "@/lib/matching";
 import { useStore } from "@/lib/store";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 export function RecruitPill({ status }: { status: RecruitStatus }) {
@@ -66,6 +68,51 @@ export function SaveButton({ id }: { id: string }) {
   );
 }
 
+export function InterestButton({
+  projectId,
+  open,
+}: {
+  projectId: string;
+  open: boolean;
+}) {
+  const { interests, profile, expressInterest } = useStore();
+  const { toast } = useToast();
+  const mine = interests.find(
+    (i) => i.projectId === projectId && i.studentId === profile.id,
+  );
+  if (mine)
+    return (
+      <span className="inline-flex items-center gap-1.5 border border-primary/25 bg-primary/8 px-3 py-1.5 text-xs font-semibold text-primary">
+        <Check size={14} /> Interest sent
+      </span>
+    );
+  if (!open)
+    return (
+      <span className="inline-flex items-center gap-1.5 border border-dashed px-3 py-1.5 text-xs text-muted-foreground">
+        Not accepting interest
+      </span>
+    );
+  return (
+    <button
+      data-testid={`button-interest-${projectId}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        expressInterest(
+          projectId,
+          "Hi! I'm interested in this opportunity — my profile matches the topics and skills involved.",
+        );
+        toast({
+          title: "Interest sent",
+          description: "Track it in your Interest tracker.",
+        });
+      }}
+      className="inline-flex items-center gap-1.5 bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+    >
+      <Send size={14} /> Show Interest
+    </button>
+  );
+}
+
 function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResult; onOpen: () => void; i?: number }) {
   return (
     <article
@@ -100,6 +147,7 @@ function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResult; onOp
         {p.paid && <span className="inline-flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" />Paid</span>}
         {m.learningPotential && <span className="inline-flex items-center gap-1 text-chart-3 font-medium"><Sprout className="h-3.5 w-3.5" />Learning potential</span>}
         <span className="ml-auto text-primary font-medium opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">Why this match</span>
+        <InterestButton projectId={p.id} open={p.status === "open"} />
       </div>
     </article>
   );

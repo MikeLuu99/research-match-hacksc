@@ -8,6 +8,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { api } from "@/lib/convex-api";
+import { InterestButton } from "@/components/bits";
 
 type MatchResult = {
   sourceId: string;
@@ -162,15 +163,10 @@ export function AiMatches() {
                 {match.summary}
               </p>
               <div className="mt-3 flex items-center gap-2">
-                <span
-                  className={
-                    match.open
-                      ? "bg-chart-2 px-2 py-0.5 font-mono text-xs uppercase tracking-[0.08em] text-accent-foreground"
-                      : "border border-primary/25 px-2 py-0.5 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground"
-                  }
-                >
-                  {match.open ? "recruiting" : "inquire"}
-                </span>
+                <InterestButton
+                  projectId={match.sourceId}
+                  open={match.open}
+                />
                 {match.sourceUrl && (
                   <a
                     href={match.sourceUrl}
