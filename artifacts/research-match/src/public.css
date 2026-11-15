@@ -74,7 +74,7 @@
   white-space: nowrap;
 }
 .brand-logo {
-  height: 40px;
+  height: 56px;
   width: auto;
   flex-shrink: 0;
 }
@@ -768,7 +768,7 @@
   font-size: 19px;
 }
 .public-footer .brand-logo {
-  height: 32px;
+  height: 44px;
 }
 .public-footer .brand-caption {
   font-size: 6px;
@@ -1275,7 +1275,7 @@
     letter-spacing: 1.4px;
   }
   .brand-logo {
-    height: 34px;
+    height: 46px;
   }
   .header-actions {
     gap: 14px;
