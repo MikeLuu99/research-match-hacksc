@@ -4,6 +4,7 @@ export type Level = "beginner" | "intermediate" | "advanced";
 
 export interface Project {
   id: string;
+  sourceId?: string;
   title: string;
   lab: string;
   pi: string;

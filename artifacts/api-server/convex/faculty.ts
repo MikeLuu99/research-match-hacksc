@@ -87,6 +87,7 @@ function facultyView(project: {
 }) {
   return {
     id: project._id,
+    sourceId: project.sourceId,
     title: project.title,
     lab: project.labName ?? project.faculty,
     pi: project.faculty,
