@@ -33,10 +33,10 @@ const STUDENT_NAV: NavItem[] = [
 
 const FACULTY_NAV: NavItem[] = [
   { href: "/faculty", label: "Lab workspace", icon: FlaskConical },
+  { href: "/ask", label: "Ask LABBE AI", icon: MessageCircleQuestion },
   { href: "/faculty/discover", label: "Discover students", icon: Users },
   { href: "/faculty/shortlist", label: "Student shortlist", icon: ListChecks },
   { href: "/faculty/inbox", label: "Interest inbox", icon: Inbox },
-  { href: "/ask", label: "Ask LABBE AI", icon: MessageCircleQuestion },
 ];
 
 const BOTTOM_PROFILE: Record<"student" | "faculty", NavItem> = {
