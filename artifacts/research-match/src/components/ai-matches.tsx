@@ -124,14 +124,14 @@ function ConnectedAiMatches() {
 
   if ((loading && !state) || seeding)
     return (
-      <div
-        className="flex items-center gap-2 py-8 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
-        role="status"
-      >
-        <LoaderCircle className="animate-spin" size={14} />
-        {seeding
-          ? "Loading the lab catalog (first visit embeds 82 labs)…"
-          : "Computing AI recommendations…"}
+      <div role="status">
+        <MascotLoading
+          label={
+            seeding
+              ? "Loading the lab catalog (first visit embeds 82 labs)…"
+              : "Scanning labs across USC…"
+          }
+        />
       </div>
     );
 

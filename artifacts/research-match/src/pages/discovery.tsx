@@ -7,6 +7,7 @@ import { AiMatches } from "@/components/ai-matches";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { useAccount } from "@/lib/auth";
 import { useCatalogProjects } from "@/lib/use-catalog-projects";
+import { useMatchProfile } from "@/lib/use-match-profile";
 import { RecruitPill, ProjectGrid } from "@/components/bits";
 import { ProjectDialog } from "@/components/project-dialog";
 import { useStore } from "@/lib/store";
@@ -33,7 +34,8 @@ function Chip({ on, onClick, children, id, size = "sm" }: { on: boolean; onClick
 
 export default function Discovery() {
   const account = useAccount();
-  const { profile } = useStore();
+  const { profile: storeProfile } = useStore();
+  const profile = useMatchProfile();
   const catalog = useCatalogProjects();
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("all");
