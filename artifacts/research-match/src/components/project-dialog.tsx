@@ -47,7 +47,7 @@ export function ProjectDialog({ project, onClose }: { project: Project | null; o
               <DialogTitle className="font-display text-2xl md:text-3xl mt-2 leading-tight">{project.title}</DialogTitle>
               <DialogDescription className="mt-1">{project.lab} — {project.pi}</DialogDescription>
             </div>
-            <SaveButton id={project.id} />
+            <SaveButton id={project.sourceId ?? project.id} />
           </div>
           <p className="mt-4 text-sm leading-relaxed text-foreground/85">{project.description}</p>
           <p className="mt-3 text-[11px] font-mono text-muted-foreground">

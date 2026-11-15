@@ -86,7 +86,7 @@ export default function Applications() {
               </ul>
             </>
           ) : (
-            <EmptyState title="No interest sent yet" body="Show interest on any lab in Discover. Faculty see your request and status updates appear here." action={<Link href="/app/student" data-testid="link-discover" className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm inline-block hover:opacity-90">Find a lab</Link>} />
+            <EmptyState title="No interest sent yet" body="Show interest on any lab in Discover. Faculty see your request and status updates appear here." action={<Link href="/student" data-testid="link-discover" className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm inline-block hover:opacity-90">Find a lab</Link>} />
           )
         ) : mine.length ? (
           <>

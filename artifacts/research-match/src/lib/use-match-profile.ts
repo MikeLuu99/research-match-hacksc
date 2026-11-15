@@ -1,4 +1,4 @@
-import { useQuery } from "convex/react";
+import { useQuery } from "./backend";
 import { api } from "./convex-api";
 import { useAccount } from "./auth";
 import { useStore } from "./store";

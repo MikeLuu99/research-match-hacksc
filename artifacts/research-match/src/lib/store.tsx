@@ -7,6 +7,8 @@ import {
 } from "react";
 import { ALEX, SEED_PROJECTS, type Project, type StudentProfile } from "./data";
 import { USC_PROJECTS } from "./usc-projects";
+import { useCatalogProjects } from "./use-catalog-projects";
+import { normalizeSavedProjectIds } from "./saved-projects";
 
 export type InterestStatus =
   | "interested"
@@ -209,6 +211,8 @@ export function StoreProvider({
   const [state, setState] = useState<State>(() =>
     load(key, accountId, accountName),
   );
+  const catalog = useCatalogProjects();
+  const saved = normalizeSavedProjectIds(state.saved, catalog);
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify(state));
@@ -220,15 +224,19 @@ export function StoreProvider({
   const now = () => new Date().toISOString();
   const value: Ctx = {
     ...state,
+    saved,
     updateProfile: (p) =>
       setState((s) => ({ ...s, profile: { ...s.profile, ...p } })),
     toggleSave: (id) =>
-      setState((s) => ({
-        ...s,
-        saved: s.saved.includes(id)
-          ? s.saved.filter((x) => x !== id)
-          : [...s.saved, id],
-      })),
+      setState((s) => {
+        const current = normalizeSavedProjectIds(s.saved, catalog);
+        return {
+          ...s,
+          saved: current.includes(id)
+            ? current.filter((x) => x !== id)
+            : [...current, id],
+        };
+      }),
     expressInterest: (projectId, message) =>
       setState((s) => {
         if (

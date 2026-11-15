@@ -14,7 +14,7 @@ export default function Saved() {
   const profile = useMatchProfile();
   const catalog = useCatalogProjects();
   const [open, setOpen] = useState<Project | null>(null);
-  const list = catalog.filter((p) => saved.includes(p.id)).map((p) => ({ p, m: matchProject(profile, p) }));
+  const list = catalog.filter((p) => saved.includes(p.sourceId ?? p.id)).map((p) => ({ p, m: matchProject(profile, p) }));
   return (
     <Layout>
       <PageHeader eyebrow="Saved" title="Your shortlist">Labs you bookmarked. Closed listings stay here so you can check back next term.</PageHeader>

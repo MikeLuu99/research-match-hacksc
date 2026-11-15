@@ -212,3 +212,5 @@ ResearchMatch is more customized to students' syllabi, schedules, and academic c
 - Optional-backend UI components import query/mutation/action hooks from `src/lib/backend.ts`. The authentication provider uses Convex's native hooks. Preserve the demo's ability to render without Convex environment variables.
 - Project details and catalog cards share `InterestButton` for live interest submission. Re-sending an active request must preserve faculty decisions; only withdrawn requests may be reopened by students.
 - Empty AI results may initiate catalog setup once per mounted signed-in student view. Avoid making setup state a dependency that retriggers its own effect.
+- Bookmarks use `sourceId ?? id` across catalog cards, project details, AI/chat cards, and Saved. Normalize older document-ID bookmarks when the live catalog arrives, preserving unknown IDs until their listings load.
+- The API test command also runs web route regressions in Node: offline rendering, legacy bookmarks, and nested workspace navigation. These render checks do not verify browser interaction or live OAuth.

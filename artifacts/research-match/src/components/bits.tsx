@@ -159,7 +159,7 @@ function ProjectCard({ p, m, onOpen, i = 0 }: { p: Project; m: MatchResult; onOp
           <h3 className="font-display text-lg leading-snug mt-1.5 group-hover:text-primary transition-colors">{p.title}</h3>
           <p className="text-sm text-muted-foreground mt-0.5">{p.lab}</p>
         </div>
-        <SaveButton id={p.id} />
+        <SaveButton id={p.sourceId ?? p.id} />
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed">{p.summary}</p>
       <div className="flex flex-wrap gap-1.5">
